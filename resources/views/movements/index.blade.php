@@ -25,7 +25,7 @@
         <tbody>
             @forelse($open as $m)
                 <tr>
-                    <td>{{ $m->vehicle->plate }}</td>
+                    <td>{{ $m->vehicle->identifier ? $m->vehicle->identifier . ' — ' : '' }}{{ $m->vehicle->plate }}</td>
                     <td>{{ $m->driver->name }}</td>
                     <td>{{ $m->odometer_out }}</td>
                     <td>{{ $m->fuel_out }}%</td>
@@ -68,7 +68,7 @@
         <tbody>
             @forelse($recentClosed as $m)
                 <tr>
-                    <td>{{ $m->vehicle->plate }}</td>
+                    <td>{{ $m->vehicle->identifier ? $m->vehicle->identifier . ' — ' : '' }}{{ $m->vehicle->plate }}</td>
                     <td>{{ $m->driver->name }}</td>
                     <td>{{ $m->departed_at?->format('Y-m-d H:i') }}</td>
                     <td>{{ $m->arrived_at?->format('Y-m-d H:i') }}</td>

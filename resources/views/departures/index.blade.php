@@ -61,7 +61,7 @@
             @forelse($departures as $m)
                 <tr>
                     <td>{{ $m->departed_at?->format('Y-m-d H:i') }}</td>
-                    <td>{{ $m->vehicle->plate }}</td>
+                    <td>{{ $m->vehicle->identifier ? $m->vehicle->identifier . ' — ' : '' }}{{ $m->vehicle->plate }}</td>
                     <td>{{ $m->driver->name }}</td>
                     <td>{{ $m->guardOut?->name ?? '—' }}</td>
                     <td>
@@ -108,7 +108,7 @@
                 <select name="vehicle_id">
                     <option value="">Todos</option>
                     @foreach($vehicles as $v)
-                        <option value="{{ $v->id }}" @selected(request('vehicle_id')==$v->id)>{{ $v->plate }}</option>
+                        <option value="{{ $v->id }}" @selected(request('vehicle_id')==$v->id)>{{ $v->identifier ? $v->identifier . ' — ' : '' }}{{ $v->plate }}</option>
                     @endforeach
                 </select>
             </div>

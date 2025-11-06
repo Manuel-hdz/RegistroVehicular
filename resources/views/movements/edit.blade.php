@@ -10,7 +10,7 @@
             <label>Vehículo</label>
             <select name="vehicle_id" required>
                 @foreach($vehicles as $v)
-                    <option value="{{ $v->id }}" @selected(old('vehicle_id', $movement->vehicle_id)==$v->id)>{{ $v->plate }}</option>
+                    <option value="{{ $v->id }}" @selected(old('vehicle_id', $movement->vehicle_id)==$v->id)>{{ $v->identifier ? $v->identifier . ' — ' : '' }}{{ $v->plate }}</option>
                 @endforeach
             </select>
         </div>

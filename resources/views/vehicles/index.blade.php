@@ -12,8 +12,8 @@
     <table>
         <thead>
             <tr>
-                <th>Placa</th>
                 <th>Identificador</th>
+                <th>Placa</th>
                 <th>Modelo</th>
                 <th>Año</th>
                 <th>Activo</th>
@@ -23,8 +23,8 @@
         <tbody>
             @foreach($vehicles as $v)
                 <tr>
-                    <td>{{ $v->plate }}</td>
                     <td>{{ $v->identifier }}</td>
+                    <td>{{ $v->plate }}</td>
                     <td>{{ $v->model }}</td>
                     <td>{{ $v->year }}</td>
                     <td>{{ $v->active ? 'Sí' : 'No' }}</td>

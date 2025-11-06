@@ -11,7 +11,7 @@
                 <option value="">Seleccione…</option>
                 @foreach($vehicles as $v)
                     <option value="{{ $v->id }}" @selected(old('vehicle_id')==$v->id)>
-                        {{ $v->plate }} {{ $v->identifier ? '— '.$v->identifier : '' }}
+                        {{ $v->identifier ?: $v->plate }}
                     </option>
                 @endforeach
             </select>

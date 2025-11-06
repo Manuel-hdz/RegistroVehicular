@@ -56,7 +56,7 @@
                 <tbody>
                 @forelse($topVehicleByDepartures as $row)
                     <tr>
-                        <td>{{ $row->vehicle?->plate ?? ('#'.$row->vehicle_id) }}</td>
+                        <td>{{ ($row->vehicle?->identifier ? $row->vehicle?->identifier . ' — ' : '') . ($row->vehicle?->plate ?? ('#'.$row->vehicle_id)) }}</td>
                         <td>{{ $row->total }}</td>
                     </tr>
                 @empty
@@ -74,7 +74,7 @@
                 <tbody>
                 @forelse($topVehicleByKm as $row)
                     <tr>
-                        <td>{{ $row->vehicle?->plate ?? ('#'.$row->vehicle_id) }}</td>
+                        <td>{{ ($row->vehicle?->identifier ? $row->vehicle?->identifier . ' — ' : '') . ($row->vehicle?->plate ?? ('#'.$row->vehicle_id)) }}</td>
                         <td>{{ (int) $row->km }}</td>
                     </tr>
                 @empty
@@ -113,7 +113,7 @@
                 <select name="vehicle_id" class="form-select" style="padding:8px 10px;">
                     <option value="">Todos</option>
                     @foreach($vehicles as $v)
-                        <option value="{{ $v->id }}" @selected((string)request('vehicle_id') === (string)$v->id)>{{ $v->plate }}</option>
+                        <option value="{{ $v->id }}" @selected((string)request('vehicle_id') === (string)$v->id)>{{ $v->identifier ? $v->identifier . ' — ' : '' }}{{ $v->plate }}</option>
                     @endforeach
                 </select>
             </div>
@@ -271,10 +271,10 @@
         }
 
         const topVehicles = @json($topVehicleByDepartures->map(fn($r) => [
-            $r->vehicle?->plate ?? ('#'.$r->vehicle_id), (int) $r->total
+            (($r->vehicle?->identifier ? $r->vehicle?->identifier.' — ' : '') . ($r->vehicle?->plate ?? ('#'.$r->vehicle_id))), (int) $r->total
         ]));
         const topKm = @json($topVehicleByKm->map(fn($r) => [
-            $r->vehicle?->plate ?? ('#'.$r->vehicle_id), (int) $r->km
+            (($r->vehicle?->identifier ? $r->vehicle?->identifier.' — ' : '') . ($r->vehicle?->plate ?? ('#'.$r->vehicle_id))), (int) $r->km
         ]));
         const topDrivers = @json($topDriverByDepartures->map(fn($r) => [
             $r->driver?->name ?? ('#'.$r->driver_id), (int) $r->total
