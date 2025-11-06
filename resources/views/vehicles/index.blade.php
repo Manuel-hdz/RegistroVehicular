@@ -28,7 +28,18 @@
                     <td>{{ $v->model }}</td>
                     <td>{{ $v->year }}</td>
                     <td>{{ $v->active ? 'Sí' : 'No' }}</td>
-                    <td><a class="btn btn-secondary" href="{{ route('vehicles.edit', $v) }}">Editar</a></td>
+                    <td>
+                        <a class="btn btn-secondary" href="{{ route('vehicles.edit', $v) }}">Editar</a>
+                        @auth
+                            @if(auth()->user()->role === 'superadmin')
+                                <form action="{{ route('vehicles.destroy', $v) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar vehículo?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-secondary" type="submit">Eliminar</button>
+                                </form>
+                            @endif
+                        @endauth
+                    </td>
                 </tr>
             @endforeach
         </tbody>

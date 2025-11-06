@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Registro Vehicular</title>
+    @stack('head-pre')
     <style>
         :root{
             --green: #006847; /* Verde bandera */
@@ -44,6 +45,8 @@
         .btn-secondary:hover { background:#f9fafb; }
         .btn-warning { background: var(--yellow); color:#000; }
         .btn-link { color: var(--green); text-decoration: none; font-weight:700; }
+        .home-link { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; background:rgba(255,255,255,.15); color:#fff; margin-right:6px; border:2px solid rgba(255,255,255,.25); }
+        .home-link:hover { background: rgba(255,255,255,.22); }
         .row { display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
         .status { padding:12px 14px; border-radius:8px; background:#e9fff1; color:#065f46; border:2px solid #a7f3d0; margin-bottom:12px; }
         .error { padding:12px 14px; border-radius:8px; background:#fff7ed; color:#9a3412; border:2px solid #fed7aa; margin-bottom:12px; }
@@ -65,11 +68,17 @@
         .modal .actions { display:flex; justify-content:flex-end; gap:10px; padding:0 18px 18px; }
         .close-x { position:absolute; right:12px; top:8px; background:transparent; border:none; color:#fff; font-size:24px; line-height:1; cursor:pointer; }
     </style>
+    @stack('head')
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
 <header>
     <div class="brand">
+        <a href="{{ route('public.dashboard') }}" class="home-link" title="Inicio" aria-label="Inicio">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 3l9 8h-3v8h-5v-5H11v5H6v-8H3l9-8z"/>
+            </svg>
+        </a>
         <img class="logo" src="{{ asset('images/logo_marca.png') }}" alt="Concreto Lanzado de Fresnillo MARCA" onerror="this.style.display='none'">
         <div>
             <strong>Registro Vehicular</strong>
@@ -77,11 +86,30 @@
         </div>
     </div>
     <nav>
-        <a href="{{ route('movements.index') }}" class="{{ request()->routeIs('movements.*') ? 'active' : '' }}">Movimientos</a>
-        <a href="{{ route('vehicles.index') }}" class="{{ request()->routeIs('vehicles.*') ? 'active' : '' }}">Vehículos</a>
-        <a href="{{ route('drivers.index') }}" class="{{ request()->routeIs('drivers.*') ? 'active' : '' }}">Conductores</a>
+        @auth
+            <a href="{{ route('movements.index') }}" class="{{ request()->routeIs('movements.*') ? 'active' : '' }}">Movimientos</a>
+            @if(in_array(auth()->user()->role, ['admin','superadmin']))
+                <a href="{{ route('departures.index') }}" class="{{ request()->routeIs('departures.*') ? 'active' : '' }}">Salidas</a>
+                <a href="{{ route('vehicles.index') }}" class="{{ request()->routeIs('vehicles.*') ? 'active' : '' }}">Vehículos</a>
+                <a href="{{ route('drivers.index') }}" class="{{ request()->routeIs('drivers.*') ? 'active' : '' }}">Conductores</a>
+            @endif
+            @if(auth()->user()->role === 'superadmin')
+                <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}">Usuarios</a>
+            @endif
+        @endauth
     </nav>
-    <div></div>
+    <div>
+        @auth
+            <span style="margin-right:10px; font-weight:600;">{{ trim(auth()->user()->name ?? '') !== '' ? auth()->user()->name : auth()->user()->username }}</span>
+            <form action="{{ route('logout') }}" method="POST" style="display:inline;">
+                @csrf
+                <button class="btn btn-secondary" type="submit">Salir</button>
+            </form>
+        @else
+            <a class="btn btn-secondary" href="{{ route('login') }}">Entrar</a>
+            <a class="btn btn-link" href="{{ route('public.dashboard') }}">Dashboard Público</a>
+        @endauth
+    </div>
     
 </header>
 <div class="wrap">
@@ -147,5 +175,6 @@
         document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
     })();
 </script>
+@stack('scripts')
 </body>
 </html>

@@ -30,8 +30,21 @@
             <input type="number" name="odometer_out" value="{{ old('odometer_out') }}" min="0" required>
         </div>
         <div>
-            <label>Combustible salida (%)</label>
-            <input type="number" name="fuel_out" value="{{ old('fuel_out', 100) }}" min="0" max="100" required>
+            <label>Combustible salida</label>
+            <div class="row" style="gap:8px;">
+                <select name="fuel_out_base" required>
+                    <option value="1/4" @selected(old('fuel_out_base')==='1/4')>1/4</option>
+                    <option value="1/2" @selected(old('fuel_out_base','1/2')==='1/2')>1/2</option>
+                    <option value="3/4" @selected(old('fuel_out_base')==='3/4')>3/4</option>
+                    <option value="1" @selected(old('fuel_out_base')==='1')>Lleno</option>
+                </select>
+                <select name="fuel_out_dir" required>
+                    <option value="below" @selected(old('fuel_out_dir')==='below')>Abajo de</option>
+                    <option value="exact" @selected(old('fuel_out_dir','exact')==='exact')>Exacto</option>
+                    <option value="above" @selected(old('fuel_out_dir')==='above')>Arriba de</option>
+                </select>
+            </div>
+            <small style="color:#555;">Se almacenará como porcentaje aproximado.</small>
         </div>
         <div>
             <label>Fecha/Hora salida</label>

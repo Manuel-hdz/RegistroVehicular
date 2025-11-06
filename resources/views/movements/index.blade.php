@@ -33,6 +33,16 @@
                     <td>{{ $m->destination }}</td>
                     <td>
                         <a class="btn btn-warning" href="{{ route('movements.checkin.form', $m) }}">Registrar Entrada</a>
+                        @auth
+                            @if(auth()->user()->role === 'superadmin')
+                                <a class="btn btn-secondary" href="{{ route('movements.edit', $m) }}">Editar</a>
+                                <form action="{{ route('movements.cancel', $m) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('PUT')
+                                    <button class="btn btn-secondary" type="submit">Cancelar</button>
+                                </form>
+                            @endif
+                        @endauth
                     </td>
                 </tr>
             @empty

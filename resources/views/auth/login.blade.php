@@ -6,8 +6,8 @@
     <form method="POST" action="{{ route('login.post') }}" class="grid">
         @csrf
         <div>
-            <label>Correo</label>
-            <input type="email" name="email" value="{{ old('email') }}" required>
+            <label>Usuario</label>
+            <input type="text" name="username" value="{{ old('username') }}" required>
         </div>
         <div>
             <label>Contraseña</label>
@@ -22,4 +22,3 @@
     </form>
 </div>
 @endsection
-

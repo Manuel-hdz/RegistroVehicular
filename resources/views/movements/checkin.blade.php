@@ -15,8 +15,21 @@
             <input type="number" name="odometer_in" value="{{ old('odometer_in', $movement->odometer_out) }}" min="{{ $movement->odometer_out }}" required>
         </div>
         <div>
-            <label>Combustible entrada (%)</label>
-            <input type="number" name="fuel_in" value="{{ old('fuel_in', $movement->fuel_out) }}" min="0" max="100" required>
+            <label>Combustible entrada</label>
+            <div class="row" style="gap:8px;">
+                <select name="fuel_in_base" required>
+                    <option value="1/4" @selected(old('fuel_in_base')==='1/4')>1/4</option>
+                    <option value="1/2" @selected(old('fuel_in_base','1/2')==='1/2')>1/2</option>
+                    <option value="3/4" @selected(old('fuel_in_base')==='3/4')>3/4</option>
+                    <option value="1" @selected(old('fuel_in_base')==='1')>Lleno</option>
+                </select>
+                <select name="fuel_in_dir" required>
+                    <option value="below" @selected(old('fuel_in_dir')==='below')>Abajo de</option>
+                    <option value="exact" @selected(old('fuel_in_dir','exact')==='exact')>Exacto</option>
+                    <option value="above" @selected(old('fuel_in_dir')==='above')>Arriba de</option>
+                </select>
+            </div>
+            <small style="color:#555;">Se almacenará como porcentaje aproximado.</small>
         </div>
         <div>
             <label>Fecha/Hora entrada</label>

@@ -14,13 +14,18 @@ class InitialSeeder extends Seeder
     {
         // Users
         User::updateOrCreate(
-            ['email' => 'guard@example.com'],
-            ['name' => 'Vigilante', 'password' => Hash::make('password'), 'role' => 'guard']
+            ['username' => 'SuperAdmin'],
+            ['name' => 'Super Admin', 'password' => Hash::make('SistemasCLF'), 'role' => 'superadmin', 'active' => true]
         );
 
         User::updateOrCreate(
-            ['email' => 'admin@example.com'],
-            ['name' => 'Administrador', 'password' => Hash::make('password'), 'role' => 'admin']
+            ['username' => 'admin'],
+            ['name' => 'Administrador', 'password' => Hash::make('password'), 'role' => 'admin', 'active' => true]
+        );
+
+        User::updateOrCreate(
+            ['username' => 'usuario'],
+            ['name' => 'Usuario', 'password' => Hash::make('password'), 'role' => 'user', 'active' => true]
         );
 
         // Vehicles

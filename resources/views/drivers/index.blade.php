@@ -26,7 +26,18 @@
                     <td>{{ $d->employee_number }}</td>
                     <td>{{ $d->license }}</td>
                     <td>{{ $d->active ? 'Sí' : 'No' }}</td>
-                    <td><a class="btn btn-secondary" href="{{ route('drivers.edit', $d) }}">Editar</a></td>
+                    <td>
+                        <a class="btn btn-secondary" href="{{ route('drivers.edit', $d) }}">Editar</a>
+                        @auth
+                            @if(auth()->user()->role === 'superadmin')
+                                <form action="{{ route('drivers.destroy', $d) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar conductor?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-secondary" type="submit">Eliminar</button>
+                                </form>
+                            @endif
+                        @endauth
+                    </td>
                 </tr>
             @endforeach
         </tbody>
