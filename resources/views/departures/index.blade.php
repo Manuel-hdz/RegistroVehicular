@@ -3,6 +3,7 @@
 @section('content')
 @push('head-pre')
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 @endpush
 @push('head')
 <style>
@@ -46,27 +47,7 @@
 
 <div id="departuresLayout">
   <div class="card main">
-    @if ($departures->total() > 0)
-        <div style="margin-bottom:10px; color:#555; font-size:14px; text-align:right;">
-            Mostrando {{ $departures->firstItem() }} a {{ $departures->lastItem() }} de {{ $departures->total() }} resultados
-            @if ($departures->hasPages())
-                <span> · Página {{ $departures->currentPage() }} de {{ $departures->lastPage() }} ·
-                @if ($departures->onFirstPage())
-                    <span style="opacity:.6;">Anterior</span>
-                @else
-                    <a href="{{ $departures->previousPageUrl() }}">Anterior</a>
-                @endif
-                <span> | </span>
-                @if ($departures->hasMorePages())
-                    <a href="{{ $departures->nextPageUrl() }}">Siguiente</a>
-                @else
-                    <span style="opacity:.6;">Siguiente</span>
-                @endif
-                </span>
-            @endif
-        </div>
-    @endif
-    <table>
+    <table id="departuresTable">
         <thead>
             <tr>
                 <th>Fecha/Hora Salida</th>
@@ -103,28 +84,6 @@
             @endforelse
         </tbody>
     </table>
-
-    @if ($departures->total() > 0)
-        <div style="margin-top:12px; color:#555; font-size:14px; text-align:right;">
-            Mostrando {{ $departures->firstItem() }} a {{ $departures->lastItem() }} de {{ $departures->total() }} resultados
-        </div>
-        @if ($departures->hasPages())
-            <div style="margin-top:6px; color:#555; font-size:14px; text-align:right;">
-                Página {{ $departures->currentPage() }} de {{ $departures->lastPage() }} ·
-                @if ($departures->onFirstPage())
-                    <span style="opacity:.6;">Anterior</span>
-                @else
-                    <a href="{{ $departures->previousPageUrl() }}">Anterior</a>
-                @endif
-                <span> | </span>
-                @if ($departures->hasMorePages())
-                    <a href="{{ $departures->nextPageUrl() }}">Siguiente</a>
-                @else
-                    <span style="opacity:.6;">Siguiente</span>
-                @endif
-            </div>
-        @endif
-    @endif
   </div>
 
   <aside>
@@ -179,6 +138,8 @@
 </div>
 
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
   (function(){
     const root = document.getElementById('departuresLayout');
@@ -200,6 +161,14 @@
       setLabel();
     });
   })();
+  // Inicializar DataTable
+  $(function(){
+      $('#departuresTable').DataTable({
+          pageLength: 25,
+          order: [[0,'desc']],
+          language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }
+      });
+  });
 </script>
 @endpush
 @endsection

@@ -36,7 +36,8 @@ class DepartureController extends Controller
             $query->where('destination', 'like', '%' . $request->string('destination') . '%');
         }
 
-        $departures = $query->paginate(50)->appends($request->query());
+        // Para DataTables en cliente: regresamos colección completa ya filtrada
+        $departures = $query->get();
 
         $vehicles = Vehicle::orderBy('identifier')->orderBy('plate')->get(['id','plate','identifier']);
         $drivers = Driver::orderBy('name')->get(['id','name']);

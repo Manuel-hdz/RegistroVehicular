@@ -11,7 +11,8 @@ class DriverController extends Controller
 {
     public function index(): View
     {
-        $drivers = Driver::orderBy('name')->paginate(20);
+        // DataTables en cliente: devolver todos los registros ordenados
+        $drivers = Driver::orderBy('name')->get();
         return view('drivers.index', compact('drivers'));
     }
 

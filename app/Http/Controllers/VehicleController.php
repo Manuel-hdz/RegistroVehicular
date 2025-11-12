@@ -11,7 +11,8 @@ class VehicleController extends Controller
 {
     public function index(): View
     {
-        $vehicles = Vehicle::orderBy('identifier')->orderBy('plate')->paginate(20);
+        // DataTables en cliente: devolver todos los registros ordenados
+        $vehicles = Vehicle::orderBy('identifier')->orderBy('plate')->get();
         return view('vehicles.index', compact('vehicles'));
     }
 

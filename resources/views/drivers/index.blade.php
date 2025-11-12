@@ -8,28 +8,25 @@
     </div>
 </div>
 
+@push('head-pre')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+@endpush
+@push('scripts')
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(function(){
+            $('#driversTable').DataTable({
+                pageLength: 25,
+                order: [[0,'asc']],
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }
+            });
+        });
+    </script>
+@endpush
+
 <div class="card">
-    @if ($drivers->total() > 0)
-        <div style="margin-bottom:10px; color:#555; font-size:14px; text-align:right;">
-            Mostrando {{ $drivers->firstItem() }} a {{ $drivers->lastItem() }} de {{ $drivers->total() }} resultados
-            @if ($drivers->hasPages())
-                <span> · Página {{ $drivers->currentPage() }} de {{ $drivers->lastPage() }} ·
-                @if ($drivers->onFirstPage())
-                    <span style="opacity:.6;">Anterior</span>
-                @else
-                    <a href="{{ $drivers->previousPageUrl() }}">Anterior</a>
-                @endif
-                <span> | </span>
-                @if ($drivers->hasMorePages())
-                    <a href="{{ $drivers->nextPageUrl() }}">Siguiente</a>
-                @else
-                    <span style="opacity:.6;">Siguiente</span>
-                @endif
-                </span>
-            @endif
-        </div>
-    @endif
-    <table>
+    <table id="driversTable">
         <thead>
             <tr>
                 <th>Nombre</th>
@@ -47,7 +44,7 @@
                     <td>{{ $d->license }}</td>
                     <td>{{ $d->active ? 'Sí' : 'No' }}</td>
                     <td>
-                        <a class="btn btn-secondary" href="{{ route('drivers.edit', $d) }}?page={{ $drivers->currentPage() }}">Editar</a>
+                        <a class="btn btn-secondary" href="{{ route('drivers.edit', $d) }}">Editar</a>
                         @auth
                             @if(auth()->user()->role === 'superadmin')
                                 <form action="{{ route('drivers.destroy', $d) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar conductor?');">
@@ -62,26 +59,5 @@
             @endforeach
         </tbody>
     </table>
-    @if ($drivers->total() > 0)
-        <div style="margin-top:12px; color:#555; font-size:14px; text-align:right;">
-            Mostrando {{ $drivers->firstItem() }} a {{ $drivers->lastItem() }} de {{ $drivers->total() }} resultados
-        </div>
-        @if ($drivers->hasPages())
-            <div style="margin-top:6px; color:#555; font-size:14px; text-align:right;">
-                Página {{ $drivers->currentPage() }} de {{ $drivers->lastPage() }} ·
-                @if ($drivers->onFirstPage())
-                    <span style="opacity:.6;">Anterior</span>
-                @else
-                    <a href="{{ $drivers->previousPageUrl() }}">Anterior</a>
-                @endif
-                <span> | </span>
-                @if ($drivers->hasMorePages())
-                    <a href="{{ $drivers->nextPageUrl() }}">Siguiente</a>
-                @else
-                    <span style="opacity:.6;">Siguiente</span>
-                @endif
-            </div>
-        @endif
-    @endif
 </div>
 @endsection
