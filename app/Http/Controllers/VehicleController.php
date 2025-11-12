@@ -11,7 +11,7 @@ class VehicleController extends Controller
 {
     public function index(): View
     {
-        $vehicles = Vehicle::orderBy('plate')->paginate(20);
+        $vehicles = Vehicle::orderBy('identifier')->orderBy('plate')->paginate(20);
         return view('vehicles.index', compact('vehicles'));
     }
 
@@ -55,4 +55,3 @@ class VehicleController extends Controller
         return redirect()->route('vehicles.index')->with('status', 'Vehículo actualizado.');
     }
 }
-

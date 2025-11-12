@@ -79,12 +79,32 @@
                     <td>{{ $m->destination }}</td>
                 </tr>
             @empty
-                <tr><td colspan="5">Sin registros de salidas</td></tr>
+                <tr><td colspan="6">Sin registros de salidas</td></tr>
             @endforelse
         </tbody>
     </table>
 
-    <div style="margin-top:12px;">{{ $departures->links() }}</div>
+    @if ($departures->total() > 0)
+        <div style="margin-top:12px; color:#555; font-size:14px;">
+            Mostrando {{ $departures->firstItem() }} a {{ $departures->lastItem() }} de {{ $departures->total() }} resultados
+        </div>
+        @if ($departures->hasPages())
+            <div style="margin-top:6px; color:#555; font-size:14px;">
+                Página {{ $departures->currentPage() }} de {{ $departures->lastPage() }} ·
+                @if ($departures->onFirstPage())
+                    <span style="opacity:.6;">Anterior</span>
+                @else
+                    <a href="{{ $departures->previousPageUrl() }}">Anterior</a>
+                @endif
+                <span> | </span>
+                @if ($departures->hasMorePages())
+                    <a href="{{ $departures->nextPageUrl() }}">Siguiente</a>
+                @else
+                    <span style="opacity:.6;">Siguiente</span>
+                @endif
+            </div>
+        @endif
+    @endif
   </div>
 
   <aside>

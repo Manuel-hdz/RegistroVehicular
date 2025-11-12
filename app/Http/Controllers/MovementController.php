@@ -30,7 +30,7 @@ class MovementController extends Controller
 
     public function create(): View
     {
-        $vehicles = Vehicle::where('active', true)->orderBy('plate')->get();
+        $vehicles = Vehicle::where('active', true)->orderBy('identifier')->orderBy('plate')->get();
         $drivers = Driver::where('active', true)->orderBy('name')->get();
         return view('movements.create', compact('vehicles', 'drivers'));
     }
@@ -92,7 +92,7 @@ class MovementController extends Controller
     // Solo SuperAdmin
     public function edit(Movement $movement): View
     {
-        $vehicles = Vehicle::orderBy('plate')->get();
+        $vehicles = Vehicle::orderBy('identifier')->orderBy('plate')->get();
         $drivers = Driver::orderBy('name')->get();
         return view('movements.edit', compact('movement','vehicles','drivers'));
     }

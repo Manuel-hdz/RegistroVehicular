@@ -45,6 +45,10 @@
         .btn-secondary:hover { background:#f9fafb; }
         .btn-warning { background: var(--yellow); color:#000; }
         .btn-link { color: var(--green); text-decoration: none; font-weight:700; }
+        /* Spinner para estado de carga */
+        .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.6); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; margin-right:8px; vertical-align: text-bottom; }
+        .btn-secondary .spinner { border-color: rgba(0,0,0,.3); border-top-color: rgba(0,0,0,.7); }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .home-link { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; background:rgba(255,255,255,.15); color:#fff; margin-right:6px; border:2px solid rgba(255,255,255,.25); }
         .home-link:hover { background: rgba(255,255,255,.22); }
         .row { display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
@@ -173,6 +177,51 @@
         if(okBtn) okBtn.addEventListener('click', close);
         if(backdrop) backdrop.addEventListener('click', function(e){ if(e.target === backdrop) close(); });
         document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+    })();
+    // Deshabilitar botón de envío y mostrar spinner mientras se envía (para POST/PUT/PATCH/DELETE)
+    (function(){
+        let lastClickedSubmit = null;
+        document.addEventListener('click', function(e){
+            const btn = e.target.closest('button[type="submit"], input[type="submit"]');
+            if(btn){ lastClickedSubmit = btn; }
+        }, true);
+        document.addEventListener('submit', function(e){
+            const form = e.target;
+            if(!(form instanceof HTMLFormElement)) return;
+            const method = (form.getAttribute('method') || 'GET').toLowerCase();
+            if(method === 'get') return; // no bloquear filtros GET
+            const btn = lastClickedSubmit && form.contains(lastClickedSubmit)
+                ? lastClickedSubmit
+                : form.querySelector('button[type="submit"], input[type="submit"]');
+            if(btn && !btn.dataset.loading){
+                btn.dataset.loading = '1';
+                btn.setAttribute('aria-busy','true');
+                btn.disabled = true;
+                // Mantener ancho aproximado usando contenido con spinner
+                const isButton = btn.tagName === 'BUTTON';
+                const original = btn.innerHTML;
+                btn.dataset.original = original;
+                const label = 'Cargando…';
+                if(isButton){
+                    btn.innerHTML = '<span class="spinner"></span><span>'+label+'</span>';
+                } else {
+                    btn.value = label;
+                }
+            }
+        }, true);
+        // Si el envío es prevenido por JS, reactivar el botón
+        document.addEventListener('submit', function(e){
+            setTimeout(function(){
+                if(e.defaultPrevented && lastClickedSubmit && lastClickedSubmit.dataset.loading){
+                    lastClickedSubmit.disabled = false;
+                    lastClickedSubmit.removeAttribute('aria-busy');
+                    if(lastClickedSubmit.tagName === 'BUTTON' && lastClickedSubmit.dataset.original){
+                        lastClickedSubmit.innerHTML = lastClickedSubmit.dataset.original;
+                    }
+                    delete lastClickedSubmit.dataset.loading;
+                }
+            });
+        });
     })();
 </script>
 @stack('scripts')

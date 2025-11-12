@@ -42,6 +42,26 @@
             @endforeach
         </tbody>
     </table>
-    <div style="margin-top:12px;">{{ $drivers->links() }}</div>
+    @if ($drivers->total() > 0)
+        <div style="margin-top:12px; color:#555; font-size:14px;">
+            Mostrando {{ $drivers->firstItem() }} a {{ $drivers->lastItem() }} de {{ $drivers->total() }} resultados
+        </div>
+        @if ($drivers->hasPages())
+            <div style="margin-top:6px; color:#555; font-size:14px;">
+                Página {{ $drivers->currentPage() }} de {{ $drivers->lastPage() }} ·
+                @if ($drivers->onFirstPage())
+                    <span style="opacity:.6;">Anterior</span>
+                @else
+                    <a href="{{ $drivers->previousPageUrl() }}">Anterior</a>
+                @endif
+                <span> | </span>
+                @if ($drivers->hasMorePages())
+                    <a href="{{ $drivers->nextPageUrl() }}">Siguiente</a>
+                @else
+                    <span style="opacity:.6;">Siguiente</span>
+                @endif
+            </div>
+        @endif
+    @endif
 </div>
 @endsection

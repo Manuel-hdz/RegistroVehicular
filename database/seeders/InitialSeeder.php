@@ -20,19 +20,19 @@ class InitialSeeder extends Seeder
 
         User::updateOrCreate(
             ['username' => 'admin'],
-            ['name' => 'Administrador', 'password' => Hash::make('password'), 'role' => 'admin', 'active' => true]
+            ['name' => 'Administrador', 'password' => Hash::make('CLF.2025'), 'role' => 'admin', 'active' => true]
         );
 
         User::updateOrCreate(
             ['username' => 'usuario'],
-            ['name' => 'Usuario', 'password' => Hash::make('password'), 'role' => 'user', 'active' => true]
+            ['name' => 'Usuario', 'password' => Hash::make('123456'), 'role' => 'user', 'active' => true]
         );
 
         // Vehicles
         Vehicle::updateOrCreate(['plate' => 'ABC-123'], [
-            'identifier' => 'Pickup 4x4',
-            'model' => 'Nissan NP300',
-            'year' => 2020,
+            'identifier' => 'CLF130',
+            'model' => 'Toyota Hylux',
+            'year' => 2024,
             'active' => true,
         ]);
 

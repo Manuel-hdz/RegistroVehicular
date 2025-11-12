@@ -38,7 +38,7 @@ class DepartureController extends Controller
 
         $departures = $query->paginate(50)->appends($request->query());
 
-        $vehicles = Vehicle::orderBy('plate')->get(['id','plate']);
+        $vehicles = Vehicle::orderBy('identifier')->orderBy('plate')->get(['id','plate','identifier']);
         $drivers = Driver::orderBy('name')->get(['id','name']);
 
         $statuses = [

@@ -65,7 +65,7 @@ class PublicDashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $vehicles = Vehicle::orderBy('plate')->get(['id','plate']);
+        $vehicles = Vehicle::orderBy('identifier')->orderBy('plate')->get(['id','plate','identifier']);
         $drivers = Driver::orderBy('name')->get(['id','name']);
 
         return view('public.dashboard', compact(

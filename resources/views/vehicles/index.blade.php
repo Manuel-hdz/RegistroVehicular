@@ -44,6 +44,26 @@
             @endforeach
         </tbody>
     </table>
-    <div style="margin-top:12px;">{{ $vehicles->links() }}</div>
+    @if ($vehicles->total() > 0)
+        <div style="margin-top:12px; color:#555; font-size:14px;">
+            Mostrando {{ $vehicles->firstItem() }} a {{ $vehicles->lastItem() }} de {{ $vehicles->total() }} resultados
+        </div>
+        @if ($vehicles->hasPages())
+            <div style="margin-top:6px; color:#555; font-size:14px;">
+                Página {{ $vehicles->currentPage() }} de {{ $vehicles->lastPage() }} ·
+                @if ($vehicles->onFirstPage())
+                    <span style="opacity:.6;">Anterior</span>
+                @else
+                    <a href="{{ $vehicles->previousPageUrl() }}">Anterior</a>
+                @endif
+                <span> | </span>
+                @if ($vehicles->hasMorePages())
+                    <a href="{{ $vehicles->nextPageUrl() }}">Siguiente</a>
+                @else
+                    <span style="opacity:.6;">Siguiente</span>
+                @endif
+            </div>
+        @endif
+    @endif
 </div>
 @endsection
