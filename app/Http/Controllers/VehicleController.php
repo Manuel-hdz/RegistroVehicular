@@ -30,7 +30,7 @@ class VehicleController extends Controller
             'active' => ['nullable', 'boolean'],
         ]);
 
-        $data['active'] = $request->boolean('active', true);
+        $data['active'] = $request->has('active');
         Vehicle::create($data);
         return redirect()->route('vehicles.index')->with('status', 'Vehículo creado.');
     }
@@ -50,8 +50,9 @@ class VehicleController extends Controller
             'active' => ['nullable', 'boolean'],
         ]);
 
-        $data['active'] = $request->boolean('active', true);
+        $data['active'] = $request->has('active');
         $vehicle->update($data);
-        return redirect()->route('vehicles.index')->with('status', 'Vehículo actualizado.');
+        $page = $request->input('page');
+        return redirect()->route('vehicles.index', array_filter(['page' => $page]))->with('status', 'Vehículo actualizado.');
     }
 }

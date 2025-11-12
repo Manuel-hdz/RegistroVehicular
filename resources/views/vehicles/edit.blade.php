@@ -6,6 +6,7 @@
     <form method="POST" action="{{ route('vehicles.update', $vehicle) }}" class="grid grid-3">
         @csrf
         @method('PUT')
+        <input type="hidden" name="page" value="{{ request('page') }}">
         <div>
             <label>Placa</label>
             <input name="plate" value="{{ old('plate', $vehicle->plate) }}" required>
@@ -32,4 +33,3 @@
     </form>
 </div>
 @endsection
-

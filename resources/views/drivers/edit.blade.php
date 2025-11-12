@@ -6,6 +6,7 @@
     <form method="POST" action="{{ route('drivers.update', $driver) }}" class="grid grid-3">
         @csrf
         @method('PUT')
+        <input type="hidden" name="page" value="{{ request('page') }}">
         <div>
             <label>Nombre</label>
             <input name="name" value="{{ old('name', $driver->name) }}" required>
@@ -29,4 +30,3 @@
     
 </div>
 @endsection
-

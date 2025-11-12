@@ -33,7 +33,7 @@ class UserController extends Controller
             'active' => ['nullable','boolean'],
         ]);
 
-        $data['active'] = $request->boolean('active', true);
+        $data['active'] = $request->has('active');
         $data['password'] = bcrypt($data['password']);
 
         User::create($data);
@@ -56,7 +56,7 @@ class UserController extends Controller
             'active' => ['nullable','boolean'],
         ]);
 
-        $data['active'] = $request->boolean('active', true);
+        $data['active'] = $request->has('active');
         if (!empty($data['password'])) {
             $data['password'] = bcrypt($data['password']);
         } else {
@@ -64,6 +64,7 @@ class UserController extends Controller
         }
 
         $user->update($data);
-        return redirect()->route('users.index')->with('status', 'Usuario actualizado.');
+        $page = $request->input('page');
+        return redirect()->route('users.index', array_filter(['page' => $page]))->with('status', 'Usuario actualizado.');
     }
 }

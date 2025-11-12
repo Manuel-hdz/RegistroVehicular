@@ -29,7 +29,7 @@ class DriverController extends Controller
             'active' => ['nullable', 'boolean'],
         ]);
 
-        $data['active'] = $request->boolean('active', true);
+        $data['active'] = $request->has('active');
         Driver::create($data);
         return redirect()->route('drivers.index')->with('status', 'Conductor creado.');
     }
@@ -48,9 +48,9 @@ class DriverController extends Controller
             'active' => ['nullable', 'boolean'],
         ]);
 
-        $data['active'] = $request->boolean('active', true);
+        $data['active'] = $request->has('active');
         $driver->update($data);
-        return redirect()->route('drivers.index')->with('status', 'Conductor actualizado.');
+        $page = $request->input('page');
+        return redirect()->route('drivers.index', array_filter(['page' => $page]))->with('status', 'Conductor actualizado.');
     }
 }
-

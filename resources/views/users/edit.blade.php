@@ -6,6 +6,7 @@
     <form method="POST" action="{{ route('users.update', $user) }}" class="grid grid-3">
         @csrf
         @method('PUT')
+        <input type="hidden" name="page" value="{{ request('page') }}">
         <div>
             <label>Nombre</label>
             <input name="name" value="{{ old('name', $user->name) }}" required>

@@ -46,6 +46,26 @@
 
 <div id="departuresLayout">
   <div class="card main">
+    @if ($departures->total() > 0)
+        <div style="margin-bottom:10px; color:#555; font-size:14px; text-align:right;">
+            Mostrando {{ $departures->firstItem() }} a {{ $departures->lastItem() }} de {{ $departures->total() }} resultados
+            @if ($departures->hasPages())
+                <span> · Página {{ $departures->currentPage() }} de {{ $departures->lastPage() }} ·
+                @if ($departures->onFirstPage())
+                    <span style="opacity:.6;">Anterior</span>
+                @else
+                    <a href="{{ $departures->previousPageUrl() }}">Anterior</a>
+                @endif
+                <span> | </span>
+                @if ($departures->hasMorePages())
+                    <a href="{{ $departures->nextPageUrl() }}">Siguiente</a>
+                @else
+                    <span style="opacity:.6;">Siguiente</span>
+                @endif
+                </span>
+            @endif
+        </div>
+    @endif
     <table>
         <thead>
             <tr>
@@ -85,11 +105,11 @@
     </table>
 
     @if ($departures->total() > 0)
-        <div style="margin-top:12px; color:#555; font-size:14px;">
+        <div style="margin-top:12px; color:#555; font-size:14px; text-align:right;">
             Mostrando {{ $departures->firstItem() }} a {{ $departures->lastItem() }} de {{ $departures->total() }} resultados
         </div>
         @if ($departures->hasPages())
-            <div style="margin-top:6px; color:#555; font-size:14px;">
+            <div style="margin-top:6px; color:#555; font-size:14px; text-align:right;">
                 Página {{ $departures->currentPage() }} de {{ $departures->lastPage() }} ·
                 @if ($departures->onFirstPage())
                     <span style="opacity:.6;">Anterior</span>

@@ -9,6 +9,26 @@
 </div>
 
 <div class="card">
+    @if ($users->total() > 0)
+        <div style="margin-bottom:10px; color:#555; font-size:14px; text-align:right;">
+            Mostrando {{ $users->firstItem() }} a {{ $users->lastItem() }} de {{ $users->total() }} resultados
+            @if ($users->hasPages())
+                <span> · Página {{ $users->currentPage() }} de {{ $users->lastPage() }} ·
+                @if ($users->onFirstPage())
+                    <span style="opacity:.6;">Anterior</span>
+                @else
+                    <a href="{{ $users->previousPageUrl() }}">Anterior</a>
+                @endif
+                <span> | </span>
+                @if ($users->hasMorePages())
+                    <a href="{{ $users->nextPageUrl() }}">Siguiente</a>
+                @else
+                    <span style="opacity:.6;">Siguiente</span>
+                @endif
+                </span>
+            @endif
+        </div>
+    @endif
     <table>
         <thead>
         <tr>
@@ -27,12 +47,32 @@
                 <td style="text-transform:uppercase;">{{ $u->role }}</td>
                 <td>{{ $u->active ? 'Sí' : 'No' }}</td>
                 <td>
-                    <a class="btn btn-secondary" href="{{ route('users.edit', $u) }}">Editar</a>
+                    <a class="btn btn-secondary" href="{{ route('users.edit', $u) }}?page={{ $users->currentPage() }}">Editar</a>
                 </td>
             </tr>
         @endforeach
         </tbody>
     </table>
-    <div style="margin-top:12px;">{{ $users->links() }}</div>
+    @if ($users->total() > 0)
+        <div style="margin-top:12px; color:#555; font-size:14px; text-align:right;">
+            Mostrando {{ $users->firstItem() }} a {{ $users->lastItem() }} de {{ $users->total() }} resultados
+        </div>
+        @if ($users->hasPages())
+            <div style="margin-top:6px; color:#555; font-size:14px; text-align:right;">
+                Página {{ $users->currentPage() }} de {{ $users->lastPage() }} ·
+                @if ($users->onFirstPage())
+                    <span style="opacity:.6;">Anterior</span>
+                @else
+                    <a href="{{ $users->previousPageUrl() }}">Anterior</a>
+                @endif
+                <span> | </span>
+                @if ($users->hasMorePages())
+                    <a href="{{ $users->nextPageUrl() }}">Siguiente</a>
+                @else
+                    <span style="opacity:.6;">Siguiente</span>
+                @endif
+            </div>
+        @endif
+    @endif
 </div>
 @endsection
