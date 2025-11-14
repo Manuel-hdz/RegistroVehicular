@@ -39,12 +39,17 @@ Route::prefix('registroVehicular')->group(function () {
         });
 
         // Administradores y superiores: gestionar catálogos
-        Route::middleware('role:admin')->group(function () {
-            Route::resource('vehicles', VehicleController::class)->only(['index','create','store','edit','update']);
-            Route::resource('drivers', DriverController::class)->only(['index','create','store','edit','update']);
-            Route::get('/departures', [DepartureController::class, 'index'])->name('departures.index');
-            Route::get('/departures/export', [DepartureController::class, 'export'])->name('departures.export');
-        });
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('vehicles', VehicleController::class)->only(['index','create','store','edit','update']);
+        Route::resource('drivers', DriverController::class)->only(['index','create','store','edit','update']);
+        Route::get('/departures', [DepartureController::class, 'index'])->name('departures.index');
+        Route::get('/departures/export', [DepartureController::class, 'export'])->name('departures.export');
+        Route::get('/maintenance', [\App\Http\Controllers\MaintenanceController::class, 'index'])->name('maintenance.index');
+        Route::put('/maintenance/{vehicle}', [\App\Http\Controllers\MaintenanceController::class, 'update'])->name('maintenance.update');
+        Route::resource('parts', \App\Http\Controllers\PartController::class)->only(['index','create','store','edit','update']);
+        Route::resource('mechanics', \App\Http\Controllers\MechanicController::class)->only(['index','create','store','edit','update']);
+        Route::resource('repairs', \App\Http\Controllers\RepairController::class)->only(['index','create','store']);
+    });
 
         // Usuarios: solo movimientos
         Route::get('/movements', [MovementController::class, 'index'])->name('movements.index');

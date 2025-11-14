@@ -26,6 +26,14 @@
             </select>
         </div>
         <div>
+            <label>Departamento</label>
+            <select name="department" required>
+                @foreach($departments as $k => $label)
+                    <option value="{{ $k }}" @selected(old('department')===$k)>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
             <label><input type="checkbox" name="active" value="1" checked> Activo</label>
         </div>
         <div style="grid-column: 1/-1;" class="row actions-stick">

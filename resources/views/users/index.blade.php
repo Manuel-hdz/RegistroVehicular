@@ -9,6 +9,20 @@
 </div>
 
 <div class="card">
+    <form method="GET" class="row" style="gap:10px; align-items:end; justify-content:flex-end; margin-bottom:10px;">
+        <div>
+            <label>Departamento</label>
+            <select name="department">
+                @foreach(($departments ?? [''=>'Todos']) as $k=>$label)
+                    <option value="{{ $k }}" @selected(request('department','')===$k)>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
+            <button class="btn btn-secondary" type="submit">Filtrar</button>
+            <a class="btn btn-link" href="{{ route('users.index') }}">Limpiar</a>
+        </div>
+    </form>
     @if ($users->total() > 0)
         <div style="margin-bottom:10px; color:#555; font-size:14px; text-align:right;">
             Mostrando {{ $users->firstItem() }} a {{ $users->lastItem() }} de {{ $users->total() }} resultados
@@ -35,6 +49,7 @@
             <th>Nombre</th>
             <th>Usuario</th>
             <th>Rol</th>
+            <th>Departamento</th>
             <th>Activo</th>
             <th></th>
         </tr>
@@ -45,6 +60,7 @@
                 <td>{{ $u->name }}</td>
                 <td>{{ $u->username }}</td>
                 <td style="text-transform:uppercase;">{{ $u->role }}</td>
+                <td>{{ $u->department ? ucfirst($u->department) : '—' }}</td>
                 <td>{{ $u->active ? 'Sí' : 'No' }}</td>
                 <td>
                     <a class="btn btn-secondary" href="{{ route('users.edit', $u) }}?page={{ $users->currentPage() }}">Editar</a>

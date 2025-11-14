@@ -15,17 +15,17 @@ class InitialSeeder extends Seeder
         // Users
         User::updateOrCreate(
             ['username' => 'SuperAdmin'],
-            ['name' => 'Super Admin', 'password' => Hash::make('SistemasCLF'), 'role' => 'superadmin', 'active' => true]
+            ['name' => 'Super Admin', 'password' => Hash::make('SistemasCLF'), 'role' => 'superadmin', 'department' => 'sistemas', 'active' => true]
         );
 
         User::updateOrCreate(
             ['username' => 'admin'],
-            ['name' => 'Administrador', 'password' => Hash::make('CLF.2025'), 'role' => 'admin', 'active' => true]
+            ['name' => 'Administrador', 'password' => Hash::make('CLF.2025'), 'role' => 'admin', 'department' => 'gerencia', 'active' => true]
         );
 
         User::updateOrCreate(
             ['username' => 'usuario'],
-            ['name' => 'Usuario', 'password' => Hash::make('123456'), 'role' => 'user', 'active' => true]
+            ['name' => 'Usuario', 'password' => Hash::make('123456'), 'role' => 'user', 'department' => 'almacen', 'active' => true]
         );
 
         // Vehicles

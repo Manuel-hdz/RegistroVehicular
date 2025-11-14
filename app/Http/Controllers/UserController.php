@@ -7,20 +7,44 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
     // Solo para SuperAdmin (restringido por middleware en rutas)
-    public function index(): View
+    public function index(Request $request): View
     {
-        $users = User::orderBy('name')->paginate(20);
-        return view('users.index', compact('users'));
+        $query = User::query()->orderBy('name');
+        $departments = [
+            '' => 'Todos',
+            'compras' => 'Compras',
+            'mantenimiento' => 'Mantenimiento',
+            'recursos humanos' => 'Recursos Humanos',
+            'gerencia' => 'Gerencia',
+            'almacen' => 'Almacén',
+            'sistemas' => 'Sistemas',
+            'calidad' => 'Calidad',
+        ];
+        if ($request->filled('department')) {
+            $query->where('department', $request->string('department'));
+        }
+        $users = $query->paginate(20)->appends($request->query());
+        return view('users.index', compact('users','departments'));
     }
 
     public function create(): View
     {
         $roles = ['superadmin' => 'SuperAdmin', 'admin' => 'Administrador', 'user' => 'Usuario'];
-        return view('users.create', compact('roles'));
+        $departments = [
+            'compras' => 'Compras',
+            'mantenimiento' => 'Mantenimiento',
+            'recursos humanos' => 'Recursos Humanos',
+            'gerencia' => 'Gerencia',
+            'almacen' => 'Almacén',
+            'sistemas' => 'Sistemas',
+            'calidad' => 'Calidad',
+        ];
+        return view('users.create', compact('roles','departments'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -30,6 +54,7 @@ class UserController extends Controller
             'username' => ['required','string','max:191','unique:users,username'],
             'password' => ['required','string','min:6'],
             'role' => ['required', Rule::in(['superadmin','admin','user'])],
+            'department' => ['required', Rule::in(['compras','mantenimiento','recursos humanos','gerencia','almacen','sistemas','calidad'])],
             'active' => ['nullable','boolean'],
         ]);
 
@@ -43,7 +68,16 @@ class UserController extends Controller
     public function edit(User $user): View
     {
         $roles = ['superadmin' => 'SuperAdmin', 'admin' => 'Administrador', 'user' => 'Usuario'];
-        return view('users.edit', compact('user','roles'));
+        $departments = [
+            'compras' => 'Compras',
+            'mantenimiento' => 'Mantenimiento',
+            'recursos humanos' => 'Recursos Humanos',
+            'gerencia' => 'Gerencia',
+            'almacen' => 'Almacén',
+            'sistemas' => 'Sistemas',
+            'calidad' => 'Calidad',
+        ];
+        return view('users.edit', compact('user','roles','departments'));
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -53,6 +87,7 @@ class UserController extends Controller
             'username' => ['required','string','max:191','unique:users,username,'.$user->id],
             'password' => ['nullable','string','min:6'],
             'role' => ['required', Rule::in(['superadmin','admin','user'])],
+            'department' => ['required', Rule::in(['compras','mantenimiento','recursos humanos','gerencia','almacen','sistemas','calidad'])],
             'active' => ['nullable','boolean'],
         ]);
 
