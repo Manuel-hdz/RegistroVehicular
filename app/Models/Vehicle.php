@@ -13,9 +13,12 @@ class Vehicle extends Model
     protected $fillable = [
         'plate',
         'identifier',
+        'vtype',
         'model',
         'year',
         'active',
+        'availability',
+        'maintenance_note',
     ];
 
     protected $casts = [
@@ -28,4 +31,3 @@ class Vehicle extends Model
         return $this->hasMany(Movement::class);
     }
 }
-

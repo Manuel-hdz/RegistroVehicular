@@ -111,6 +111,10 @@
                 <a href="{{ route('departures.index') }}" class="{{ request()->routeIs('departures.*') ? 'active' : '' }}">Salidas</a>
                 <a href="{{ route('vehicles.index') }}" class="{{ request()->routeIs('vehicles.*') ? 'active' : '' }}">Vehículos</a>
                 <a href="{{ route('drivers.index') }}" class="{{ request()->routeIs('drivers.*') ? 'active' : '' }}">Conductores</a>
+                <a href="{{ route('maintenance.index') }}" class="{{ request()->routeIs('maintenance.*') ? 'active' : '' }}">Mantenimiento</a>
+                <a href="{{ route('parts.index') }}" class="{{ request()->routeIs('parts.*') ? 'active' : '' }}">Refacciones</a>
+                <a href="{{ route('mechanics.index') }}" class="{{ request()->routeIs('mechanics.*') ? 'active' : '' }}">Mecánicos</a>
+                <a href="{{ route('repairs.index') }}" class="{{ request()->routeIs('repairs.*') ? 'active' : '' }}">Reparaciones</a>
             @endif
             @if(auth()->user()->role === 'superadmin')
                 <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}">Usuarios</a>
