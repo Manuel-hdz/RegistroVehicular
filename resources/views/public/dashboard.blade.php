@@ -181,13 +181,15 @@
 
 <div class="card">
     <h3 style="margin-top:0">Salidas por día (últimos {{ $selectedDays }} días)</h3>
-    <canvas id="chartByDay" height="110"></canvas>
-</div>
+    <img id="imgByDay" alt="Salidas por día" style="max-width:100%; height:auto;" src="{{ route('dashboard.graph.byday', array_filter(['days'=>$selectedDays,'vehicle_id'=>$vehicleId,'driver_id'=>$driverId])) }}">
+    <canvas id="chartByDay" height="110" style="display:none;"></canvas>
+    </div>
 
 <div class="grid grid-2">
-    <div class="card">
-        <h3 style="margin-top:0">Top 5 equipos por salidas</h3>
-        <canvas id="chartTopVehicles" height="120"></canvas>
+        <div class="card">
+            <h3 style="margin-top:0">Top 5 equipos por salidas</h3>
+            <img id="imgTopVehicles" alt="Top equipos por salidas" style="max-width:100%; height:auto;" src="{{ route('dashboard.graph.topvehicles', array_filter(['days'=>$selectedDays,'driver_id'=>$driverId,'vehicle_id'=>$vehicleId])) }}">
+            <canvas id="chartTopVehicles" height="120" style="display:none;"></canvas>
         <table class="table table-sm" style="margin-top:10px;">
             <thead><tr><th>Vehículo</th><th>Salidas</th></tr></thead>
             <tbody>
@@ -203,9 +205,10 @@
         </table>
     </div>
 
-    <div class="card">
-        <h3 style="margin-top:0">Top 5 equipos por kilómetros</h3>
-        <canvas id="chartTopKm" height="120"></canvas>
+        <div class="card">
+            <h3 style="margin-top:0">Top 5 equipos por kilómetros</h3>
+            <img id="imgTopKm" alt="Top equipos por kilómetros" style="max-width:100%; height:auto;" src="{{ route('dashboard.graph.topkm', array_filter(['days'=>$selectedDays,'driver_id'=>$driverId,'vehicle_id'=>$vehicleId])) }}">
+            <canvas id="chartTopKm" height="120" style="display:none;"></canvas>
         <table class="table table-sm" style="margin-top:10px;">
             <thead><tr><th>Vehículo</th><th>Kilómetros</th></tr></thead>
             <tbody>
@@ -221,9 +224,10 @@
         </table>
     </div>
 
-    <div class="card">
-        <h3 style="margin-top:0">Top 5 conductores por salidas</h3>
-        <canvas id="chartTopDrivers" height="120"></canvas>
+        <div class="card">
+            <h3 style="margin-top:0">Top 5 conductores por salidas</h3>
+            <img id="imgTopDrivers" alt="Top conductores por salidas" style="max-width:100%; height:auto;" src="{{ route('dashboard.graph.topdrivers', array_filter(['days'=>$selectedDays,'vehicle_id'=>$vehicleId])) }}">
+            <canvas id="chartTopDrivers" height="120" style="display:none;"></canvas>
         <table class="table table-sm" style="margin-top:10px;">
             <thead><tr><th>Conductor</th><th>Salidas</th></tr></thead>
             <tbody>
@@ -246,30 +250,6 @@
     <script>
         const labelsDays = @json($days);
         const dataDays = @json($seriesDays);
-
-        const ctxDay = document.getElementById('chartByDay');
-        if (ctxDay) {
-            new Chart(ctxDay, {
-                type: 'line',
-                data: {
-                    labels: labelsDays,
-                    datasets: [{
-                        label: 'Salidas',
-                        data: dataDays,
-                        borderColor: '#006847',
-                        backgroundColor: 'rgba(0,104,71,.15)',
-                        tension: 0.25,
-                        fill: true
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: { beginAtZero: true, precision:0 }
-                    }
-                }
-            });
-        }
-
         const topVehicles = @json($topVehicleByDepartures->map(fn($r) => [
             (($r->vehicle?->identifier ? $r->vehicle?->identifier.' — ' : '') . ($r->vehicle?->plate ?? ('#'.$r->vehicle_id))), (int) $r->total
         ]));
@@ -292,8 +272,37 @@
             });
         }
 
-        barChart('chartTopVehicles', topVehicles, 'Salidas', '#FFCD11');
-        barChart('chartTopKm', topKm, 'Kilómetros', '#3b82f6');
-        barChart('chartTopDrivers', topDrivers, 'Salidas', '#10b981');
+        function lineChart(canvasId, labels, data){
+            const el = document.getElementById(canvasId);
+            if(!el) return;
+            new Chart(el, {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'Salidas', data, borderColor: '#006847', backgroundColor: 'rgba(0,104,71,.15)', tension:.25, fill:true }] },
+                options: { scales: { y: { beginAtZero:true, ticks:{precision:0} } } }
+            });
+        }
+
+        // Fallback si JpGraph no está disponible
+        fetch('{{ route('dashboard.graph.status') }}')
+            .then(r => r.json())
+            .then(({jpgraph}) => {
+                if (!jpgraph) {
+                    // Mostrar canvas y ocultar imágenes
+                    const showCanvas = (imgId, canvasId) => {
+                        const img = document.getElementById(imgId);
+                        const canvas = document.getElementById(canvasId);
+                        if(img && canvas){ img.style.display='none'; canvas.style.display='block'; }
+                    };
+                    showCanvas('imgByDay','chartByDay');
+                    showCanvas('imgTopVehicles','chartTopVehicles');
+                    showCanvas('imgTopKm','chartTopKm');
+                    showCanvas('imgTopDrivers','chartTopDrivers');
+                    lineChart('chartByDay', labelsDays.map(d=>d.substring(5)), dataDays);
+                    barChart('chartTopVehicles', topVehicles, 'Salidas', '#FFCD11');
+                    barChart('chartTopKm', topKm, 'Kilómetros', '#3b82f6');
+                    barChart('chartTopDrivers', topDrivers, 'Salidas', '#10b981');
+                }
+            })
+            .catch(()=>{});
     </script>
 @endpush

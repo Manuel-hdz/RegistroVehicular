@@ -56,6 +56,11 @@
                 <th>Registró</th>
                 <th>Estatus</th>
                 <th>Destino</th>
+                @auth
+                    @if(auth()->user()->role === 'superadmin')
+                        <th>Acciones</th>
+                    @endif
+                @endauth
             </tr>
         </thead>
         <tbody>
@@ -78,6 +83,24 @@
                         @endswitch
                     </td>
                     <td>{{ $m->destination }}</td>
+                    @auth
+                        @if(auth()->user()->role === 'superadmin')
+                            <td style="display:flex; gap:6px; align-items:center;">
+                                <a class="btn btn-secondary btn-icon" href="{{ route('movements.edit', $m) }}" title="Editar" aria-label="Editar">
+                                    <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                                </a>
+                                @if($m->status === 'open')
+                                    <form action="{{ route('movements.cancel', $m) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Seguro que deseas cancelar esta salida?');">
+                                        @csrf
+                                        @method('PUT')
+                                        <button class="btn btn-secondary btn-icon" type="submit" title="Cancelar" aria-label="Cancelar">
+                                            <i class="bi bi-x-circle" aria-hidden="true" style="color:#dc2626;"></i>
+                                        </button>
+                                    </form>
+                                @endif
+                            </td>
+                        @endif
+                    @endauth
                 </tr>
             @empty
                 <tr><td colspan="6">Sin registros de salidas</td></tr>
@@ -163,11 +186,16 @@
   })();
   // Inicializar DataTable
   $(function(){
-      $('#departuresTable').DataTable({
+      var hasActions = $('#departuresTable thead th').last().text().trim() === 'Acciones';
+      var opts = {
           pageLength: 25,
           order: [[0,'desc']],
           language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }
-      });
+      };
+      if (hasActions) {
+          opts.columnDefs = [{ targets: -1, orderable: false, searchable: false }];
+      }
+      $('#departuresTable').DataTable(opts);
   });
 </script>
 @endpush

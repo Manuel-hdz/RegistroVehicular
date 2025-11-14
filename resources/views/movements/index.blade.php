@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+@push('head-pre')
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+@endpush
 <div class="card">
     <div class="row" style="justify-content: space-between;">
         <h2 style="margin:0">Movimientos</h2>
@@ -35,12 +38,18 @@
                         <a class="btn btn-warning" href="{{ route('movements.checkin.form', $m) }}">Registrar Entrada</a>
                         @auth
                             @if(auth()->user()->role === 'superadmin')
-                                <a class="btn btn-secondary" href="{{ route('movements.edit', $m) }}">Editar</a>
-                                <form action="{{ route('movements.cancel', $m) }}" method="POST" style="display:inline;">
-                                    @csrf
-                                    @method('PUT')
-                                    <button class="btn btn-secondary" type="submit">Cancelar</button>
-                                </form>
+                                <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
+                                    <a class="btn btn-secondary btn-icon" href="{{ route('movements.edit', $m) }}" title="Editar" aria-label="Editar">
+                                        <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                                    </a>
+                                    <form action="{{ route('movements.cancel', $m) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Seguro que deseas cancelar esta salida?');">
+                                        @csrf
+                                        @method('PUT')
+                                        <button class="btn btn-secondary btn-icon" type="submit" title="Cancelar" aria-label="Cancelar">
+                                            <i class="bi bi-x-circle" aria-hidden="true" style="color:#dc2626;"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             @endif
                         @endauth
                     </td>

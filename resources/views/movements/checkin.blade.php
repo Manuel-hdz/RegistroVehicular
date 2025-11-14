@@ -46,4 +46,16 @@
     </form>
     
 </div>
+<script>
+    (function(){
+        var input = document.querySelector('input[name="arrived_at"]');
+        if(input && !input.value){
+            var d = new Date();
+            var yyyy = d.getFullYear();
+            var mm = String(d.getMonth()+1).padStart(2,'0');
+            var dd = String(d.getDate()).padStart(2,'0');
+            input.value = yyyy + '-' + mm + '-' + dd + 'T08:00';
+        }
+    })();
+</script>
 @endsection

@@ -44,13 +44,17 @@
                     <td>{{ $d->license }}</td>
                     <td>{{ $d->active ? 'Sí' : 'No' }}</td>
                     <td>
-                        <a class="btn btn-secondary" href="{{ route('drivers.edit', $d) }}">Editar</a>
+                        <a class="btn btn-secondary" href="{{ route('drivers.edit', $d) }}" title="Editar" aria-label="Editar">
+                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                        </a>
                         @auth
                             @if(auth()->user()->role === 'superadmin')
                                 <form action="{{ route('drivers.destroy', $d) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar conductor?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="btn btn-secondary" type="submit">Eliminar</button>
+                                    <button class="btn btn-secondary" type="submit" title="Eliminar" aria-label="Eliminar">
+                                        <i class="bi bi-trash" aria-hidden="true" style="color:#dc2626;"></i>
+                                    </button>
                                 </form>
                             @endif
                         @endauth
@@ -61,3 +65,6 @@
     </table>
 </div>
 @endsection
+@push('head-pre')
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+@endpush

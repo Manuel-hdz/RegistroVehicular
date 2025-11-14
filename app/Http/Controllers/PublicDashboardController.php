@@ -34,6 +34,7 @@ class PublicDashboardController extends Controller
         $topVehicleByDeparturesQuery = Movement::select('vehicle_id', DB::raw('COUNT(*) as total'))
             ->where('departed_at', '>=', now()->subDays($selectedDays - 1)->startOfDay());
         if ($driverId) { $topVehicleByDeparturesQuery->where('driver_id', $driverId); }
+        if ($vehicleId) { $topVehicleByDeparturesQuery->where('vehicle_id', $vehicleId); }
         $topVehicleByDepartures = $topVehicleByDeparturesQuery
             ->groupBy('vehicle_id')
             ->orderByDesc('total')
@@ -47,6 +48,7 @@ class PublicDashboardController extends Controller
             ->where('status', 'closed')
             ->where('departed_at', '>=', now()->subDays($selectedDays - 1)->startOfDay());
         if ($driverId) { $topVehicleByKmQuery->where('driver_id', $driverId); }
+        if ($vehicleId) { $topVehicleByKmQuery->where('vehicle_id', $vehicleId); }
         $topVehicleByKm = $topVehicleByKmQuery
             ->groupBy('vehicle_id')
             ->orderByDesc('km')

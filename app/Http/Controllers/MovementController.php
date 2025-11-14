@@ -92,6 +92,9 @@ class MovementController extends Controller
     // Solo SuperAdmin
     public function edit(Movement $movement): View
     {
+        if (!Auth::user() || Auth::user()->role !== 'superadmin') {
+            abort(403);
+        }
         $vehicles = Vehicle::orderBy('identifier')->orderBy('plate')->get();
         $drivers = Driver::orderBy('name')->get();
         return view('movements.edit', compact('movement','vehicles','drivers'));
@@ -99,6 +102,9 @@ class MovementController extends Controller
 
     public function update(Request $request, Movement $movement): RedirectResponse
     {
+        if (!Auth::user() || Auth::user()->role !== 'superadmin') {
+            abort(403);
+        }
         $data = $request->validate([
             'vehicle_id' => ['required','exists:vehicles,id'],
             'driver_id' => ['required','exists:drivers,id'],
@@ -133,6 +139,9 @@ class MovementController extends Controller
 
     public function cancel(Movement $movement): RedirectResponse
     {
+        if (!Auth::user() || Auth::user()->role !== 'superadmin') {
+            abort(403);
+        }
         if ($movement->status !== 'open') {
             return back()->withErrors(['status' => 'Solo se pueden cancelar salidas abiertas.']);
         }

@@ -3,7 +3,7 @@
 @section('content')
 <div class="card">
     <h2 style="margin-top:0">Registrar Salida</h2>
-    <form method="POST" action="{{ route('movements.store') }}" class="grid grid-3">
+    <form method="POST" action="{{ route('movements.store') }}" class="grid grid-3" onsubmit="return confirm('Antes de guardar, por favor revisa que los datos sean correctos (vehículo, conductor, odómetro, combustible y fecha/hora). ¿Deseas continuar?')">
         @csrf
         <div>
             <label>Vehículo</label>
@@ -64,4 +64,16 @@
         </div>
     </form>
 </div>
+<script>
+    (function(){
+        var input = document.querySelector('input[name="departed_at"]');
+        if(input){
+            var d = new Date();
+            var yyyy = d.getFullYear();
+            var mm = String(d.getMonth()+1).padStart(2,'0');
+            var dd = String(d.getDate()).padStart(2,'0');
+            input.value = yyyy + '-' + mm + '-' + dd + 'T08:00';
+        }
+    })();
+</script>
 @endsection

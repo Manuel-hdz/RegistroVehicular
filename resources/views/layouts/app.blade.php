@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Registro Vehicular</title>
     @stack('head-pre')
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root{
             --green: #006847; /* Verde bandera */
@@ -45,6 +46,7 @@
         .btn-secondary:hover { background:#f9fafb; }
         .btn-warning { background: var(--yellow); color:#000; }
         .btn-link { color: var(--green); text-decoration: none; font-weight:700; }
+        .btn-icon { padding:6px 8px; min-height:auto; line-height:1; }
         /* Spinner para estado de carga */
         .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.6); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; margin-right:8px; vertical-align: text-bottom; }
         .btn-secondary .spinner { border-color: rgba(0,0,0,.3); border-top-color: rgba(0,0,0,.7); }
@@ -62,6 +64,13 @@
         .footer-info { display:flex; gap:12px; align-items:center; }
         .footer-text small { display:block; line-height:1.2; }
         .btn-support { background: var(--yellow); color:#000; border:2px solid rgba(0,0,0,.08); }
+        .footer-actions { display:flex; align-items:center; gap:14px; }
+        .footer-social { display:flex; align-items:center; gap:10px; }
+        .footer-social a { color:#374151; text-decoration:none; font-size:20px; display:inline-flex; width:32px; height:32px; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--grey-300); background:#fff; }
+        .footer-social a:hover { background:#f3f4f6; }
+        .footer-links { display:flex; align-items:center; gap:8px; font-size:14px; }
+        .footer-links a { color:#374151; text-decoration:none; border-bottom:1px dashed transparent; }
+        .footer-links a:hover { border-bottom-color:#374151; }
 
         /* Modal soporte */
         .backdrop { position: fixed; inset:0; background: rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:16px; }
@@ -78,15 +87,21 @@
 <body>
 <header>
     <div class="brand">
-        <a href="{{ route('public.dashboard') }}" class="home-link" title="Inicio" aria-label="Inicio">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 3l9 8h-3v8h-5v-5H11v5H6v-8H3l9-8z"/>
-            </svg>
-        </a>
+        @if(request()->is('registroVehicular*'))
+            <a href="{{ route('public.dashboard') }}" class="home-link" title="Inicio" aria-label="Inicio">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 3l9 8h-3v8h-5v-5H11v5H6v-8H3l9-8z"/>
+                </svg>
+            </a>
+        @endif
         <img class="logo" src="{{ asset('images/logo_marca.png') }}" alt="Concreto Lanzado de Fresnillo MARCA" onerror="this.style.display='none'">
         <div>
-            <strong>Registro Vehicular</strong>
-            <span class="sub">Concreto Lanzado de Fresnillo MARCA</span>
+            @if(request()->is('registroVehicular*'))
+                <strong>Registro Vehicular</strong>
+                <span class="sub">Concreto Lanzado de Fresnillo MARCA</span>
+            @else
+                <strong>Concreto Lanzado de Fresnillo MARCA</strong>
+            @endif
         </div>
     </div>
     <nav>
@@ -110,8 +125,10 @@
                 <button class="btn btn-secondary" type="submit">Salir</button>
             </form>
         @else
-            <a class="btn btn-secondary" href="{{ route('login') }}">Entrar</a>
-            <a class="btn btn-link" href="{{ route('public.dashboard') }}">Dashboard Público</a>
+            @if(request()->is('registroVehicular*'))
+                <a class="btn btn-secondary" href="{{ route('login') }}">Entrar</a>
+                <a class="btn btn-link" href="{{ route('public.dashboard') }}">Dashboard Público</a>
+            @endif
         @endauth
     </div>
     
@@ -143,9 +160,19 @@
                     <small>Desarrollador: Manuel Hernandez</small>
                 </div>
             </div>
-            <div class="footer-actions">
+        <div class="footer-actions">
+                <div class="footer-social">
+                    <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                    <a href="#" aria-label="X"><i class="bi bi-twitter-x"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                </div>
+                <div class="footer-links">
+                    <a href="/sisad">SISAD</a>
+                    <span>•</span>
+                    <a href="/registroVehicular">Registro Vehicular</a>
+                </div>
                 <button type="button" class="btn btn-support" id="btnSupport">Soporte</button>
-            </div>
+        </div>
         </div>
     </footer>
 
