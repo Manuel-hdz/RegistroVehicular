@@ -94,7 +94,7 @@ class DepartureController extends Controller
                 };
                 fputcsv($out, [
                     optional($m->departed_at)->format('Y-m-d H:i'),
-                    (optional($m->vehicle)->identifier ? optional($m->vehicle)->identifier.' — ' : '').optional($m->vehicle)->plate,
+                    optional($m->vehicle)->identifier,
                     optional($m->driver)->name,
                     optional($m->guardOut)->name,
                     $status,

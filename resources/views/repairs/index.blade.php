@@ -15,7 +15,7 @@
             <select name="vehicle_id">
                 <option value="">Todas</option>
                 @foreach($vehicles as $v)
-                    <option value="{{ $v->id }}" @selected(request('vehicle_id')==$v->id)>{{ ($v->identifier ? $v->identifier.' — ' : '').$v->plate }}</option>
+                    <option value="{{ $v->id }}" @selected(request('vehicle_id')==$v->id)>{{ $v->identifier }}</option>
                 @endforeach
             </select>
         </div>
@@ -25,11 +25,12 @@
         </div>
     </form>
     <table>
-        <thead><tr><th>Unidad</th><th>Inicio</th><th>Horas</th><th>Partes</th><th>Mecánicos</th><th>Costos</th></tr></thead>
+        <thead><tr><th>#</th><th>Unidad</th><th>Inicio</th><th>Horas</th><th>Partes</th><th>Mecánicos</th><th>Costos</th></tr></thead>
         <tbody>
             @foreach($repairs as $r)
                 <tr>
-                    <td>{{ ($r->vehicle->identifier ? $r->vehicle->identifier.' — ' : '').$r->vehicle->plate }}</td>
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $r->vehicle->identifier }}</td>
                     <td>{{ $r->started_at?->format('Y-m-d H:i') }}</td>
                     <td>{{ $r->duration_hours }}</td>
                     <td>
@@ -54,4 +55,3 @@
     <div style="margin-top:12px;">{{ $repairs->links() }}</div>
 </div>
 @endsection
-

@@ -4,7 +4,7 @@
 <div class="card">
     <h2 style="margin-top:0">Registrar Entrada</h2>
     <p>
-        Vehículo: <strong>{{ $movement->vehicle->identifier ? $movement->vehicle->identifier . ' — ' : '' }}{{ $movement->vehicle->plate }}</strong> — Conductor: <strong>{{ $movement->driver->name }}</strong><br>
+        Vehículo: <strong>{{ $movement->vehicle->identifier }}</strong> — Conductor: <strong>{{ $movement->driver->name }}</strong><br>
         Salida: {{ $movement->departed_at->format('Y-m-d H:i') }}, Odómetro: {{ $movement->odometer_out }} km, Comb.: {{ $movement->fuel_out }}%
     </p>
     <form method="POST" action="{{ route('movements.checkin', $movement) }}" class="grid grid-3">

@@ -100,7 +100,7 @@ class GraphController extends Controller
         $rows = $q->groupBy('vehicle_id')->orderByDesc('total')->limit(5)->get();
         $labels = $rows->map(function($r){
             $v = Vehicle::find($r->vehicle_id);
-            return ($v?->identifier ? $v->identifier.' — ' : '').($v?->plate ?? ('#'.$r->vehicle_id));
+            return $v?->identifier ?? ('#'.$r->vehicle_id);
         })->all();
         $values = $rows->pluck('total')->map(fn($x)=>(int)$x)->all();
         if (!$ok) { return $this->pngResponseFromGD(520, 260, 'Instale jpgraph'); }
@@ -132,7 +132,7 @@ class GraphController extends Controller
         $rows = $q->groupBy('vehicle_id')->orderByDesc('km')->limit(5)->get();
         $labels = $rows->map(function($r){
             $v = Vehicle::find($r->vehicle_id);
-            return ($v?->identifier ? $v->identifier.' — ' : '').($v?->plate ?? ('#'.$r->vehicle_id));
+            return $v?->identifier ?? ('#'.$r->vehicle_id);
         })->all();
         $values = $rows->pluck('km')->map(fn($x)=>(int)$x)->all();
         if (!$ok) { return $this->pngResponseFromGD(520, 260, 'Instale jpgraph'); }

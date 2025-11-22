@@ -7,302 +7,152 @@
 
 @push('head')
     <style>
-        #dashLayout { display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; }
-        #dashLayout > .main { flex: 1 1 700px; min-width:280px; }
-        #dashLayout > aside {
-            flex: 0 0 320px;
-            max-width: 320px;
-            transition: flex-basis .25s ease, max-width .25s ease, opacity .25s ease, transform .25s ease;
-            opacity: 1;
-            transform: translateX(0);
+        .filters-top {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fff;
+            margin-bottom: 12px;
         }
-        /* Mover filtros a la izquierda en pantallas grandes */
-        @media (min-width: 992px) { #dashLayout > aside { order: -1; } }
-        /* Colapsar filtros con animación */
-        #dashLayout.collapsed > aside {
-            flex-basis: 0 !important;
-            max-width: 0 !important;
-            opacity: 0;
-            transform: translateX(12px);
-            pointer-events: none;
-        }
-        /* Fade-in del contenido principal */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: translateY(0);} }
-        #dashLayout > .main { animation: fadeIn .25s ease; }
+        .filters-top .form-label { margin-bottom: 4px; font-size: 14px; color:#374151; }
+        .filters-top .form-select { min-width: 220px; }
+        .equal-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; align-items:stretch; }
+        .equal-card { height:100%; display:flex; flex-direction:column; }
+        .equal-card canvas { max-width:100%; height:240px; }
+        .section-title { display:flex; align-items:center; justify-content:space-between; margin: 6px 0 8px; }
     </style>
 @endpush
 
 @section('content')
-<div class="card">
+<div class="card" style="margin-bottom:12px;">
     <div>
         <h2 style="margin:0">Dashboard Público</h2>
-        <p style="margin:6px 0 0 0; color:#555;">Resumen de uso de equipos y conductores (sin iniciar sesión).</p>
+        <p style="margin:6px 0 0 0; color:#555;">Resumen de uso de equipos y conductores.</p>
     </div>
-  </div>
+</div>
 
-<div id="dashLayout" class="grid" style="grid-template-columns: 1fr 320px; align-items:start; gap:12px;">
-  <div class="main">
-    <div class="card">
-        <h3 style="margin-top:0">Salidas por día (últimos {{ $selectedDays }} días)</h3>
-        <canvas id="chartByDay" height="110"></canvas>
-    </div>
-
-    <div class="grid grid-2">
-        <div class="card">
-            <h3 style="margin-top:0">Top 5 equipos por salidas</h3>
-            <canvas id="chartTopVehicles" height="120"></canvas>
-            <table class="table table-sm" style="margin-top:10px;">
-                <thead><tr><th>Vehículo</th><th>Salidas</th></tr></thead>
-                <tbody>
-                @forelse($topVehicleByDepartures as $row)
-                    <tr>
-                        <td>{{ ($row->vehicle?->identifier ? $row->vehicle?->identifier . ' — ' : '') . ($row->vehicle?->plate ?? ('#'.$row->vehicle_id)) }}</td>
-                        <td>{{ $row->total }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="2">Sin datos</td></tr>
-                @endforelse
-                </tbody>
-            </table>
+<div class="filters-top">
+    <form method="GET" class="d-flex flex-wrap gap-2 align-items-end w-100">
+        <div class="d-flex flex-column">
+            <label class="form-label">Vehículo</label>
+            <select name="vehicle_id" class="form-select">
+                <option value="">Todos</option>
+                @foreach($vehicles as $v)
+                    <option value="{{ $v->id }}" @selected((string)request('vehicle_id') === (string)$v->id)>{{ $v->identifier }}</option>
+                @endforeach
+            </select>
         </div>
-
-        <div class="card">
-            <h3 style="margin-top:0">Top 5 equipos por kilómetros</h3>
-            <canvas id="chartTopKm" height="120"></canvas>
-            <table class="table table-sm" style="margin-top:10px;">
-                <thead><tr><th>Vehículo</th><th>Kilómetros</th></tr></thead>
-                <tbody>
-                @forelse($topVehicleByKm as $row)
-                    <tr>
-                        <td>{{ ($row->vehicle?->identifier ? $row->vehicle?->identifier . ' — ' : '') . ($row->vehicle?->plate ?? ('#'.$row->vehicle_id)) }}</td>
-                        <td>{{ (int) $row->km }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="2">Sin datos</td></tr>
-                @endforelse
-                </tbody>
-            </table>
+        <div class="d-flex flex-column">
+            <label class="form-label">Conductor</label>
+            <select name="driver_id" class="form-select">
+                <option value="">Todos</option>
+                @foreach($drivers as $d)
+                    <option value="{{ $d->id }}" @selected((string)request('driver_id') === (string)$d->id)>{{ $d->name }}</option>
+                @endforeach
+            </select>
         </div>
-
-        <div class="card">
-            <h3 style="margin-top:0">Top 5 conductores por salidas</h3>
-            <canvas id="chartTopDrivers" height="120"></canvas>
-            <table class="table table-sm" style="margin-top:10px;">
-                <thead><tr><th>Conductor</th><th>Salidas</th></tr></thead>
-                <tbody>
-                @forelse($topDriverByDepartures as $row)
-                    <tr>
-                        <td>{{ $row->driver?->name ?? ('#'.$row->driver_id) }}</td>
-                        <td>{{ $row->total }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="2">Sin datos</td></tr>
-                @endforelse
-                </tbody>
-            </table>
+        <div class="ms-auto d-flex gap-2">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Aplicar</button>
+            <a class="btn btn-outline-secondary" href="{{ route('public.dashboard') }}">Limpiar</a>
         </div>
+    </form>
     </div>
-  </div>
 
-  <aside>
-    <div class="card" style="position: sticky; top: 86px;">
-        <h3 style="margin-top:0; font-size:18px;">Filtros</h3>
-        <form method="GET" class="grid" style="gap:10px;">
-            <div>
-                <label style="font-size:14px;">Vehículo</label>
-                <select name="vehicle_id" class="form-select" style="padding:8px 10px;">
-                    <option value="">Todos</option>
-                    @foreach($vehicles as $v)
-                        <option value="{{ $v->id }}" @selected((string)request('vehicle_id') === (string)$v->id)>{{ $v->identifier ? $v->identifier . ' — ' : '' }}{{ $v->plate }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label style="font-size:14px;">Conductor</label>
-                <select name="driver_id" class="form-select" style="padding:8px 10px;">
-                    <option value="">Todos</option>
-                    @foreach($drivers as $d)
-                        <option value="{{ $d->id }}" @selected((string)request('driver_id') === (string)$d->id)>{{ $d->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label style="font-size:14px;">Periodo</label>
-                <select name="days" class="form-select" style="padding:8px 10px;">
-                    <option value="7" @selected((int)$selectedDays===7)>7 días</option>
-                    <option value="30" @selected((int)$selectedDays===30)>30 días</option>
-                    <option value="90" @selected((int)$selectedDays===90)>90 días</option>
-                </select>
-            </div>
-            <div class="row" style="gap:8px;">
-                <button class="btn btn-primary" type="submit">Aplicar</button>
-                <a class="btn btn-secondary" href="{{ route('public.dashboard') }}">Limpiar</a>
-            </div>
-        </form>
+<div class="section-title">
+    <h4 style="margin:0">Últimos 7 días</h4>
+</div>
+<div class="equal-grid" style="margin-bottom:12px;">
+    <div class="card equal-card">
+        <h5 class="px-2 pt-2" style="margin:0;">Salidas por día</h5>
+        <div class="p-2"><canvas id="chartDays7"></canvas></div>
     </div>
-  </aside>
+    <div class="card equal-card">
+        <h5 class="px-2 pt-2" style="margin:0;">Top 5 equipos por salidas</h5>
+        <div class="p-2"><canvas id="chartTopVehicles7"></canvas></div>
+    </div>
+    <div class="card equal-card">
+        <h5 class="px-2 pt-2" style="margin:0;">Top 5 equipos por kilómetros</h5>
+        <div class="p-2"><canvas id="chartTopKm7"></canvas></div>
+    </div>
+    <div class="card equal-card">
+        <h5 class="px-2 pt-2" style="margin:0;">Top 5 conductores por salidas</h5>
+        <div class="p-2"><canvas id="chartTopDrivers7"></canvas></div>
+    </div>
+</div>
+
+<div class="section-title">
+    <h4 style="margin:0">Últimos 30 días</h4>
+    <small class="text-muted">Comparativo extendido</small>
+    </div>
+<div class="equal-grid">
+    <div class="card equal-card">
+        <h5 class="px-2 pt-2" style="margin:0;">Salidas por día</h5>
+        <div class="p-2"><canvas id="chartDays30"></canvas></div>
+    </div>
+    <div class="card equal-card">
+        <h5 class="px-2 pt-2" style="margin:0;">Top 5 equipos por salidas</h5>
+        <div class="p-2"><canvas id="chartTopVehicles30"></canvas></div>
+    </div>
+    <div class="card equal-card">
+        <h5 class="px-2 pt-2" style="margin:0;">Top 5 equipos por kilómetros</h5>
+        <div class="p-2"><canvas id="chartTopKm30"></canvas></div>
+    </div>
+    <div class="card equal-card">
+        <h5 class="px-2 pt-2" style="margin:0;">Top 5 conductores por salidas</h5>
+        <div class="p-2"><canvas id="chartTopDrivers30"></canvas></div>
+    </div>
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-  (function(){
-    const root = document.getElementById('dashLayout');
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'btn btn-secondary';
-    btn.innerHTML = '<i class="bi bi-funnel" style="margin-right:6px;"></i><span class="lbl"></span>';
-    const hdr = document.querySelectorAll('.card')[0]?.querySelector('.row') || document.querySelectorAll('.card')[0];
-    // Insertar botón al encabezado principal
-    if (hdr) {
-      const wrap = document.createElement('div');
-      wrap.style.marginTop = '8px';
-      wrap.appendChild(btn);
-      hdr.appendChild(wrap);
+    const days7 = @json($days7 ?? []);
+    const series7 = @json($series7 ?? []);
+    const days30 = @json($days30 ?? []);
+    const series30 = @json($series30 ?? []);
+
+    const tv7 = @json(($topVehicles7 ?? collect())->map(fn($r)=>[$r->vehicle?->identifier ?? 'N/A', (int)$r->total]));
+    const tkm7 = @json(($topKm7 ?? collect())->map(fn($r)=>[$r->vehicle?->identifier ?? 'N/A', (int)$r->km]));
+    const td7 = @json(($topDrivers7 ?? collect())->map(fn($r)=>[$r->driver?->name ?? 'N/A', (int)$r->total]));
+
+    const tv30 = @json(($topVehicles30 ?? collect())->map(fn($r)=>[$r->vehicle?->identifier ?? 'N/A', (int)$r->total]));
+    const tkm30 = @json(($topKm30 ?? collect())->map(fn($r)=>[$r->vehicle?->identifier ?? 'N/A', (int)$r->km]));
+    const td30 = @json(($topDrivers30 ?? collect())->map(fn($r)=>[$r->driver?->name ?? 'N/A', (int)$r->total]));
+
+    function lineChart(el, labels, data, label){
+        if (!el || !labels?.length) return;
+        new Chart(el, {
+            type: 'line',
+            data: { labels, datasets: [{ label, data, borderColor:'#0d6efd', backgroundColor:'rgba(13,110,253,.15)', tension:.25, fill:true }] },
+            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+        });
     }
-    function setLabel(){
-      const text = root.classList.contains('collapsed') ? 'Mostrar filtros' : 'Ocultar filtros';
-      const span = btn.querySelector('.lbl');
-      if (span) span.textContent = text; else btn.textContent = text;
+    function barChart(el, rows, label){
+        if (!el || !rows?.length) return;
+        const labels = rows.map(r=>r[0]);
+        const data = rows.map(r=>r[1]);
+        new Chart(el, {
+            type: 'bar',
+            data: { labels, datasets: [{ label, data, backgroundColor:'#198754' }] },
+            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+        });
     }
-    // Estado inicial desde localStorage
-    if (localStorage.getItem('dashFiltersCollapsed') === '1') {
-      root.classList.add('collapsed');
-    }
-    setLabel();
-    btn.addEventListener('click', function(){
-      const willCollapse = !root.classList.contains('collapsed');
-      root.classList.toggle('collapsed', willCollapse);
-      localStorage.setItem('dashFiltersCollapsed', willCollapse ? '1' : '0');
-      setLabel();
-    });
-  })();
+
+    lineChart(document.getElementById('chartDays7'), days7, series7, 'Salidas');
+    barChart(document.getElementById('chartTopVehicles7'), tv7, 'Salidas');
+    barChart(document.getElementById('chartTopKm7'), tkm7, 'Km');
+    barChart(document.getElementById('chartTopDrivers7'), td7, 'Salidas');
+
+    lineChart(document.getElementById('chartDays30'), days30, series30, 'Salidas');
+    barChart(document.getElementById('chartTopVehicles30'), tv30, 'Salidas');
+    barChart(document.getElementById('chartTopKm30'), tkm30, 'Km');
+    barChart(document.getElementById('chartTopDrivers30'), td30, 'Salidas');
 </script>
 @endpush
 
-<div class="card">
-    <h3 style="margin-top:0">Salidas por día (últimos {{ $selectedDays }} días)</h3>
-    <img id="imgByDay" alt="Salidas por día" style="max-width:100%; height:auto;" src="{{ route('dashboard.graph.byday', array_filter(['days'=>$selectedDays,'vehicle_id'=>$vehicleId,'driver_id'=>$driverId])) }}">
-    <canvas id="chartByDay" height="110" style="display:none;"></canvas>
-    </div>
-
-<div class="grid grid-2">
-        <div class="card">
-            <h3 style="margin-top:0">Top 5 equipos por salidas</h3>
-            <img id="imgTopVehicles" alt="Top equipos por salidas" style="max-width:100%; height:auto;" src="{{ route('dashboard.graph.topvehicles', array_filter(['days'=>$selectedDays,'driver_id'=>$driverId,'vehicle_id'=>$vehicleId])) }}">
-            <canvas id="chartTopVehicles" height="120" style="display:none;"></canvas>
-        <table class="table table-sm" style="margin-top:10px;">
-            <thead><tr><th>Vehículo</th><th>Salidas</th></tr></thead>
-            <tbody>
-            @forelse($topVehicleByDepartures as $row)
-                <tr>
-                    <td>{{ $row->vehicle?->plate ?? ('#'.$row->vehicle_id) }}</td>
-                    <td>{{ $row->total }}</td>
-                </tr>
-            @empty
-                <tr><td colspan="2">Sin datos</td></tr>
-            @endforelse
-            </tbody>
-        </table>
-    </div>
-
-        <div class="card">
-            <h3 style="margin-top:0">Top 5 equipos por kilómetros</h3>
-            <img id="imgTopKm" alt="Top equipos por kilómetros" style="max-width:100%; height:auto;" src="{{ route('dashboard.graph.topkm', array_filter(['days'=>$selectedDays,'driver_id'=>$driverId,'vehicle_id'=>$vehicleId])) }}">
-            <canvas id="chartTopKm" height="120" style="display:none;"></canvas>
-        <table class="table table-sm" style="margin-top:10px;">
-            <thead><tr><th>Vehículo</th><th>Kilómetros</th></tr></thead>
-            <tbody>
-            @forelse($topVehicleByKm as $row)
-                <tr>
-                    <td>{{ $row->vehicle?->plate ?? ('#'.$row->vehicle_id) }}</td>
-                    <td>{{ (int) $row->km }}</td>
-                </tr>
-            @empty
-                <tr><td colspan="2">Sin datos</td></tr>
-            @endforelse
-            </tbody>
-        </table>
-    </div>
-
-        <div class="card">
-            <h3 style="margin-top:0">Top 5 conductores por salidas</h3>
-            <img id="imgTopDrivers" alt="Top conductores por salidas" style="max-width:100%; height:auto;" src="{{ route('dashboard.graph.topdrivers', array_filter(['days'=>$selectedDays,'vehicle_id'=>$vehicleId])) }}">
-            <canvas id="chartTopDrivers" height="120" style="display:none;"></canvas>
-        <table class="table table-sm" style="margin-top:10px;">
-            <thead><tr><th>Conductor</th><th>Salidas</th></tr></thead>
-            <tbody>
-            @forelse($topDriverByDepartures as $row)
-                <tr>
-                    <td>{{ $row->driver?->name ?? ('#'.$row->driver_id) }}</td>
-                    <td>{{ $row->total }}</td>
-                </tr>
-            @empty
-                <tr><td colspan="2">Sin datos</td></tr>
-            @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
 @endsection
 
-@push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script>
-        const labelsDays = @json($days);
-        const dataDays = @json($seriesDays);
-        const topVehicles = @json($topVehicleByDepartures->map(fn($r) => [
-            (($r->vehicle?->identifier ? $r->vehicle?->identifier.' — ' : '') . ($r->vehicle?->plate ?? ('#'.$r->vehicle_id))), (int) $r->total
-        ]));
-        const topKm = @json($topVehicleByKm->map(fn($r) => [
-            (($r->vehicle?->identifier ? $r->vehicle?->identifier.' — ' : '') . ($r->vehicle?->plate ?? ('#'.$r->vehicle_id))), (int) $r->km
-        ]));
-        const topDrivers = @json($topDriverByDepartures->map(fn($r) => [
-            $r->driver?->name ?? ('#'.$r->driver_id), (int) $r->total
-        ]));
-
-        function barChart(canvasId, rows, label, color){
-            const el = document.getElementById(canvasId);
-            if(!el) return;
-            const labels = rows.map(r => r[0]);
-            const data = rows.map(r => r[1]);
-            new Chart(el, {
-                type: 'bar',
-                data: { labels, datasets: [{ label, data, backgroundColor: color }] },
-                options: { scales: { y: { beginAtZero: true } } }
-            });
-        }
-
-        function lineChart(canvasId, labels, data){
-            const el = document.getElementById(canvasId);
-            if(!el) return;
-            new Chart(el, {
-                type: 'line',
-                data: { labels, datasets: [{ label: 'Salidas', data, borderColor: '#006847', backgroundColor: 'rgba(0,104,71,.15)', tension:.25, fill:true }] },
-                options: { scales: { y: { beginAtZero:true, ticks:{precision:0} } } }
-            });
-        }
-
-        // Fallback si JpGraph no está disponible
-        fetch('{{ route('dashboard.graph.status') }}')
-            .then(r => r.json())
-            .then(({jpgraph}) => {
-                if (!jpgraph) {
-                    // Mostrar canvas y ocultar imágenes
-                    const showCanvas = (imgId, canvasId) => {
-                        const img = document.getElementById(imgId);
-                        const canvas = document.getElementById(canvasId);
-                        if(img && canvas){ img.style.display='none'; canvas.style.display='block'; }
-                    };
-                    showCanvas('imgByDay','chartByDay');
-                    showCanvas('imgTopVehicles','chartTopVehicles');
-                    showCanvas('imgTopKm','chartTopKm');
-                    showCanvas('imgTopDrivers','chartTopDrivers');
-                    lineChart('chartByDay', labelsDays.map(d=>d.substring(5)), dataDays);
-                    barChart('chartTopVehicles', topVehicles, 'Salidas', '#FFCD11');
-                    barChart('chartTopKm', topKm, 'Kilómetros', '#3b82f6');
-                    barChart('chartTopDrivers', topDrivers, 'Salidas', '#10b981');
-                }
-            })
-            .catch(()=>{});
-    </script>
-@endpush

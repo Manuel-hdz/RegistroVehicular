@@ -10,10 +10,11 @@
 
 <div class="card">
     <table>
-        <thead><tr><th>Nombre</th><th>Costo</th><th>Activa</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th>Nombre</th><th>Costo</th><th>Activa</th><th></th></tr></thead>
         <tbody>
             @foreach($parts as $p)
                 <tr>
+                    <td>{{ $loop->iteration }}</td>
                     <td>{{ $p->name }}</td>
                     <td>${{ number_format($p->unit_cost, 2) }}</td>
                     <td>{{ $p->active ? 'Sí' : 'No' }}</td>
@@ -25,4 +26,3 @@
     <div style="margin-top:12px;">{{ $parts->links() }}</div>
 </div>
 @endsection
-

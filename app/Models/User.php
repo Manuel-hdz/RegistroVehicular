@@ -24,6 +24,7 @@ class User extends Authenticatable
         'role',
         'department',
         'active',
+        'current_session_id',
     ];
 
     /**

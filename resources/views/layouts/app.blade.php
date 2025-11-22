@@ -254,6 +254,34 @@
             });
         });
     })();
+    // Modal de conflicto de sesión (cuenta en uso)
+    (function(){
+        const conflictMsg = @json(session('session_conflict'));
+        if(!conflictMsg) return;
+        // Crear modal on-the-fly reutilizando estilos existentes
+        const backdrop = document.createElement('div');
+        backdrop.className = 'backdrop';
+        backdrop.setAttribute('aria-hidden','false');
+        backdrop.setAttribute('role','dialog');
+        backdrop.setAttribute('aria-modal','true');
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        const header = document.createElement('header');
+        header.innerHTML = '<strong>Sesión cerrada</strong>';
+        const content = document.createElement('div');
+        content.className = 'content';
+        content.textContent = conflictMsg;
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+        const ok = document.createElement('button');
+        ok.className = 'btn btn-secondary';
+        ok.textContent = 'Entendido';
+        ok.addEventListener('click', ()=> document.body.removeChild(backdrop));
+        actions.appendChild(ok);
+        modal.appendChild(header); modal.appendChild(content); modal.appendChild(actions);
+        backdrop.appendChild(modal);
+        document.body.appendChild(backdrop);
+    })();
 </script>
 @stack('scripts')
 </body>

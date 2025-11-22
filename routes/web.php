@@ -26,7 +26,7 @@ Route::prefix('registroVehicular')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Rutas protegidas
-    Route::middleware('auth')->group(function () {
+    Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(function () {
         // Usuarios (solo SuperAdmin)
         Route::middleware('role:superadmin')->group(function () {
             Route::resource('users', UserController::class)->only(['index','create','store','edit','update']);

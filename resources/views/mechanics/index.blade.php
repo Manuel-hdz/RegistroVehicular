@@ -10,10 +10,11 @@
 
 <div class="card">
     <table>
-        <thead><tr><th>Nombre</th><th>Salario diario</th><th>Activo</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th>Nombre</th><th>Salario diario</th><th>Activo</th><th></th></tr></thead>
         <tbody>
             @foreach($mechanics as $m)
                 <tr>
+                    <td>{{ $loop->iteration }}</td>
                     <td>{{ $m->name }}</td>
                     <td>${{ number_format($m->daily_salary, 2) }}</td>
                     <td>{{ $m->active ? 'Sí' : 'No' }}</td>
@@ -25,4 +26,3 @@
     <div style="margin-top:12px;">{{ $mechanics->links() }}</div>
 </div>
 @endsection
-

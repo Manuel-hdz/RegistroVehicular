@@ -29,6 +29,7 @@
     <table id="driversTable">
         <thead>
             <tr>
+                <th>#</th>
                 <th>Nombre</th>
                 <th>Número</th>
                 <th>Licencia</th>
@@ -39,6 +40,7 @@
         <tbody>
             @foreach($drivers as $d)
                 <tr>
+                    <td>{{ $loop->iteration }}</td>
                     <td>{{ $d->name }}</td>
                     <td>{{ $d->employee_number }}</td>
                     <td>{{ $d->license }}</td>

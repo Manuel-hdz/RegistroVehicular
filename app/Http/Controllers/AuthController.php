@@ -33,6 +33,10 @@ class AuthController extends Controller
                 return back()->withErrors(['username' => 'Usuario bloqueado. Contacte a sistemas.'])->onlyInput('username');
             }
             $request->session()->regenerate();
+            // Guardar ID de sesión actual para forzar una sola sesión activa
+            $user = Auth::user();
+            $user->current_session_id = $request->session()->getId();
+            $user->save();
             return redirect()->intended(route('public.dashboard'));
         }
         
