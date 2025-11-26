@@ -9,17 +9,20 @@
     <style>
         .filters-top {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: flex-end;
-            flex-wrap: wrap;
-            padding: 10px 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            background: #fff;
-            margin-bottom: 12px;
+            flex-wrap: nowrap; /* una sola fila */
+            overflow-x: auto;  /* scroll horizontal si no cabe */
+            padding: 6px 0;     /* más compacto */
+            border: 0;
+            background: transparent;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb; /* leve separador */
         }
-        .filters-top .form-label { margin-bottom: 4px; font-size: 14px; color:#374151; }
-        .filters-top .form-select { min-width: 220px; }
+        .filters-top .filter-item { display:flex; flex-direction:column; gap:2px; flex:0 0 auto; min-width: 180px; }
+        .filters-top .form-label { margin: 0; font-size: 12px; color:#6b7280; }
+        .filters-top .form-select, .filters-top .form-control { min-width: 180px; }
+        .filters-top .form-select-sm, .filters-top .form-control-sm { padding:.25rem .5rem; }
         .equal-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; align-items:stretch; }
         .equal-card { height:100%; display:flex; flex-direction:column; }
         .equal-card canvas { max-width:100%; height:240px; }
@@ -36,28 +39,28 @@
 </div>
 
 <div class="filters-top">
-    <form method="GET" class="d-flex flex-wrap gap-2 align-items-end w-100">
-        <div class="d-flex flex-column">
+    <form method="GET" class="d-flex flex-nowrap gap-2 align-items-end w-100">
+        <div class="filter-item">
             <label class="form-label">Vehículo</label>
-            <select name="vehicle_id" class="form-select">
+            <select name="vehicle_id" class="form-select form-select-sm">
                 <option value="">Todos</option>
                 @foreach($vehicles as $v)
                     <option value="{{ $v->id }}" @selected((string)request('vehicle_id') === (string)$v->id)>{{ $v->identifier }}</option>
                 @endforeach
             </select>
         </div>
-        <div class="d-flex flex-column">
+        <div class="filter-item">
             <label class="form-label">Conductor</label>
-            <select name="driver_id" class="form-select">
+            <select name="driver_id" class="form-select form-select-sm">
                 <option value="">Todos</option>
                 @foreach($drivers as $d)
                     <option value="{{ $d->id }}" @selected((string)request('driver_id') === (string)$d->id)>{{ $d->name }}</option>
                 @endforeach
             </select>
         </div>
-        <div class="ms-auto d-flex gap-2">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Aplicar</button>
-            <a class="btn btn-outline-secondary" href="{{ route('public.dashboard') }}">Limpiar</a>
+        <div class="ms-auto d-flex gap-2 flex-shrink-0">
+            <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-funnel me-1"></i>Aplicar</button>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('public.dashboard') }}">Limpiar</a>
         </div>
     </form>
     </div>
@@ -155,4 +158,3 @@
 @endpush
 
 @endsection
-

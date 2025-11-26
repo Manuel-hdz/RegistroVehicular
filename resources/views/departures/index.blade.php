@@ -7,25 +7,7 @@
 @endpush
 @push('head')
 <style>
-  #departuresLayout { display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; }
-  #departuresLayout > .main { flex: 1 1 700px; min-width:280px; }
-  #departuresLayout > aside {
-    flex: 0 0 320px;
-    max-width: 320px;
-    transition: flex-basis .25s ease, max-width .25s ease, opacity .25s ease, transform .25s ease;
-    opacity: 1;
-    transform: translateX(0);
-  }
-  @media (min-width: 992px) { #departuresLayout > aside { order: -1; } }
-  #departuresLayout.collapsed > aside {
-    flex-basis: 0 !important;
-    max-width: 0 !important;
-    opacity: 0;
-    transform: translateX(12px);
-    pointer-events: none;
-  }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: translateY(0);} }
-  #departuresLayout > .main { animation: fadeIn .25s ease; }
+  /* Estilos mínimos; sin filtros en header */
 </style>
 @endpush
 
@@ -36,18 +18,13 @@
             <small style="color:#555;">Filtra por fecha, vehículo o conductor</small>
         </div>
         <div class="row" style="gap:8px;">
-            <button type="button" class="btn btn-secondary" id="btnToggleFiltersDeps">
-                <i class="bi bi-funnel" style="margin-right:6px;"></i>
-                <span class="lbl">Ocultar filtros</span>
-            </button>
-            <a class="btn btn-secondary" href="{{ route('departures.export', request()->query()) }}">Exportar CSV</a>
+            <a class="btn btn-secondary btn-sm" href="{{ route('departures.export', request()->query()) }}">Exportar CSV</a>
         </div>
     </div>
 </div>
 
-<div id="departuresLayout">
-  <div class="card main">
-    <table id="departuresTable">
+<div class="card">
+    <table id="departuresTable" class="display" style="width:100%">
         <thead>
             <tr>
                 <th>#</th>
@@ -111,93 +88,20 @@
     </table>
   </div>
 
-  <aside>
-    <div class="card" style="position: sticky; top: 86px;">
-        <h3 style="margin-top:0; font-size:18px;">Filtros</h3>
-        <form method="GET" class="grid grid-3" style="gap:10px;">
-            <div>
-                <label style="font-size:14px;">Desde</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}">
-            </div>
-            <div>
-                <label style="font-size:14px;">Hasta</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}">
-            </div>
-            <div>
-                <label style="font-size:14px;">Destino</label>
-                <input type="text" name="destination" value="{{ request('destination') }}" placeholder="Texto a buscar">
-            </div>
-            <div>
-                <label style="font-size:14px;">Vehículo</label>
-                <select name="vehicle_id">
-                    <option value="">Todos</option>
-                    @foreach($vehicles as $v)
-                    <option value="{{ $v->id }}" @selected(request('vehicle_id')==$v->id)>{{ $v->identifier }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label style="font-size:14px;">Conductor</label>
-                <select name="driver_id">
-                    <option value="">Todos</option>
-                    @foreach($drivers as $d)
-                        <option value="{{ $d->id }}" @selected(request('driver_id')==$d->id)>{{ $d->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label style="font-size:14px;">Estatus</label>
-                <select name="status">
-                    @foreach($statuses as $k=>$label)
-                        <option value="{{ $k }}" @selected(request('status','')===$k)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="row" style="gap:8px; grid-column: 1/-1;">
-                <button class="btn btn-primary" type="submit">Aplicar</button>
-                <a class="btn btn-secondary" href="{{ route('departures.index') }}">Limpiar</a>
-            </div>
-        </form>
-    </div>
-  </aside>
-</div>
-
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
-  (function(){
-    const root = document.getElementById('departuresLayout');
-    const btn = document.getElementById('btnToggleFiltersDeps');
-    if (!root || !btn) return;
-    function setLabel(){
-      const lbl = root.classList.contains('collapsed') ? 'Mostrar filtros' : 'Ocultar filtros';
-      const span = btn.querySelector('.lbl');
-      if (span) span.textContent = lbl; else btn.innerHTML = lbl;
-    }
-    if (localStorage.getItem('depsFiltersCollapsed') === '1') {
-      root.classList.add('collapsed');
-    }
-    setLabel();
-    btn.addEventListener('click', function(){
-      const willCollapse = !root.classList.contains('collapsed');
-      root.classList.toggle('collapsed', willCollapse);
-      localStorage.setItem('depsFiltersCollapsed', willCollapse ? '1' : '0');
-      setLabel();
-    });
-  })();
-  // Inicializar DataTable
+  // Inicialización simple de DataTables sin filtros por columna
   $(function(){
-      var hasActions = $('#departuresTable thead th').last().text().trim() === 'Acciones';
-      var opts = {
+      var $table = $('#departuresTable');
+      var hasActions = $table.find('thead th').last().text().trim() === 'Acciones';
+      $table.DataTable({
           pageLength: 25,
           order: [[0,'desc']],
-          language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }
-      };
-      if (hasActions) {
-          opts.columnDefs = [{ targets: -1, orderable: false, searchable: false }];
-      }
-      $('#departuresTable').DataTable(opts);
+          language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+          columnDefs: hasActions ? [{ targets: -1, orderable: false, searchable: false }] : []
+      });
   });
 </script>
 @endpush

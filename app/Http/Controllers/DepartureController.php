@@ -7,7 +7,7 @@ use App\Models\Movement;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Response as ResponseFactory;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\View\View;
 
 class DepartureController extends Controller
@@ -52,7 +52,7 @@ class DepartureController extends Controller
         return view('departures.index', compact('departures','vehicles','drivers','statuses'));
     }
 
-    public function export(Request $request): Response
+    public function export(Request $request): StreamedResponse
     {
         $query = Movement::with(['vehicle','driver','guardOut'])
             ->orderByDesc('departed_at');
