@@ -44,6 +44,7 @@ Route::prefix('registroVehicular')->group(function () {
         Route::resource('drivers', DriverController::class)->only(['index','create','store','edit','update']);
         Route::get('/departures', [DepartureController::class, 'index'])->name('departures.index');
         Route::get('/departures/export', [DepartureController::class, 'export'])->name('departures.export');
+        Route::get('/departures/export-excel', [DepartureController::class, 'exportExcel'])->name('departures.export.excel');
         Route::get('/maintenance', [\App\Http\Controllers\MaintenanceController::class, 'index'])->name('maintenance.index');
         Route::put('/maintenance/{vehicle}', [\App\Http\Controllers\MaintenanceController::class, 'update'])->name('maintenance.update');
         Route::resource('parts', \App\Http\Controllers\PartController::class)->only(['index','create','store','edit','update']);

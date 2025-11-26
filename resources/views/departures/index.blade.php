@@ -19,6 +19,7 @@
         </div>
         <div class="row" style="gap:8px;">
             <a class="btn btn-secondary btn-sm" href="{{ route('departures.export', request()->query()) }}">Exportar CSV</a>
+            <a class="btn btn-success btn-sm" href="{{ route('departures.export.excel', request()->query()) }}">Exportar Excel</a>
         </div>
     </div>
 </div>
