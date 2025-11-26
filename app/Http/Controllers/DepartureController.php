@@ -85,7 +85,7 @@ class DepartureController extends Controller
 
         $callback = function () use ($rows) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Fecha/Hora Salida','Vehículo','Conductor','Registró','Estatus','Destino','Odómetro','Combustible%']);
+            fputcsv($out, ['#','Fecha/Hora Salida','Vehículo','Conductor','Registró','Estatus','Destino','Odómetro','Combustible%']);
             foreach ($rows as $m) {
                 $status = match ($m->status) {
                     'closed' => 'Completado',
@@ -93,6 +93,7 @@ class DepartureController extends Controller
                     default => 'Abierto',
                 };
                 fputcsv($out, [
+                    $m->id,
                     optional($m->departed_at)->format('Y-m-d H:i'),
                     optional($m->vehicle)->identifier,
                     optional($m->driver)->name,
@@ -147,7 +148,7 @@ class DepartureController extends Controller
             // HTML básico que Excel interpreta como hoja
             fwrite($out, "<html><head><meta charset=\"UTF-8\"></head><body>");
             fwrite($out, "<table border=\"1\" cellspacing=\"0\" cellpadding=\"2\">\n");
-            fwrite($out, "<tr><th>Fecha/Hora Salida</th><th>Vehículo</th><th>Conductor</th><th>Registró</th><th>Estatus</th><th>Destino</th><th>Odómetro</th><th>Combustible%</th></tr>\n");
+            fwrite($out, "<tr><th># Operación</th><th>Fecha/Hora Salida</th><th>Vehículo</th><th>Conductor</th><th>Registró</th><th>Estatus</th><th>Destino</th><th>Odómetro</th><th>Combustible%</th></tr>\n");
             foreach ($rows as $m) {
                 $status = match ($m->status) {
                     'closed' => 'Completado',
@@ -155,6 +156,7 @@ class DepartureController extends Controller
                     default => 'Abierto',
                 };
                 $cells = [
+                    e((string)$m->id),
                     e(optional($m->departed_at)->format('Y-m-d H:i')),
                     e(optional($m->vehicle)->identifier),
                     e(optional($m->driver)->name),
