@@ -24,7 +24,8 @@
             <a class="btn btn-link" href="{{ route('repairs.index') }}">Limpiar</a>
         </div>
     </form>
-    <table>
+    <div class="table-responsive">
+    <table class="table table-striped align-middle" style="width:100%">
         <thead><tr><th>#</th><th>Unidad</th><th>Inicio</th><th>Horas</th><th>Partes</th><th>Mecánicos</th><th>Costos</th></tr></thead>
         <tbody>
             @foreach($repairs as $r)
@@ -52,6 +53,7 @@
             @endforeach
         </tbody>
     </table>
+    </div>
     <div style="margin-top:12px;">{{ $repairs->links() }}</div>
 </div>
 @endsection

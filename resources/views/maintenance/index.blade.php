@@ -1,6 +1,18 @@
 @extends('layouts.app')
 
 @section('content')
+@push('head')
+<style>
+  /* Evitar conflicto con Bootstrap .modal */
+  .backdrop { z-index: 1060; }
+  .backdrop .modal { display: block !important; position: relative; width: min(560px, 92vw); }
+  .backdrop .modal header { border-radius: 10px 10px 0 0; }
+  .backdrop .modal .content { max-height: 70vh; overflow:auto; }
+  /* Icono más grande y clicable */
+  .maint-icon svg { width: 72px; height: 72px; }
+  @media (max-width: 576px){ .maint-icon svg { width: 64px; height: 64px; } }
+</style>
+@endpush
 <div class="card">
     <div class="row" style="justify-content: space-between;">
         <h2 style="margin:0">Estado de Unidades</h2>

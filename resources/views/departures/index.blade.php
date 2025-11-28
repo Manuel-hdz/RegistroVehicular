@@ -8,6 +8,34 @@
 @push('head')
 <style>
   /* Estilos mínimos; sin filtros en header */
+  .table-responsive { width:100%; overflow-x:auto; -webkit-overflow-scrolling: touch; }
+  @media (max-width: 640px){
+    #departuresTable thead th, #departuresTable tbody td { font-size: 14px; padding: 8px; }
+  }
+
+  /* Compactar controles de DataTables (Mostrar y Buscar) */
+  .dataTables_wrapper .dataTables_length label,
+  .dataTables_wrapper .dataTables_filter label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 14px;
+    color: #374151;
+  }
+  .dataTables_wrapper .dataTables_length select,
+  .dataTables_wrapper .dataTables_filter input {
+    height: 30px;
+    padding: .25rem .5rem;
+    font-size: .875rem; /* 14px */
+    border: 1px solid #d1d5db;
+    border-radius: .375rem;
+  }
+  .dataTables_wrapper .dataTables_filter input { width: 220px; }
+  @media (max-width: 768px){
+    .dataTables_wrapper .dataTables_filter input { width: 160px; }
+    .dataTables_wrapper .dataTables_length select { width: 90px; }
+  }
 </style>
 @endpush
 
@@ -25,6 +53,7 @@
 </div>
 
 <div class="card">
+  <div class="table-responsive">
     <table id="departuresTable" class="display" style="width:100%">
         <thead>
             <tr>
@@ -88,6 +117,7 @@
         </tbody>
     </table>
   </div>
+</div>
 
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -95,6 +125,9 @@
 <script>
   // Inicialización simple de DataTables sin filtros por columna
   $(function(){
+      if ($.fn.dataTable && $.fn.dataTable.ext && $.fn.dataTable.ext.pager) {
+          $.fn.dataTable.ext.pager.numbers_length = 5; // mostrar 5 números
+      }
       var $table = $('#departuresTable');
       var hasActions = $table.find('thead th').last().text().trim() === 'Acciones';
       $table.DataTable({

@@ -5,7 +5,6 @@
     <h1 style="margin:0; font-size:34px;">Concreto Lanzado de Fresnillo MARCA</h1>
     <p style="margin-top:10px; opacity:.95; font-size:18px;">Innovación y control para operaciones seguras y eficientes.</p>
     <div class="row" style="justify-content:center; margin-top:18px; gap:10px;">
-        <a class="btn btn-secondary" href="/sisad">Entrar a SISAD</a>
         <a class="btn btn-primary" href="/registroVehicular">Registro Vehicular</a>
     </div>
     <div class="row" style="justify-content:center; gap:18px; margin-top:22px;">
@@ -37,14 +36,9 @@
         <ul>
             <li>Flujo de salidas y entradas</li>
             <li>Catálogo de vehículos y conductores</li>
-            <li>Reportes y tablero público</li>
+            <li>Indicadores y reportes</li>
         </ul>
-        <a class="btn btn-primary" href="/registroVehicular/dashboard">Ver Dashboard</a>
-    </div>
-    <div class="card">
-        <h3 style="margin-top:0">SISAD</h3>
-        <p>Administración operativa y apoyo a procesos estratégicos.</p>
-        <a class="btn btn-secondary" href="/sisad">Entrar a SISAD</a>
+        <a class="btn btn-primary" href="/registroVehicular">Ir al sistema</a>
     </div>
 </section>
 

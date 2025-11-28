@@ -1,10 +1,10 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('content')
 <div class="card">
     <div class="row" style="justify-content: space-between;">
         <h2 style="margin:0">Vehículos</h2>
-        <a href="{{ route('vehicles.create') }}" class="btn btn-primary">Nuevo Vehículo</a>
+        <a href="{{ route('vehicles.create') }}" class="btn btn-primary">Nuevo vehículo</a>
     </div>
 </div>
 
@@ -16,6 +16,9 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script>
         $(function(){
+            if ($.fn.dataTable && $.fn.dataTable.ext && $.fn.dataTable.ext.pager) {
+                $.fn.dataTable.ext.pager.numbers_length = 5;
+            }
             $('#vehiclesTable').DataTable({
                 pageLength: 25,
                 order: [],
@@ -26,7 +29,8 @@
 @endpush
 
 <div class="card">
-    <table id="vehiclesTable">
+    <div class="table-responsive">
+    <table id="vehiclesTable" class="table table-striped align-middle" style="width:100%">
         <thead>
             <tr>
                 <th>#</th>
@@ -51,7 +55,7 @@
                         </a>
                         @auth
                             @if(auth()->user()->role === 'superadmin')
-                                <form action="{{ route('vehicles.destroy', $v) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar vehículo?');">
+                                <form action="{{ route('vehicles.destroy', $v) }}" method="POST" style="display:inline;" onsubmit="return confirm('Â¿Eliminar vehículo?');">
                                     @csrf
                                     @method('DELETE')
                                     <button class="btn btn-secondary" type="submit" title="Eliminar" aria-label="Eliminar">
@@ -65,8 +69,11 @@
             @endforeach
         </tbody>
     </table>
+    </div>
 </div>
 @endsection
 @push('head-pre')
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 @endpush
+
+

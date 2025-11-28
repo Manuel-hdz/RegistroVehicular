@@ -1,25 +1,43 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('content')
 @push('head-pre')
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 @endpush
+@push('head')
+<style>
+  /* Ocultar columnas pesadas en mÃ³viles para la tabla de abiertos */
+  @media (max-width: 575.98px){
+    table.movements-open thead th:nth-child(4),
+    table.movements-open thead th:nth-child(5),
+    table.movements-open thead th:nth-child(7),
+    table.movements-open thead th:nth-child(8),
+    table.movements-open tbody td:nth-child(4),
+    table.movements-open tbody td:nth-child(5),
+    table.movements-open tbody td:nth-child(7),
+    table.movements-open tbody td:nth-child(8){
+      display: none !important;
+    }
+  }
+</style>
+@endpush
 <div class="card">
-    <div class="row" style="justify-content: space-between;">
-        <h2 style="margin:0">Movimientos</h2>
-        <a href="{{ route('movements.create') }}" class="btn btn-primary">Registrar Salida</a>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h2 class="m-0" style="font-size:20px;">Movimientos</h2>
+        <a href="{{ route('movements.create') }}" class="btn btn-primary btn-sm">Registrar Salida</a>
     </div>
 </div>
 
 <div class="card">
-    <h3 style="margin-top:0">Abiertos</h3>
-    <table>
+    <h3 class="mt-0" style="font-size:18px;">Abiertos</h3>
+    <div class="table-responsive">
+    <table class="table table-striped align-middle movements-open">
         <thead>
             <tr>
                 <th>#</th>
                 <th>Vehículo</th>
                 <th>Conductor</th>
-                <th>Odómetro Salida</th>
+                <th class="d-none d-sm-table-cell">Odómetro Salida</th>
                 <th>Combustible Salida</th>
                 <th>Fecha/Hora Salida</th>
                 <th>Destino</th>
@@ -44,7 +62,7 @@
                                     <a class="btn btn-secondary btn-icon" href="{{ route('movements.edit', $m) }}" title="Editar" aria-label="Editar">
                                         <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                     </a>
-                                    <form action="{{ route('movements.cancel', $m) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Seguro que deseas cancelar esta salida?');">
+                                    <form action="{{ route('movements.cancel', $m) }}" method="POST" style="display:inline;" onsubmit="return confirm('Â¿Seguro que deseas cancelar esta salida?');">
                                         @csrf
                                         @method('PUT')
                                         <button class="btn btn-secondary btn-icon" type="submit" title="Cancelar" aria-label="Cancelar">
@@ -65,8 +83,9 @@
 </div>
 
 <div class="card">
-    <h3 style="margin-top:0">Cerrados Recientes</h3>
-    <table>
+    <h3 class="mt-0" style="font-size:18px;">Cerrados Recientes</h3>
+    <div class="table-responsive">
+    <table class="table table-striped align-middle">
         <thead>
             <tr>
                 <th>#</th>
@@ -92,5 +111,8 @@
             @endforelse
         </tbody>
     </table>
+    </div>
 </div>
 @endsection
+
+

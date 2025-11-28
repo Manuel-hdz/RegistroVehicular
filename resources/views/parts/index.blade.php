@@ -9,7 +9,8 @@
 </div>
 
 <div class="card">
-    <table>
+    <div class="table-responsive">
+    <table class="table table-striped align-middle" style="width:100%">
         <thead><tr><th>#</th><th>Nombre</th><th>Costo</th><th>Activa</th><th></th></tr></thead>
         <tbody>
             @foreach($parts as $p)
@@ -23,6 +24,7 @@
             @endforeach
         </tbody>
     </table>
+    </div>
     <div style="margin-top:12px;">{{ $parts->links() }}</div>
 </div>
 @endsection

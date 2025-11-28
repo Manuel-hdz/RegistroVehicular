@@ -43,7 +43,8 @@
             @endif
         </div>
     @endif
-    <table>
+    <div class="table-responsive">
+    <table class="table table-striped align-middle" style="width:100%">
         <thead>
         <tr>
             <th>Nombre</th>
@@ -69,6 +70,7 @@
         @endforeach
         </tbody>
     </table>
+    </div>
     @if ($users->total() > 0)
         <div style="margin-top:12px; color:#555; font-size:14px; text-align:right;">
             Mostrando {{ $users->firstItem() }} a {{ $users->lastItem() }} de {{ $users->total() }} resultados

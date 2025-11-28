@@ -1,10 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Registro Vehicular</title>
     @stack('head-pre')
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root{
@@ -16,14 +17,22 @@
             --footer-h: 68px; /* alto footer fijo */
         }
         * { box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:var(--grey-100); color:var(--grey-900); font-size:18px; line-height:1.5; padding-bottom: var(--footer-h); }
+        html, body { overscroll-behavior-y: contain; }
+        /* Cubre el área de rebote superior sin alterar el alto del header */
+        body::before { content:""; position: fixed; top:0; left:0; right:0; height: 28px; background: var(--green); z-index: 1059; pointer-events:none; }
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:var(--grey-100); color:var(--grey-900); font-size:18px; line-height:1.5; }
         header { position: sticky; top:0; z-index:10; background:var(--green); color:#fff; padding:10px 18px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 6px rgba(0,0,0,.15); }
         .brand { display:flex; align-items:center; gap:12px; }
         .brand strong { font-size:20px; letter-spacing:.3px; line-height: 1.1; }
         .brand .sub { display:block; font-size:12px; opacity:.9; font-weight:500; }
+        /* Compactar navbar y títulos */
+        header.navbar { padding: 8px 12px; position: sticky; top: 0; z-index: 1060; background: var(--green); }
+        .navbar-brand strong { font-size: 18px; line-height: 1.1; }
+        .navbar-brand .small { font-size: 12px; opacity: .9; line-height: 1; }
         .logo { height:44px; width:auto; display:block; filter: drop-shadow(0 1px 1px rgba(0,0,0,.15)); background:transparent; }
-        nav a { color:#e8f5ec; margin-right:16px; text-decoration:none; padding:8px 6px; border-bottom:3px solid transparent; font-weight:600; }
-        nav a.active, nav a:hover { color:#ffffff; border-bottom-color: var(--yellow); }
+        /* Estilo opcional para links del menú principal (scoped) */
+        .main-nav .nav-link { color:#e8f5ec; font-weight:600; }
+        .main-nav .nav-link.active, .main-nav .nav-link:hover { color:#ffffff; border-bottom:3px solid var(--yellow); }
         .wrap { max-width: 1100px; margin: 24px auto 32px; padding: 0 18px; }
         .card { background:#fff; border:1px solid var(--grey-300); border-radius:10px; padding:20px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
         h2 { font-size:22px; }
@@ -39,13 +48,8 @@
         table { width:100%; border-collapse: collapse; }
         th, td { text-align:left; padding:12px; border-bottom:1px solid var(--grey-300); font-size:18px; }
         tbody tr:nth-child(odd){ background: #fafafa; }
-        .btn { display:inline-block; padding:12px 18px; border-radius:10px; text-decoration:none; cursor:pointer; border:2px solid transparent; font-weight:700; font-size:18px; min-height:44px; }
-        .btn-primary { background:var(--green); color:#fff; }
-        .btn-primary:hover { filter: brightness(1.05); }
-        .btn-secondary { background:#ffffff; color:var(--grey-900); border-color: var(--grey-300); }
-        .btn-secondary:hover { background:#f9fafb; }
-        .btn-warning { background: var(--yellow); color:#000; }
-        .btn-link { color: var(--green); text-decoration: none; font-weight:700; }
+        /* Evitar override de clases Bootstrap .btn*, mantenemos solo utilidades propias */
+        /* .btn, .btn-primary, .btn-secondary, .btn-warning, .btn-link redefinidas aquÃ­ anteriormente */
         .btn-icon { padding:6px 8px; min-height:auto; line-height:1; }
         /* Spinner para estado de carga */
         .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.6); border-top-color:#fff; border-radius:50%; animation: spin 1s linear infinite; margin-right:8px; vertical-align: text-bottom; }
@@ -53,24 +57,14 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .home-link { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; background:rgba(255,255,255,.15); color:#fff; margin-right:6px; border:2px solid rgba(255,255,255,.25); }
         .home-link:hover { background: rgba(255,255,255,.22); }
-        .row { display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+        /* Evitar override de .row de Bootstrap */
+        /* .row { display:flex; gap:10px; align-items:center; flex-wrap: wrap; } */
         .status { padding:12px 14px; border-radius:8px; background:#e9fff1; color:#065f46; border:2px solid #a7f3d0; margin-bottom:12px; }
         .error { padding:12px 14px; border-radius:8px; background:#fff7ed; color:#9a3412; border:2px solid #fed7aa; margin-bottom:12px; }
         .actions-stick { position: sticky; bottom: calc(var(--footer-h) + 8px); background:#fff; padding-top:12px; }
 
-        /* Footer fijo */
-        footer.footer-fixed { position: fixed; left:0; right:0; bottom:0; height: var(--footer-h); background:#fff; border-top: 4px solid var(--green); display:flex; align-items:center; }
-        .footer-inner { max-width:1100px; margin:0 auto; width:100%; padding:8px 18px; display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
-        .footer-info { display:flex; gap:12px; align-items:center; }
-        .footer-text small { display:block; line-height:1.2; }
+        /* Footer (no fijo) */
         .btn-support { background: var(--yellow); color:#000; border:2px solid rgba(0,0,0,.08); }
-        .footer-actions { display:flex; align-items:center; gap:14px; }
-        .footer-social { display:flex; align-items:center; gap:10px; }
-        .footer-social a { color:#374151; text-decoration:none; font-size:20px; display:inline-flex; width:32px; height:32px; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--grey-300); background:#fff; }
-        .footer-social a:hover { background:#f3f4f6; }
-        .footer-links { display:flex; align-items:center; gap:8px; font-size:14px; }
-        .footer-links a { color:#374151; text-decoration:none; border-bottom:1px dashed transparent; }
-        .footer-links a:hover { border-bottom-color:#374151; }
 
         /* Modal soporte */
         .backdrop { position: fixed; inset:0; background: rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:16px; }
@@ -80,62 +74,110 @@
         .modal .content { padding:18px; font-size:18px; }
         .modal .actions { display:flex; justify-content:flex-end; gap:10px; padding:0 18px 18px; }
         .close-x { position:absolute; right:12px; top:8px; background:transparent; border:none; color:#fff; font-size:24px; line-height:1; cursor:pointer; }
-    </style>
+            /* DataTables */
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label {
+            display: flex; align-items: center; gap: 6px; margin: 0; font-size: 14px; color: #374151;
+        }
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            height: 30px; padding: .25rem .5rem; font-size: .875rem; border: 1px solid #d1d5db; border-radius: .375rem;
+        }
+        .dataTables_wrapper .dataTables_filter input { w
+        @media (max-width: 768px){
+            .dataTables_wrapper .dataTables_filter input { width: 160px; }
+            .dataTables_wrapper .dataTables_length select { width: 90px; }
+        }
+idth: 220px; }
+        @media (max-width: 768px){
+            .dataTables_wrapper .dataTables_filter input { width: 160px; }
+            .dataTables_wrapper .dataTables_length select { width: 90px; }
+        }
+        .dataTables_wrapper .dataTables_info { font-size: 14px; color:#374151; padding-top: .25rem; }
+        .dataTables_wrapper .dataTables_paginate { display:flex; gap:6px; align-items:center; padding-top:.25rem; flex-wrap: nowrap; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding:.25rem .5rem !important; font-size:.875rem; line-height:1.2; border-radius:.375rem !important;
+            border:1px solid #d1d5db !important; background:#fff !important; color:#374151 !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: var(--green) !important; color:#fff !important; border-color: var(--green) !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled { opacity:.5; cursor: default !important; }        .dataTables_wrapper { width: 100% !important; }    </style>
     @stack('head')
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
-<header>
-    <div class="brand">
+<header class="navbar navbar-expand-lg navbar-dark sticky-top" style="background:var(--green)">
+  <div class="container-fluid">
+    @if(request()->is('registroVehicular*'))
+      <a href="{{ route('public.dashboard') }}" class="home-link d-inline-flex me-2" title="Inicio" aria-label="Inicio">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 3l9 8h-3v8h-5v-5H11v5H6v-8H3l9-8z"/>
+        </svg>
+      </a>
+    @endif
+
+    <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+      <img class="logo" src="{{ asset('images/logo_marca.png') }}" alt="Concreto Lanzado de Fresnillo MARCA" onerror="this.style.display='none'" style="height:36px;">
+      <span>
         @if(request()->is('registroVehicular*'))
-            <a href="{{ route('public.dashboard') }}" class="home-link" title="Inicio" aria-label="Inicio">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M12 3l9 8h-3v8h-5v-5H11v5H6v-8H3l9-8z"/>
-                </svg>
-            </a>
-        @endif
-        <img class="logo" src="{{ asset('images/logo_marca.png') }}" alt="Concreto Lanzado de Fresnillo MARCA" onerror="this.style.display='none'">
-        <div>
-            @if(request()->is('registroVehicular*'))
-                <strong>Registro Vehicular</strong>
-                <span class="sub">Concreto Lanzado de Fresnillo MARCA</span>
-            @else
-                <strong>Concreto Lanzado de Fresnillo MARCA</strong>
-            @endif
-        </div>
-    </div>
-    <nav>
-        @auth
-            <a href="{{ route('movements.index') }}" class="{{ request()->routeIs('movements.*') ? 'active' : '' }}">Movimientos</a>
-            @if(in_array(auth()->user()->role, ['admin','superadmin']))
-                <a href="{{ route('departures.index') }}" class="{{ request()->routeIs('departures.*') ? 'active' : '' }}">Salidas</a>
-                <a href="{{ route('vehicles.index') }}" class="{{ request()->routeIs('vehicles.*') ? 'active' : '' }}">Vehículos</a>
-                <a href="{{ route('drivers.index') }}" class="{{ request()->routeIs('drivers.*') ? 'active' : '' }}">Conductores</a>
-                <a href="{{ route('maintenance.index') }}" class="{{ request()->routeIs('maintenance.*') ? 'active' : '' }}">Mantenimiento</a>
-                <a href="{{ route('parts.index') }}" class="{{ request()->routeIs('parts.*') ? 'active' : '' }}">Refacciones</a>
-                <a href="{{ route('mechanics.index') }}" class="{{ request()->routeIs('mechanics.*') ? 'active' : '' }}">Mecánicos</a>
-                <a href="{{ route('repairs.index') }}" class="{{ request()->routeIs('repairs.*') ? 'active' : '' }}">Reparaciones</a>
-            @endif
-            @if(auth()->user()->role === 'superadmin')
-                <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}">Usuarios</a>
-            @endif
-        @endauth
-    </nav>
-    <div>
-        @auth
-            <span style="margin-right:10px; font-weight:600;">{{ trim(auth()->user()->name ?? '') !== '' ? auth()->user()->name : auth()->user()->username }}</span>
-            <form action="{{ route('logout') }}" method="POST" style="display:inline;">
-                @csrf
-                <button class="btn btn-secondary" type="submit">Salir</button>
-            </form>
+          <strong>Registro Vehicular</strong>
+          <span class="d-block small">Concreto Lanzado de Fresnillo MARCA</span>
         @else
-            @if(request()->is('registroVehicular*'))
-                <a class="btn btn-secondary" href="{{ route('login') }}">Entrar</a>
-                <a class="btn btn-link" href="{{ route('public.dashboard') }}">Dashboard Público</a>
-            @endif
+          <strong>Concreto Lanzado de Fresnillo MARCA</strong>
+        @endif
+      </span>
+    </a>
+
+    @if(request()->routeIs('public.dashboard') && !auth()->check())
+      <a class="btn btn-outline-light btn-sm ms-auto" href="{{ route('login') }}">
+        <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar sesión
+      </a>
+    @endif
+
+    @auth<button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#appNavbar" aria-controls="appNavbar" aria-expanded="false" aria-label="Menú">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="appNavbar">
+      <ul class="navbar-nav main-nav me-auto mb-2 mb-lg-0">
+        @auth
+          <li class="nav-item"><a class="nav-link {{ request()->routeIs('movements.*') ? 'active' : '' }}" href="{{ route('movements.index') }}">Movimientos</a></li>
+          @if(in_array(auth()->user()->role, ['admin','superadmin']))
+            <li class="nav-item"><a class="nav-link {{ request()->routeIs('departures.*') ? 'active' : '' }}" href="{{ route('departures.index') }}">Salidas</a></li>
+            <li class="nav-item"><a class="nav-link {{ request()->routeIs('vehicles.*') ? 'active' : '' }}" href="{{ route('vehicles.index') }}">Vehículos</a></li>
+            <li class="nav-item"><a class="nav-link {{ request()->routeIs('drivers.*') ? 'active' : '' }}" href="{{ route('drivers.index') }}">Conductores</a></li>
+            <li class="nav-item"><a class="nav-link {{ request()->routeIs('maintenance.*') ? 'active' : '' }}" href="{{ route('maintenance.index') }}">Mantenimiento</a></li>
+            <li class="nav-item"><a class="nav-link {{ request()->routeIs('parts.*') ? 'active' : '' }}" href="{{ route('parts.index') }}">Refacciones</a></li>
+            <li class="nav-item"><a class="nav-link {{ request()->routeIs('mechanics.*') ? 'active' : '' }}" href="{{ route('mechanics.index') }}">Mecánicos</a></li>
+            <li class="nav-item"><a class="nav-link {{ request()->routeIs('repairs.*') ? 'active' : '' }}" href="{{ route('repairs.index') }}">Reparaciones</a></li>
+          @endif
+          @if(auth()->user()->role === 'superadmin')
+            <li class="nav-item"><a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">Usuarios</a></li>
+          @endif
         @endauth
+      </ul>
+
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+        @auth
+          <li class="nav-item">
+            <span class="navbar-text fw-semibold">{{ trim(auth()->user()->name ?? '') !== '' ? auth()->user()->name : auth()->user()->username }}</span>
+          </li>
+          <li class="nav-item">
+            <form action="{{ route('logout') }}" method="POST" class="d-inline">
+              @csrf
+              <button class="btn btn-outline-light btn-sm" type="submit"><i class="bi bi-box-arrow-right me-1"></i>Salir</button>
+            </form>
+          </li>
+        @else
+          @if(request()->is('registroVehicular*'))
+            <li class="nav-item"><a class="btn btn-outline-light btn-sm" href="{{ route('login') }}">Entrar</a></li>
+            <li class="nav-item"><a class="btn btn-link text-white-50" href="{{ route('public.dashboard') }}">Dashboard Público</a></li>
+          @endif
+        @endauth
+      </ul>    </div>    @endauth
     </div>
-    
+  </div>
 </header>
 <div class="wrap">
     @if (session('status'))
@@ -154,29 +196,26 @@
 
     {{ $slot ?? '' }}
     @yield('content')
-    <footer class="footer-fixed">
-        <div class="footer-inner">
-            <div class="footer-info">
-                <img class="logo" src="{{ asset('images/logo_marca.png') }}" alt="Concreto Lanzado de Fresnillo MARCA" onerror="this.style.display='none'" style="height:36px;">
-                <div class="footer-text">
-                    <strong>Concreto Lanzado de Fresnillo MARCA</strong>
-                    <small>Av Enrique Estrada #755, Las Américas, 99030, Fresnillo, Zacatecas</small>
-                    <small>Desarrollador: Manuel Hernandez</small>
+    <footer class="mt-4 border-top bg-white">
+        <div class="container py-3">
+            <div class="row g-3 align-items-center">
+                <div class="col-12 col-md-6 d-flex align-items-center gap-2">
+                    <img class="logo" src="{{ asset('images/logo_marca.png') }}" alt="Concreto Lanzado de Fresnillo MARCA" onerror="this.style.display='none'" style="height:36px;">
+                    <div class="small">
+                        <strong class="d-block">Concreto Lanzado de Fresnillo MARCA</strong>
+                        <span class="d-block">Av Enrique Estrada #755, Las Américas, 99030, Fresnillo, Zacatecas</span>
+                        <span class="d-block">Desarrollador: Manuel Hernandez</span>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 d-flex justify-content-md-end align-items-center gap-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <a class="btn btn-outline-secondary btn-sm" href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a class="btn btn-outline-secondary btn-sm" href="#" aria-label="X"><i class="bi bi-twitter-x"></i></a>
+                        <a class="btn btn-outline-secondary btn-sm" href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                    </div>
+                    <button type="button" class="btn btn-warning btn-sm" id="btnSupport">Soporte</button>
                 </div>
             </div>
-        <div class="footer-actions">
-                <div class="footer-social">
-                    <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
-                    <a href="#" aria-label="X"><i class="bi bi-twitter-x"></i></a>
-                    <a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
-                </div>
-                <div class="footer-links">
-                    <a href="/sisad">SISAD</a>
-                    <span>•</span>
-                    <a href="/registroVehicular">Registro Vehicular</a>
-                </div>
-                <button type="button" class="btn btn-support" id="btnSupport">Soporte</button>
-        </div>
         </div>
     </footer>
 
@@ -195,6 +234,7 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     (function(){
         const openBtn = document.getElementById('btnSupport');
@@ -209,7 +249,7 @@
         if(backdrop) backdrop.addEventListener('click', function(e){ if(e.target === backdrop) close(); });
         document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
     })();
-    // Deshabilitar botón de envío y mostrar spinner mientras se envía (para POST/PUT/PATCH/DELETE)
+    // Deshabilitar botón de envío y mostrar spinner mientras se envÃ­a (para POST/PUT/PATCH/DELETE)
     (function(){
         let lastClickedSubmit = null;
         document.addEventListener('click', function(e){
@@ -232,7 +272,7 @@
                 const isButton = btn.tagName === 'BUTTON';
                 const original = btn.innerHTML;
                 btn.dataset.original = original;
-                const label = 'Cargando…';
+                const label = 'Cargando';
                 if(isButton){
                     btn.innerHTML = '<span class="spinner"></span><span>'+label+'</span>';
                 } else {
@@ -254,7 +294,7 @@
             });
         });
     })();
-    // Modal de conflicto de sesión (cuenta en uso)
+    // Modal de conflicto de sesiÃ³n (cuenta en uso)
     (function(){
         const conflictMsg = @json(session('session_conflict'));
         if(!conflictMsg) return;
@@ -267,7 +307,7 @@
         const modal = document.createElement('div');
         modal.className = 'modal';
         const header = document.createElement('header');
-        header.innerHTML = '<strong>Sesión cerrada</strong>';
+        header.innerHTML = '<strong>SesiÃ³n cerrada</strong>';
         const content = document.createElement('div');
         content.className = 'content';
         content.textContent = conflictMsg;
@@ -286,3 +326,8 @@
 @stack('scripts')
 </body>
 </html>
+
+
+
+
+
