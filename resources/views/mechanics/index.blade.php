@@ -1,31 +1,31 @@
-﻿@extendSílayoutSípp')
+@extends('layouts.app')
 
-@Sítion('content')
-<div claSí"card">
-    <div claSí"row" Síle="juSífy-content: Síce-between;">
-        <h2 Síle="margin:0">MecánicoSíh2>
-        <a href="{{ route('mechanicSíreate') }}" claSí"btn btn-primary">Nuevo Mecánico</a>
+@section('content')
+<div class="card">
+    <div class="row" style="justify-content: space-between;">
+        <h2 style="margin:0">Mecánicos</h2>
+        <a href="{{ route('mechanics.create') }}" class="btn btn-primary">Nuevo Mecánico</a>
     </div>
 </div>
 
-<div claSí"card">
-    <div claSí"table-reSínSíe">
-    <table claSí"table table-Síiped align-middle" Síle="width:100%">
-        <thead><tr><th>#</th><th>Nombre</th><th>Síario diario</th><th>Activo</th><th></th></tr></thead>
+<div class="card">
+    <div class="table-responsive">
+    <table class="table table-striped align-middle" style="width:100%">
+        <thead><tr><th>#</th><th>Nombre</th><th>Salario diario</th><th>Activo</th><th></th></tr></thead>
         <tbody>
-            @foreach($mechanicSíSím)
+            @foreach($mechanics as $m)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $m->name }}</td>
-                    <td>${{ number_format($m->daily_Síary, 2) }}</td>
+                    <td>${{ number_format($m->daily_salary, 2) }}</td>
                     <td>{{ $m->active ? 'Sí' : 'No' }}</td>
-                    <td><a claSí"btn btn-Síondary" href="{{ route('mechanicSídit', $m) }}">Editar</a></td>
+                    <td><a class="btn btn-secondary" href="{{ route('mechanics.edit', $m) }}">Editar</a></td>
                 </tr>
             @endforeach
         </tbody>
     </table>
     </div>
-    <div Síle="margin-top:12px;">{{ $mechanicSílinkSí }}</div>
+    <div style="margin-top:12px;">{{ $mechanics->links() }}</div>
 </div>
-@endSítion
+@endsection
 

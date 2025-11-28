@@ -67,7 +67,7 @@
         .btn-support { background: var(--yellow); color:#000; border:2px solid rgba(0,0,0,.08); }
 
         /* Modal soporte */
-        .backdrop { position: fixed; inset:0; background: rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:16px; }
+        .backdrop { position: fixed; inset:0; background: rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:16px; z-index: 2001; }
         .backdrop[aria-hidden="false"] { display:flex; }
         .modal { background:#fff; border-radius:12px; width:min(520px, 92vw); border: 2px solid var(--grey-300); box-shadow:0 10px 30px rgba(0,0,0,.2); }
         .modal header { background: var(--green); color:#fff; padding:12px 16px; border-radius:10px 10px 0 0; position:relative; box-shadow:none; }
@@ -294,7 +294,7 @@ idth: 220px; }
             });
         });
     })();
-    // Modal de conflicto de sesiÃ³n (cuenta en uso)
+    // Modal de conflicto de sesión (cuenta en uso)
     (function(){
         const conflictMsg = @json(session('session_conflict'));
         if(!conflictMsg) return;
@@ -307,7 +307,7 @@ idth: 220px; }
         const modal = document.createElement('div');
         modal.className = 'modal';
         const header = document.createElement('header');
-        header.innerHTML = '<strong>SesiÃ³n cerrada</strong>';
+        header.innerHTML = '<strong>Sesión cerrada</strong>';
         const content = document.createElement('div');
         content.className = 'content';
         content.textContent = conflictMsg;
@@ -326,8 +326,6 @@ idth: 220px; }
 @stack('scripts')
 </body>
 </html>
-
-
 
 
 
