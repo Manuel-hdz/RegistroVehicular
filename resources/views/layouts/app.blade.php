@@ -67,12 +67,15 @@
         .btn-support { background: var(--yellow); color:#000; border:2px solid rgba(0,0,0,.08); }
 
         /* Modal soporte */
-        .backdrop { position: fixed; inset:0; background: rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:16px; z-index: 2001; }
+        .backdrop { position: fixed; inset:0; background: rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:12px; z-index: 2001; }
         .backdrop[aria-hidden="false"] { display:flex; }
-        .modal { background:#fff; border-radius:12px; width:min(520px, 92vw); border: 2px solid var(--grey-300); box-shadow:0 10px 30px rgba(0,0,0,.2); }
-        .modal header { background: var(--green); color:#fff; padding:12px 16px; border-radius:10px 10px 0 0; position:relative; box-shadow:none; }
-        .modal .content { padding:18px; font-size:18px; }
-        .modal .actions { display:flex; justify-content:flex-end; gap:10px; padding:0 18px 18px; }
+        /* Forzar modal personalizado por encima y visible pese a Bootstrap */
+        .backdrop .modal { display:block !important; position: relative; z-index: 2002; background:#fff; border-radius:12px; width:min(380px, 90vw); height:auto; max-height:none; border: 1px solid var(--grey-300); box-shadow:0 10px 24px rgba(0,0,0,.18); box-sizing: border-box; }
+        .backdrop .modal header { background: var(--green); color:#fff; padding:8px 12px; border-radius:10px 10px 0 0; position:relative; box-shadow:none; }
+        .backdrop .modal header strong { font-size:15px; }
+        .modal .content { padding:12px; font-size:15px; }
+        @media (max-width: 576px){ .backdrop .modal { max-height: 50vh; } }
+        .modal .actions { display:flex; justify-content:flex-end; gap:6px; padding:0 12px 12px; }
         .close-x { position:absolute; right:12px; top:8px; background:transparent; border:none; color:#fff; font-size:24px; line-height:1; cursor:pointer; }
             /* DataTables */
         .dataTables_wrapper .dataTables_length label,
@@ -314,7 +317,7 @@ idth: 220px; }
         const actions = document.createElement('div');
         actions.className = 'actions';
         const ok = document.createElement('button');
-        ok.className = 'btn btn-secondary';
+        ok.className = 'btn btn-secondary btn-sm';
         ok.textContent = 'Entendido';
         ok.addEventListener('click', ()=> document.body.removeChild(backdrop));
         actions.appendChild(ok);
@@ -326,6 +329,8 @@ idth: 220px; }
 @stack('scripts')
 </body>
 </html>
+
+
 
 
 
