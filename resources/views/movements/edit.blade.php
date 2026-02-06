@@ -8,7 +8,7 @@
         @method('PUT')
         <div>
             <label>Vehículo</label>
-            <select name="vehicle_id" required>
+            <select class="searchable-select" name="vehicle_id" required>
                 @foreach($vehicles as $v)
                     <option value="{{ $v->id }}" @selected(old('vehicle_id', $movement->vehicle_id)==$v->id)>{{ $v->identifier }}</option>
                 @endforeach
@@ -16,7 +16,7 @@
         </div>
         <div>
             <label>Conductor</label>
-            <select name="driver_id" required>
+            <select class="searchable-select" name="driver_id" required>
                 @foreach($drivers as $d)
                     <option value="{{ $d->id }}" @selected(old('driver_id', $movement->driver_id)==$d->id)>{{ $d->name }}</option>
                 @endforeach
@@ -38,7 +38,14 @@
             <label>Combustible salida</label>
             <div class="row" style="gap:8px;">
                 <select name="fuel_out_base">
-                    @php($baseOut = match(true){$movement->fuel_out>=87=> '1', $movement->fuel_out>=62=> '3/4', $movement->fuel_out>=37=> '1/2', default => '1/4'})
+                    @php($baseOut = match(true){
+                        $movement->fuel_out<=12 => 'reserve',
+                        $movement->fuel_out>=87=> '1',
+                        $movement->fuel_out>=62=> '3/4',
+                        $movement->fuel_out>=37=> '1/2',
+                        default => '1/4'
+                    })
+                    <option value="reserve" @selected(old('fuel_out_base', $baseOut)==='reserve')>Reserva</option>
                     <option value="1/4" @selected(old('fuel_out_base', $baseOut)==='1/4')>1/4</option>
                     <option value="1/2" @selected(old('fuel_out_base', $baseOut)==='1/2')>1/2</option>
                     <option value="3/4" @selected(old('fuel_out_base', $baseOut)==='3/4')>3/4</option>
@@ -72,8 +79,15 @@
         <div>
             <label>Combustible entrada</label>
             <div class="row" style="gap:8px;">
-                @php($baseIn = match(true){($movement->fuel_in??0)>=87=> '1', ($movement->fuel_in??0)>=62=> '3/4', ($movement->fuel_in??0)>=37=> '1/2', default => '1/4'})
+                @php($baseIn = match(true){
+                    ($movement->fuel_in ?? 0)<=12 => 'reserve',
+                    ($movement->fuel_in??0)>=87=> '1',
+                    ($movement->fuel_in??0)>=62=> '3/4',
+                    ($movement->fuel_in??0)>=37=> '1/2',
+                    default => '1/4'
+                })
                 <select name="fuel_in_base">
+                    <option value="reserve" @selected(old('fuel_in_base', $baseIn)==='reserve')>Reserva</option>
                     <option value="1/4" @selected(old('fuel_in_base', $baseIn)==='1/4')>1/4</option>
                     <option value="1/2" @selected(old('fuel_in_base', $baseIn)==='1/2')>1/2</option>
                     <option value="3/4" @selected(old('fuel_in_base', $baseIn)==='3/4')>3/4</option>
@@ -102,4 +116,147 @@
         </div>
     </form>
 </div>
+<script>
+    (function(){
+        function makeSearchable(select){
+            if(!select) return;
+            var wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.className = 'searchable-wrapper';
+
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = 'Buscar...';
+            input.className = 'searchable-input';
+            input.autocomplete = 'off';
+
+            var list = document.createElement('ul');
+            list.className = 'searchable-list';
+            list.style.position = 'absolute';
+            list.style.left = '0';
+            list.style.right = '0';
+            list.style.top = '100%';
+            list.style.zIndex = '10';
+            list.style.maxHeight = '160px';
+            list.style.overflowY = 'auto';
+            list.style.margin = '4px 0 0';
+            list.style.padding = '0';
+            list.style.listStyle = 'none';
+            list.style.background = '#fff';
+            list.style.border = '1px solid #ccc';
+            list.style.boxShadow = '0 2px 6px rgba(0,0,0,.1)';
+            list.hidden = true;
+
+            var originalOptions = Array.from(select.options);
+
+            function render(filter){
+                list.innerHTML = '';
+                var term = (filter || '').toLowerCase();
+                originalOptions.forEach(function(opt, idx){
+                    if(idx===0) return; // saltar "Seleccione…"
+                    var text = opt.textContent;
+                    if(term && !text.toLowerCase().includes(term)) return;
+                    var li = document.createElement('li');
+                    li.textContent = text;
+                    li.dataset.value = opt.value;
+                    li.style.padding = '6px 8px';
+                    li.style.cursor = 'pointer';
+                    li.addEventListener('mousedown', function(e){
+                        e.preventDefault();
+                        select.value = opt.value;
+                        input.value = text;
+                        list.hidden = true;
+                    });
+                    list.appendChild(li);
+                });
+                list.hidden = list.children.length === 0;
+            }
+
+            input.addEventListener('focus', function(){
+                input.select();
+                render(input.value);
+            });
+
+            input.addEventListener('input', function(){
+                render(this.value);
+            });
+
+            document.addEventListener('click', function(e){
+                if(!wrapper.contains(e.target)){
+                    list.hidden = true;
+                }
+            });
+
+            select.parentNode.insertBefore(wrapper, select);
+            wrapper.appendChild(input);
+            wrapper.appendChild(list);
+            select.style.display = 'none';
+
+            var selectedOpt = select.selectedOptions[0];
+            if(selectedOpt){
+                input.value = selectedOpt.textContent;
+            }
+        }
+
+        document.querySelectorAll('.searchable-select').forEach(makeSearchable);
+        function toggleDirOnReserve(baseSelect, dirSelect){
+            if(!baseSelect || !dirSelect) return;
+            var sync = function(){
+                var isReserve = baseSelect.value === 'reserve';
+                dirSelect.disabled = isReserve;
+                if(isReserve){
+                    dirSelect.value = 'exact';
+                }
+            };
+            baseSelect.addEventListener('change', sync);
+            sync();
+        }
+
+        toggleDirOnReserve(
+            document.querySelector('select[name=\"fuel_out_base\"]'),
+            document.querySelector('select[name=\"fuel_out_dir\"]')
+        );
+        toggleDirOnReserve(
+            document.querySelector('select[name=\"fuel_in_base\"]'),
+            document.querySelector('select[name=\"fuel_in_dir\"]')
+        );
+        function validateSearchables(form){
+            form.addEventListener('submit', function(e){
+                var hasError = false;
+                document.querySelectorAll('.searchable-wrapper').forEach(function(w){
+                    var input = w.querySelector('.searchable-input');
+                    var select = w.nextElementSibling;
+                    if(!input || !select || select.tagName !== 'SELECT') return;
+                    var options = Array.from(select.options).slice(1);
+                    var term = input.value.trim().toLowerCase();
+                    var match = options.some(function(o){
+                        var text = o.textContent.toLowerCase();
+                        return text.includes(term) || o.value === select.value;
+                    });
+                    var msg = w.querySelector('.searchable-error');
+                    if(!msg){
+                        msg = document.createElement('small');
+                        msg.className = 'searchable-error';
+                        msg.style.color = '#d33';
+                        msg.style.display = 'block';
+                        msg.style.marginTop = '4px';
+                        w.appendChild(msg);
+                    }
+                    if(!match){
+                        hasError = true;
+                        msg.textContent = 'Los datos de vehículo o conductor no se encontraron en la lista.';
+                    }else{
+                        msg.textContent = '';
+                    }
+                });
+                if(hasError){
+                    e.preventDefault();
+                }
+            });
+        }
+
+        var form = document.querySelector('form');
+        if(form) validateSearchables(form);
+    })();
+</script>
 @endsection

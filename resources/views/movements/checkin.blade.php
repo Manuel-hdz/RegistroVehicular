@@ -18,6 +18,7 @@
             <label>Combustible entrada</label>
             <div class="row" style="gap:8px;">
                 <select name="fuel_in_base" required>
+                    <option value="reserve" @selected(old('fuel_in_base')==='reserve')>Reserva</option>
                     <option value="1/4" @selected(old('fuel_in_base')==='1/4')>1/4</option>
                     <option value="1/2" @selected(old('fuel_in_base','1/2')==='1/2')>1/2</option>
                     <option value="3/4" @selected(old('fuel_in_base')==='3/4')>3/4</option>
@@ -56,6 +57,24 @@
             var dd = String(d.getDate()).padStart(2,'0');
             input.value = yyyy + '-' + mm + '-' + dd + 'T08:00';
         }
+
+        function toggleDirOnReserve(baseSelect, dirSelect){
+            if(!baseSelect || !dirSelect) return;
+            var sync = function(){
+                var isReserve = baseSelect.value === 'reserve';
+                dirSelect.disabled = isReserve;
+                if(isReserve){
+                    dirSelect.value = 'exact';
+                }
+            };
+            baseSelect.addEventListener('change', sync);
+            sync();
+        }
+
+        toggleDirOnReserve(
+            document.querySelector('select[name=\"fuel_in_base\"]'),
+            document.querySelector('select[name=\"fuel_in_dir\"]')
+        );
     })();
 </script>
 @endsection

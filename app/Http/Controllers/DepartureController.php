@@ -85,13 +85,14 @@ class DepartureController extends Controller
 
         $callback = function () use ($rows) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['#','Fecha/Hora Salida','Vehículo','Conductor','Registró','Estatus','Destino','Odómetro','Combustible%']);
+            fputcsv($out, ['#','Fecha/Hora Salida','Vehículo','Conductor','Registró','Estatus','Destino','Odómetro','Km recorridos','Combustible%']);
             foreach ($rows as $m) {
                 $status = match ($m->status) {
                     'closed' => 'Completado',
                     'cancelled' => 'Cancelado',
                     default => 'Abierto',
                 };
+                $km = (!is_null($m->odometer_in) && !is_null($m->odometer_out)) ? $m->odometer_in - $m->odometer_out : null;
                 fputcsv($out, [
                     $m->id,
                     optional($m->departed_at)->format('Y-m-d H:i'),
@@ -101,6 +102,7 @@ class DepartureController extends Controller
                     $status,
                     $m->destination,
                     $m->odometer_out,
+                    $km,
                     $m->fuel_out,
                 ]);
             }
@@ -148,13 +150,14 @@ class DepartureController extends Controller
             // HTML básico que Excel interpreta como hoja
             fwrite($out, "<html><head><meta charset=\"UTF-8\"></head><body>");
             fwrite($out, "<table border=\"1\" cellspacing=\"0\" cellpadding=\"2\">\n");
-            fwrite($out, "<tr><th># Operación</th><th>Fecha/Hora Salida</th><th>Vehículo</th><th>Conductor</th><th>Registró</th><th>Estatus</th><th>Destino</th><th>Odómetro</th><th>Combustible%</th></tr>\n");
+            fwrite($out, "<tr><th># Operación</th><th>Fecha/Hora Salida</th><th>Vehículo</th><th>Conductor</th><th>Registró</th><th>Estatus</th><th>Destino</th><th>Odómetro</th><th>Km recorridos</th><th>Combustible%</th></tr>\n");
             foreach ($rows as $m) {
                 $status = match ($m->status) {
                     'closed' => 'Completado',
                     'cancelled' => 'Cancelado',
                     default => 'Abierto',
                 };
+                $km = (!is_null($m->odometer_in) && !is_null($m->odometer_out)) ? $m->odometer_in - $m->odometer_out : null;
                 $cells = [
                     e((string)$m->id),
                     e(optional($m->departed_at)->format('Y-m-d H:i')),
@@ -164,6 +167,7 @@ class DepartureController extends Controller
                     e($status),
                     e($m->destination),
                     e((string)$m->odometer_out),
+                    e($km !== null ? (string)$km : ''),
                     e((string)$m->fuel_out),
                 ];
                 fwrite($out, '<tr><td>'.implode('</td><td>', $cells)."</td></tr>\n");

@@ -32,7 +32,18 @@ class MovementController extends Controller
     {
         $vehicles = Vehicle::where('active', true)->orderBy('identifier')->orderBy('plate')->get();
         $drivers = Driver::where('active', true)->orderBy('name')->get();
-        return view('movements.create', compact('vehicles', 'drivers'));
+        $lastOdometers = Movement::orderByDesc('departed_at')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('vehicle_id')
+            ->mapWithKeys(function ($m) {
+                // prioriza lectura más reciente, usa odómetro de salida si no hay entrada
+                $reading = $m->odometer_in ?? $m->odometer_out;
+                return [$m->vehicle_id => $reading];
+            })
+            ->toArray();
+
+        return view('movements.create', compact('vehicles', 'drivers', 'lastOdometers'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -42,13 +53,16 @@ class MovementController extends Controller
             'driver_id' => ['required', 'exists:drivers,id'],
             'odometer_out' => ['required', 'integer', 'min:0'],
             // combustible vía medida fraccional
-            'fuel_out_base' => ['required', 'in:1/4,1/2,3/4,1'],
-            'fuel_out_dir' => ['required', 'in:below,exact,above'],
+            'fuel_out_base' => ['required', 'in:reserve,1/4,1/2,3/4,1'],
+            'fuel_out_dir' => ['required_unless:fuel_out_base,reserve', 'in:below,exact,above', 'nullable'],
             'departed_at' => ['required', 'date'],
             'destination' => ['nullable', 'string', 'max:255'],
             'notes_out' => ['nullable', 'string'],
         ]);
 
+        if ($data['fuel_out_base'] === 'reserve' && empty($data['fuel_out_dir'])) {
+            $data['fuel_out_dir'] = 'exact';
+        }
         $data['fuel_out'] = $this->fuelToPercent($data['fuel_out_base'], $data['fuel_out_dir']);
         unset($data['fuel_out_base'], $data['fuel_out_dir']);
 
@@ -72,12 +86,15 @@ class MovementController extends Controller
 
         $data = $request->validate([
             'odometer_in' => ['required', 'integer', 'min:' . $movement->odometer_out],
-            'fuel_in_base' => ['required', 'in:1/4,1/2,3/4,1'],
-            'fuel_in_dir' => ['required', 'in:below,exact,above'],
+            'fuel_in_base' => ['required', 'in:reserve,1/4,1/2,3/4,1'],
+            'fuel_in_dir' => ['required_unless:fuel_in_base,reserve', 'in:below,exact,above', 'nullable'],
             'arrived_at' => ['required', 'date', 'after_or_equal:' . $movement->departed_at],
             'notes_in' => ['nullable', 'string'],
         ]);
 
+        if ($data['fuel_in_base'] === 'reserve' && empty($data['fuel_in_dir'])) {
+            $data['fuel_in_dir'] = 'exact';
+        }
         $data['fuel_in'] = $this->fuelToPercent($data['fuel_in_base'], $data['fuel_in_dir']);
         unset($data['fuel_in_base'], $data['fuel_in_dir']);
 
@@ -110,26 +127,26 @@ class MovementController extends Controller
             'driver_id' => ['required','exists:drivers,id'],
             'odometer_out' => ['required','integer','min:0'],
             'fuel_out' => ['nullable','integer','min:0','max:100'],
-            'fuel_out_base' => ['nullable','in:1/4,1/2,3/4,1'],
+            'fuel_out_base' => ['nullable','in:reserve,1/4,1/2,3/4,1'],
             'fuel_out_dir' => ['nullable','in:below,exact,above'],
             'departed_at' => ['required','date'],
             'destination' => ['nullable','string','max:255'],
             'notes_out' => ['nullable','string'],
             'odometer_in' => ['nullable','integer','min:0'],
             'fuel_in' => ['nullable','integer','min:0','max:100'],
-            'fuel_in_base' => ['nullable','in:1/4,1/2,3/4,1'],
+            'fuel_in_base' => ['nullable','in:reserve,1/4,1/2,3/4,1'],
             'fuel_in_dir' => ['nullable','in:below,exact,above'],
             'arrived_at' => ['nullable','date'],
             'notes_in' => ['nullable','string'],
             'status' => ['required','string'],
         ]);
-        if (!empty($data['fuel_out_base']) && !empty($data['fuel_out_dir'])) {
-            $data['fuel_out'] = $this->fuelToPercent($data['fuel_out_base'], $data['fuel_out_dir']);
+        if (!empty($data['fuel_out_base']) && (!empty($data['fuel_out_dir']) || $data['fuel_out_base'] === 'reserve')) {
+            $data['fuel_out'] = $this->fuelToPercent($data['fuel_out_base'], $data['fuel_out_dir'] ?? 'exact');
         }
         unset($data['fuel_out_base'], $data['fuel_out_dir']);
 
-        if (!empty($data['fuel_in_base']) && !empty($data['fuel_in_dir'])) {
-            $data['fuel_in'] = $this->fuelToPercent($data['fuel_in_base'], $data['fuel_in_dir']);
+        if (!empty($data['fuel_in_base']) && (!empty($data['fuel_in_dir']) || $data['fuel_in_base'] === 'reserve')) {
+            $data['fuel_in'] = $this->fuelToPercent($data['fuel_in_base'], $data['fuel_in_dir'] ?? 'exact');
         }
         unset($data['fuel_in_base'], $data['fuel_in_dir']);
 
@@ -151,6 +168,7 @@ class MovementController extends Controller
     private function fuelToPercent(string $base, string $dir): int
     {
         $map = [
+            'reserve' => 5,
             '1/4' => 25,
             '1/2' => 50,
             '3/4' => 75,
@@ -158,10 +176,12 @@ class MovementController extends Controller
         ];
         $pct = $map[$base] ?? 50;
         $delta = 10; // ajuste aproximado
-        if ($dir === 'above') {
-            $pct = min(100, $pct + $delta);
-        } elseif ($dir === 'below') {
-            $pct = max(0, $pct - $delta);
+        if ($base !== 'reserve') {
+            if ($dir === 'above') {
+                $pct = min(100, $pct + $delta);
+            } elseif ($dir === 'below') {
+                $pct = max(0, $pct - $delta);
+            }
         }
         return (int) $pct;
     }

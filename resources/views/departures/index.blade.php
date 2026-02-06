@@ -63,6 +63,7 @@
                 <th>Conductor</th>
                 <th>Registró</th>
                 <th>Estatus</th>
+                <th>Km recorridos</th>
                 <th>Destino</th>
                 @auth
                     @if(auth()->user()->role === 'superadmin')
@@ -91,6 +92,10 @@
                                 <span style="display:inline-block; padding:4px 8px; border-radius:12px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8;">Abierto</span>
                         @endswitch
                     </td>
+                    <td>
+                        @php($km = (!is_null($m->odometer_in) && !is_null($m->odometer_out)) ? $m->odometer_in - $m->odometer_out : null)
+                        {{ ($km !== null && $km >= 0) ? $km . ' km' : '—' }}
+                    </td>
                     <td>{{ $m->destination }}</td>
                     @auth
                         @if(auth()->user()->role === 'superadmin')
@@ -112,7 +117,7 @@
                     @endauth
                 </tr>
             @empty
-                <tr><td colspan="6">Sin registros de salidas</td></tr>
+                <tr><td colspan="{{ auth()->check() && auth()->user()->role === 'superadmin' ? 9 : 8 }}">Sin registros de salidas</td></tr>
             @endforelse
         </tbody>
     </table>
