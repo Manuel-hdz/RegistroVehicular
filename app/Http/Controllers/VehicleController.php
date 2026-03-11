@@ -25,7 +25,7 @@ class VehicleController extends Controller
     {
         $data = $request->validate([
             'plate' => ['required', 'string', 'max:50', 'unique:vehicles,plate'],
-            'vtype' => ['nullable','in:auto,pickup,furgoneta,camion'],
+            'vtype' => ['nullable','in:auto,pickup,furgoneta,camion,transporte_personal,remolcable,equipo_pesado,trompo'],
             'identifier' => ['nullable', 'string', 'max:100'],
             'model' => ['nullable', 'string', 'max:100'],
             'year' => ['nullable', 'integer', 'min:1900', 'max:2100'],
@@ -46,7 +46,7 @@ class VehicleController extends Controller
     {
         $data = $request->validate([
             'plate' => ['required', 'string', 'max:50', 'unique:vehicles,plate,' . $vehicle->id],
-            'vtype' => ['nullable','in:auto,pickup,furgoneta,camion'],
+            'vtype' => ['nullable','in:auto,pickup,furgoneta,camion,transporte_personal,remolcable,equipo_pesado,trompo'],
             'identifier' => ['nullable', 'string', 'max:100'],
             'model' => ['nullable', 'string', 'max:100'],
             'year' => ['nullable', 'integer', 'min:1900', 'max:2100'],

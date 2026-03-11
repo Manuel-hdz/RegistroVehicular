@@ -1,6 +1,18 @@
 ﻿@extends('layouts.app')
 
 @section('content')
+@php
+    $typeLabels = [
+        'auto' => 'Auto',
+        'pickup' => 'Pickup',
+        'furgoneta' => 'Furgoneta',
+        'camion' => 'Camion',
+        'transporte_personal' => 'Transporte personal',
+        'remolcable' => 'Remolcable',
+        'equipo_pesado' => 'Equipo pesado',
+        'trompo' => 'Trompo',
+    ];
+@endphp
 <div class="card">
     <div class="row" style="justify-content: space-between;">
         <h2 style="margin:0">Vehículos</h2>
@@ -35,6 +47,7 @@
             <tr>
                 <th>#</th>
                 <th>Identificador</th>
+                <th>Tipo</th>
                 <th>Modelo</th>
                 <th>Año</th>
                 <th>Activo</th>
@@ -46,6 +59,12 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $v->identifier }}</td>
+                    <td>
+                        <span class="d-inline-flex align-items-center gap-2">
+                            @include('vehicles.partials.vtype-icon', ['type' => $v->vtype, 'size' => 22, 'class' => 'text-secondary'])
+                            <span>{{ $typeLabels[$v->vtype] ?? 'Auto' }}</span>
+                        </span>
+                    </td>
                     <td>{{ $v->model }}</td>
                     <td>{{ $v->year }}</td>
                     <td>{{ $v->active ? 'Sí' : 'No' }}</td>
@@ -75,5 +94,3 @@
 @push('head-pre')
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 @endpush
-
-

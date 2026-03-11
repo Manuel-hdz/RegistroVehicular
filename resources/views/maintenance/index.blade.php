@@ -10,7 +10,11 @@
   .backdrop .modal .content { max-height: 70vh; overflow:auto; }
   /* Icono más grande y clicable */
   .maint-icon svg { width: 72px; height: 72px; }
-  @media (max-width: 576px){ .maint-icon svg { width: 64px; height: 64px; } }
+  .maint-icon i { font-size: 72px; line-height: 1; }
+  @media (max-width: 576px){
+    .maint-icon svg { width: 64px; height: 64px; }
+    .maint-icon i { font-size: 64px; }
+  }
 </style>
 @endpush
 <div class="card">
@@ -34,19 +38,7 @@
                     data-availability="{{ $v->availability }}"
                     data-note="{{ $v->maintenance_note }}"
                     data-title="{{ $title }}">
-                    @switch($v->vtype)
-                        @case('camion')
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 7h10v7h2.5a2.5 2.5 0 0 1 2.45 2h.55a2.5 2.5 0 1 1 0 1H18a2.5 2.5 0 0 1-4.9 0H8.9a2.5 2.5 0 0 1-4.9 0H3V8a1 1 0 0 1 0-1Zm11 1H4v6h10V8Zm1 6h2.5a1.5 1.5 0  0 1 1.5 1.5V16h-5v-.5A1.5 1.5 0 0 1 15 14Z"/></svg>
-                            @break
-                        @case('pickup')
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 13v-2a2 2 0 0 1 2-2h4l2 3h6a2 2 0 0 1 2 2v2h-1a2.5 2.5 0 1 1-5 0H9a2.5 2.5 0 1 1-5 0H3v-3Zm3-2a1 1 0 0 0-1 1v1h6l-1.33-2H6Z"/></svg>
-                            @break
-                        @case('furgoneta')
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 12h11V7h4l3 4v5h-1a2.5 2.5 0 1 1-5 0H9a2.5 2.5 0 1 1-5 0H2v-4Zm17 0h2l-2-3h-2v3Z"/></svg>
-                            @break
-                        @default
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 11l2.5-4.5A2 2 0 0 1 9.2 5h5.6a2 2 0 0 1 1.7 1L19 11h1a1 1 0 0 1 1 1v3h-1.05a2.5 2.5 0 1 1-4.9 0H9.95a2.5 2.5 0 1 1-4.9 0H4v-3a1 1 0 0 1 1-1h0Zm2.3 0h9.4l-1.8-3.24a1 1 0 0 0-.87-.5H9.2a1 1 0 0 0-.87.5L7.3 11Z"/></svg>
-                    @endswitch
+                    @include('vehicles.partials.vtype-icon', ['type' => $v->vtype, 'size' => 64])
                 </button>
                 <div>
                     <strong>{{ $title }}</strong>
