@@ -103,6 +103,39 @@
             border-color: rgba(0,0,0,.1);
             box-shadow: 0 4px 10px rgba(0,0,0,.16);
         }
+        .main-nav .dropdown-toggle::after {
+            margin-left: .25rem;
+            vertical-align: middle;
+        }
+        .main-nav .dropdown-menu {
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,.12);
+            background: #f7fff9;
+            padding: .35rem;
+            min-width: 228px;
+            box-shadow: 0 14px 24px rgba(0,0,0,.14);
+        }
+        .main-nav .dropdown-item {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            border-radius: 9px;
+            font-size: .9rem;
+            font-weight: 600;
+            color: #13412f;
+            padding: .48rem .65rem;
+            transition: all .18s ease;
+        }
+        .main-nav .dropdown-item:hover,
+        .main-nav .dropdown-item:focus {
+            color: #0e2f22;
+            background: #e6f7ec;
+        }
+        .main-nav .dropdown-item.active,
+        .main-nav .dropdown-item:active {
+            color: #04281b;
+            background: #c8f0d5;
+        }
 
         .user-pill {
             display: inline-flex;
@@ -153,6 +186,29 @@
                 box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
             }
             .main-nav .nav-link { width: 100%; border-radius: 10px; }
+            .main-nav .dropdown-menu {
+                position: static !important;
+                float: none;
+                min-width: 100%;
+                margin-top: .35rem;
+                padding: .35rem;
+                background: rgba(255,255,255,.12);
+                border-color: rgba(255,255,255,.24);
+                box-shadow: none;
+            }
+            .main-nav .dropdown-item {
+                color: #f2fff7;
+            }
+            .main-nav .dropdown-item:hover,
+            .main-nav .dropdown-item:focus {
+                color: #ffffff;
+                background: rgba(255,255,255,.2);
+            }
+            .main-nav .dropdown-item.active,
+            .main-nav .dropdown-item:active {
+                color: #04281b;
+                background: linear-gradient(180deg, #ffe38c, var(--yellow));
+            }
             .user-nav .nav-item { width: 100%; }
             .user-pill, .btn-logout { width: 100%; justify-content: center; }
             .navbar-brand strong { font-size: .94rem; }
@@ -299,49 +355,118 @@
 
             <div class="collapse navbar-collapse app-navbar-collapse" id="appNavbar">
                 <div class="navbar-shell">
+                    @php($isAdminMenu = in_array(auth()->user()->role, ['admin','superadmin']))
                     <ul class="navbar-nav main-nav me-auto mb-0">
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('movements.*') ? 'active' : '' }}" href="{{ route('movements.index') }}">
-                                <i class="bi bi-arrow-left-right"></i><span>Movimientos</span>
-                            </a>
-                        </li>
-                        @if(in_array(auth()->user()->role, ['admin','superadmin']))
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('departures.*') ? 'active' : '' }}" href="{{ route('departures.index') }}">
-                                    <i class="bi bi-box-arrow-up-right"></i><span>Salidas</span>
+                        @if($isAdminMenu)
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('movements.*') || request()->routeIs('departures.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    <i class="bi bi-arrow-left-right"></i><span>Movimientos</span>
                                 </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('movements.*') ? 'active' : '' }}" href="{{ route('movements.index') }}">
+                                            <i class="bi bi-arrow-left-right"></i><span>Movimientos</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('departures.*') ? 'active' : '' }}" href="{{ route('departures.index') }}">
+                                            <i class="bi bi-box-arrow-up-right"></i><span>Salidas</span>
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
+                        @else
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('vehicles.*') ? 'active' : '' }}" href="{{ route('vehicles.index') }}">
-                                    <i class="bi bi-truck"></i><span>Vehículos</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('drivers.*') ? 'active' : '' }}" href="{{ route('drivers.index') }}">
-                                    <i class="bi bi-person-vcard"></i><span>Conductores</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('maintenance.*') ? 'active' : '' }}" href="{{ route('maintenance.index') }}">
-                                    <i class="bi bi-tools"></i><span>Mantenimiento</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('parts.*') ? 'active' : '' }}" href="{{ route('parts.index') }}">
-                                    <i class="bi bi-gear-wide-connected"></i><span>Refacciones</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('mechanics.*') ? 'active' : '' }}" href="{{ route('mechanics.index') }}">
-                                    <i class="bi bi-wrench-adjustable-circle"></i><span>Mecánicos</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('repairs.*') ? 'active' : '' }}" href="{{ route('repairs.index') }}">
-                                    <i class="bi bi-shield-check"></i><span>Reparaciones</span>
+                                <a class="nav-link {{ request()->routeIs('movements.*') ? 'active' : '' }}" href="{{ route('movements.index') }}">
+                                    <i class="bi bi-arrow-left-right"></i><span>Movimientos</span>
                                 </a>
                             </li>
                         @endif
+
+                        @if($isAdminMenu)
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('maintenance.*') || request()->routeIs('repairs.*') || request()->routeIs('mechanics.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    <i class="bi bi-tools"></i><span>Mantenimiento</span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('maintenance.*') ? 'active' : '' }}" href="{{ route('maintenance.index') }}">
+                                            <i class="bi bi-tools"></i><span>Mantenimiento</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('repairs.*') ? 'active' : '' }}" href="{{ route('repairs.index') }}">
+                                            <i class="bi bi-shield-check"></i><span>Reparaciones</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('parts.*') ? 'active' : '' }}" href="{{ route('parts.index') }}">
+                                            <i class="bi bi-gear-wide-connected"></i><span>Refacciones</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('mechanics.*') ? 'active' : '' }}" href="{{ route('mechanics.index') }}">
+                                            <i class="bi bi-wrench-adjustable-circle"></i><span>Mecánicos</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('vehicles.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    <i class="bi bi-building-gear"></i><span>Administración</span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('vehicles.*') ? 'active' : '' }}" href="{{ route('vehicles.index') }}">
+                                            <i class="bi bi-truck"></i><span>Vehículos</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('hr.*') || request()->routeIs('personnel.*') || request()->routeIs('cardex.*') || request()->routeIs('drivers.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    <i class="bi bi-people"></i><span>Recursos Humanos</span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('personnel.*') ? 'active' : '' }}" href="{{ route('personnel.index') }}">
+                                            <i class="bi bi-person-lines-fill"></i><span>Personal</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('cardex.index') ? 'active' : '' }}" href="{{ route('cardex.index') }}">
+                                            <i class="bi bi-calendar3-week"></i><span>Kardex</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('cardex.import.*') ? 'active' : '' }}" href="{{ route('cardex.import.index') }}">
+                                            <i class="bi bi-file-earmark-arrow-up"></i><span>Cargar documentos</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('drivers.*') ? 'active' : '' }}" href="{{ route('drivers.index') }}">
+                                            <i class="bi bi-person-vcard"></i><span>Conductores</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('parts.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    <i class="bi bi-box-seam"></i><span>Almacén</span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('parts.*') ? 'active' : '' }}" href="{{ route('parts.index') }}">
+                                            <i class="bi bi-gear-wide-connected"></i><span>Refacciones</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        @endif
+
                         @if(auth()->user()->role === 'superadmin')
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
@@ -448,7 +573,7 @@
         const navbar = document.getElementById('appNavbar');
         if(!navbar || typeof bootstrap === 'undefined') return;
         const collapse = bootstrap.Collapse.getOrCreateInstance(navbar, { toggle: false });
-        navbar.querySelectorAll('.nav-link').forEach(function(link){
+        navbar.querySelectorAll('.nav-link, .dropdown-item').forEach(function(link){
             link.addEventListener('click', function(){
                 if(window.innerWidth < 992 && navbar.classList.contains('show')){
                     collapse.hide();

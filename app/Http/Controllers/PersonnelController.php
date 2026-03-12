@@ -1,0 +1,201 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Personnel;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
+
+class PersonnelController extends Controller
+{
+    public function index(Request $request): View
+    {
+        $personnelList = Personnel::orderBy('last_name')
+            ->orderBy('first_name')
+            ->get();
+
+        $selectedPersonnelId = (int) $request->input('personnel_id');
+        if ($selectedPersonnelId <= 0 && $personnelList->isNotEmpty()) {
+            $selectedPersonnelId = (int) $personnelList->first()->id;
+        }
+
+        $selectedPersonnel = $personnelList->firstWhere('id', $selectedPersonnelId);
+        $emptyFields = [];
+
+        if ($selectedPersonnel) {
+            $fieldLabels = [
+                'curp' => 'CURP',
+                'rfc' => 'RFC',
+                'nss' => 'NSS',
+                'department' => 'Departamento',
+                'position' => 'Puesto',
+                'hire_date' => 'Fecha de ingreso',
+                'phone' => 'Telefono',
+                'email' => 'Correo',
+                'address' => 'Domicilio',
+                'emergency_contact_name' => 'Contacto de emergencia',
+                'emergency_contact_phone' => 'Telefono de emergencia',
+                'photo_path' => 'Fotografia',
+            ];
+
+            foreach ($fieldLabels as $field => $label) {
+                $value = data_get($selectedPersonnel, $field);
+                if (blank($value)) {
+                    $emptyFields[] = $label;
+                }
+            }
+        }
+
+        return view('personnel.index', compact(
+            'personnelList',
+            'selectedPersonnelId',
+            'selectedPersonnel',
+            'emptyFields'
+        ));
+    }
+
+    public function create(): View
+    {
+        return view('personnel.create');
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $this->validatePayload($request);
+        $data['active'] = $request->has('active');
+        $data['photo_path'] = $this->storePhoto($request);
+        $data['terminated_at'] = $data['active'] ? null : now()->toDateString();
+
+        $personnel = Personnel::create($data);
+
+        return redirect()->route('personnel.index', ['personnel_id' => $personnel->id])
+            ->with('status', 'Personal creado.');
+    }
+
+    public function edit(Personnel $personnel): View
+    {
+        return view('personnel.edit', compact('personnel'));
+    }
+
+    public function update(Request $request, Personnel $personnel): RedirectResponse
+    {
+        $data = $this->validatePayload($request, $personnel->id);
+        $data['active'] = $request->has('active');
+        $newPhotoPath = $this->storePhoto($request);
+        if ($newPhotoPath) {
+            $this->deletePhoto($personnel->photo_path);
+            $data['photo_path'] = $newPhotoPath;
+        }
+
+        if ($data['active']) {
+            $data['terminated_at'] = null;
+        } else {
+            $data['terminated_at'] = $personnel->terminated_at ?: now()->toDateString();
+        }
+
+        $personnel->update($data);
+
+        return redirect()->route('personnel.index', ['personnel_id' => $personnel->id])
+            ->with('status', 'Personal actualizado.');
+    }
+
+    public function deactivate(Request $request, Personnel $personnel): RedirectResponse
+    {
+        $request->validate([
+            'terminated_at' => ['nullable', 'date'],
+        ]);
+
+        $terminatedAt = $request->input('terminated_at');
+        if (!$terminatedAt) {
+            $terminatedAt = now()->toDateString();
+        }
+
+        $personnel->update([
+            'active' => false,
+            'terminated_at' => $terminatedAt,
+        ]);
+
+        return redirect()->route('personnel.index', ['personnel_id' => $personnel->id])
+            ->with('status', 'Personal dado de baja.');
+    }
+
+    public function reactivate(Personnel $personnel): RedirectResponse
+    {
+        $personnel->update([
+            'active' => true,
+            'terminated_at' => null,
+        ]);
+
+        return redirect()->route('personnel.index', ['personnel_id' => $personnel->id])
+            ->with('status', 'Personal reactivado.');
+    }
+
+    public function destroy(Personnel $personnel): RedirectResponse
+    {
+        $this->deletePhoto($personnel->photo_path);
+        $personnel->delete();
+
+        return redirect()->route('personnel.index')->with('status', 'Personal eliminado.');
+    }
+
+    private function validatePayload(Request $request, ?int $personnelId = null): array
+    {
+        $employeeUnique = 'unique:personnels,employee_number';
+        if ($personnelId) {
+            $employeeUnique .= ',' . $personnelId;
+        }
+
+        return $request->validate([
+            'employee_number' => ['required', 'string', 'max:50', $employeeUnique],
+            'first_name' => ['required', 'string', 'max:120'],
+            'last_name' => ['required', 'string', 'max:120'],
+            'middle_name' => ['nullable', 'string', 'max:120'],
+            'curp' => ['nullable', 'string', 'max:18'],
+            'rfc' => ['nullable', 'string', 'max:13'],
+            'nss' => ['nullable', 'string', 'max:20'],
+            'department' => ['nullable', 'string', 'max:120'],
+            'position' => ['nullable', 'string', 'max:120'],
+            'hire_date' => ['nullable', 'date'],
+            'phone' => ['nullable', 'string', 'max:40'],
+            'email' => ['nullable', 'email', 'max:150'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'emergency_contact_name' => ['nullable', 'string', 'max:150'],
+            'emergency_contact_phone' => ['nullable', 'string', 'max:40'],
+            'photo' => ['nullable', 'image', 'max:3072'],
+            'active' => ['nullable', 'boolean'],
+        ]);
+    }
+
+    private function storePhoto(Request $request): ?string
+    {
+        if (!$request->hasFile('photo')) {
+            return null;
+        }
+
+        $directory = public_path('images/personnel');
+        if (!File::isDirectory($directory)) {
+            File::makeDirectory($directory, 0755, true);
+        }
+
+        $extension = $request->file('photo')->getClientOriginalExtension();
+        $fileName = Str::uuid()->toString() . '.' . $extension;
+        $request->file('photo')->move($directory, $fileName);
+
+        return 'images/personnel/' . $fileName;
+    }
+
+    private function deletePhoto(?string $photoPath): void
+    {
+        if (!$photoPath) {
+            return;
+        }
+
+        $absolutePath = public_path($photoPath);
+        if (File::exists($absolutePath)) {
+            File::delete($absolutePath);
+        }
+    }
+}
