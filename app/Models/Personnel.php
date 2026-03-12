@@ -57,6 +57,10 @@ class Personnel extends Model
             return null;
         }
 
-        return asset($this->photo_path);
+        if (str_starts_with($this->photo_path, 'images/')) {
+            return asset($this->photo_path);
+        }
+
+        return route('personnel.photo', $this);
     }
 }

@@ -42,6 +42,7 @@ Route::prefix('registroVehicular')->group(function () {
             Route::resource('vehicles', VehicleController::class)->only(['index', 'create', 'store', 'edit', 'update']);
             Route::resource('drivers', DriverController::class)->only(['index', 'create', 'store', 'edit', 'update']);
             Route::resource('personnel', PersonnelController::class)->only(['index', 'create', 'store', 'edit', 'update']);
+            Route::get('/personnel/{personnel}/photo', [PersonnelController::class, 'photo'])->name('personnel.photo');
             Route::patch('/personnel/{personnel}/deactivate', [PersonnelController::class, 'deactivate'])->name('personnel.deactivate');
             Route::patch('/personnel/{personnel}/reactivate', [PersonnelController::class, 'reactivate'])->name('personnel.reactivate');
 

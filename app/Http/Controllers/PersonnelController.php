@@ -6,8 +6,10 @@ use App\Models\Personnel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PersonnelController extends Controller
 {
@@ -141,6 +143,28 @@ class PersonnelController extends Controller
         return redirect()->route('personnel.index')->with('status', 'Personal eliminado.');
     }
 
+    public function photo(Personnel $personnel): BinaryFileResponse
+    {
+        $photoPath = (string) ($personnel->photo_path ?? '');
+        if ($photoPath === '') {
+            abort(404);
+        }
+
+        if (str_starts_with($photoPath, 'images/')) {
+            $legacyPath = public_path($photoPath);
+            if (!File::exists($legacyPath)) {
+                abort(404);
+            }
+            return response()->file($legacyPath);
+        }
+
+        if (!Storage::disk('local')->exists($photoPath)) {
+            abort(404);
+        }
+
+        return response()->file(Storage::disk('local')->path($photoPath));
+    }
+
     private function validatePayload(Request $request, ?int $personnelId = null): array
     {
         $employeeUnique = 'unique:personnels,employee_number';
@@ -175,16 +199,12 @@ class PersonnelController extends Controller
             return null;
         }
 
-        $directory = public_path('images/personnel');
-        if (!File::isDirectory($directory)) {
-            File::makeDirectory($directory, 0755, true);
-        }
-
         $extension = $request->file('photo')->getClientOriginalExtension();
         $fileName = Str::uuid()->toString() . '.' . $extension;
-        $request->file('photo')->move($directory, $fileName);
+        $path = 'personnel/photos/' . $fileName;
+        $request->file('photo')->storeAs('personnel/photos', $fileName, 'local');
 
-        return 'images/personnel/' . $fileName;
+        return $path;
     }
 
     private function deletePhoto(?string $photoPath): void
@@ -193,9 +213,14 @@ class PersonnelController extends Controller
             return;
         }
 
-        $absolutePath = public_path($photoPath);
-        if (File::exists($absolutePath)) {
-            File::delete($absolutePath);
+        if (str_starts_with($photoPath, 'images/')) {
+            $absolutePath = public_path($photoPath);
+            if (File::exists($absolutePath)) {
+                File::delete($absolutePath);
+            }
+            return;
         }
+
+        Storage::disk('local')->delete($photoPath);
     }
 }
