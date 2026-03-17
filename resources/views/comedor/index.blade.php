@@ -411,9 +411,10 @@
     }
 
     .comedor-confirm {
-        color: #fff7ef;
-        background: linear-gradient(180deg, var(--comedor-red), var(--comedor-red-deep));
-        box-shadow: 0 16px 26px rgba(159, 23, 19, .18);
+        color: #ffffff;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, .28);
+        background: linear-gradient(180deg, #b91c1c, #7f1212);
+        box-shadow: 0 16px 26px rgba(127, 18, 18, .24);
     }
 
     .comedor-cancel {
@@ -506,7 +507,7 @@
             <span class="comedor-kicker"><i class="bi bi-cup-hot-fill"></i> Registro libre</span>
             <h1 class="comedor-title">Comedor</h1>
             <p class="comedor-copy">
-                Presiona el botón rojo, escribe tu nombre y el sistema guardará automáticamente tu nombre, la fecha y la hora.
+                Presiona el botón rojo, escribe tu nombre para solicitar comida el dia de hoy.
             </p>
         </div>
 
