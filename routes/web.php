@@ -72,6 +72,7 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(fu
 
     Route::prefix('administracion')->group(function () {
         Route::middleware('role:admin')->group(function () {
+            Route::get('/vehiculos/{vehicle}/documentos/{document}', [VehicleController::class, 'document'])->name('vehicles.document');
             Route::resource('vehiculos', VehicleController::class)
                 ->parameters(['vehiculos' => 'vehicle'])
                 ->names('vehicles')

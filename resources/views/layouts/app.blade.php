@@ -415,6 +415,11 @@
                                         </a>
                                     </li>
                                     <li>
+                                        <a class="dropdown-item {{ request()->routeIs('vehicles.*') ? 'active' : '' }}" href="{{ route('vehicles.index') }}">
+                                            <i class="bi bi-truck"></i><span>Consulta de unidades</span>
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item {{ request()->routeIs('repairs.*') ? 'active' : '' }}" href="{{ route('repairs.index') }}">
                                             <i class="bi bi-shield-check"></i><span>Reparaciones</span>
                                         </a>
@@ -486,6 +491,11 @@
                                     <li>
                                         <a class="dropdown-item {{ request()->routeIs('parts.*') ? 'active' : '' }}" href="{{ route('parts.index') }}">
                                             <i class="bi bi-gear-wide-connected"></i><span>Refacciones</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('vehicles.*') ? 'active' : '' }}" href="{{ route('vehicles.index') }}">
+                                            <i class="bi bi-truck"></i><span>Unidades</span>
                                         </a>
                                     </li>
                                 </ul>

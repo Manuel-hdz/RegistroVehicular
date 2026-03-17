@@ -19,6 +19,15 @@ class Vehicle extends Model
         'active',
         'availability',
         'maintenance_note',
+        'serial_number',
+        'additional_serial_number',
+        'engine_number',
+        'supplier',
+        'assigned_personnel',
+        'description',
+        'photo_path',
+        'circulation_card_path',
+        'insurance_policy_path',
     ];
 
     protected $casts = [
@@ -29,5 +38,32 @@ class Vehicle extends Model
     public function movements(): HasMany
     {
         return $this->hasMany(Movement::class);
+    }
+
+    public function getCirculationCardUrlAttribute(): ?string
+    {
+        if (!$this->circulation_card_path) {
+            return null;
+        }
+
+        return route('vehicles.document', ['vehicle' => $this, 'document' => 'circulation-card']);
+    }
+
+    public function getInsurancePolicyUrlAttribute(): ?string
+    {
+        if (!$this->insurance_policy_path) {
+            return null;
+        }
+
+        return route('vehicles.document', ['vehicle' => $this, 'document' => 'insurance-policy']);
+    }
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if (!$this->photo_path) {
+            return null;
+        }
+
+        return route('vehicles.document', ['vehicle' => $this, 'document' => 'photo']);
     }
 }
