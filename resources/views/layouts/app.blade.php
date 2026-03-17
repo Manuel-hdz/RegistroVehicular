@@ -307,10 +307,30 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
+@php($isSystemArea = request()->routeIs(
+    'login',
+    'login.post',
+    'logout',
+    'public.dashboard',
+    'dashboard.graph.*',
+    'movements.*',
+    'departures.*',
+    'maintenance.*',
+    'repairs.*',
+    'mechanics.*',
+    'vehicles.*',
+    'users.*',
+    'hr.*',
+    'personnel.*',
+    'cardex.*',
+    'drivers.*',
+    'parts.*',
+    'comedor.*'
+))
 <header class="navbar navbar-expand-lg navbar-dark sticky-top app-navbar">
     <div class="container-fluid">
         <div class="d-flex align-items-center gap-2">
-            @if(request()->is('registroVehicular*'))
+            @if($isSystemArea)
                 <a href="{{ route('public.dashboard') }}" class="home-link" title="Inicio" aria-label="Inicio">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path d="M12 3l9 8h-3v8h-5v-5H11v5H6v-8H3l9-8z"/>
@@ -321,7 +341,7 @@
             <a class="navbar-brand d-flex align-items-center gap-2" href="{{ auth()->check() ? route('movements.index') : route('public.dashboard') }}">
                 <img class="logo" src="{{ asset('images/logo_marca.png') }}" alt="Concreto Lanzado de Fresnillo MARCA" onerror="this.style.display='none'" style="height:36px;">
                 <span>
-                    @if(request()->is('registroVehicular*'))
+                    @if($isSystemArea)
                         <strong>Registro Vehicular</strong>
                         <span class="d-block small">Concreto Lanzado de Fresnillo MARCA</span>
                     @else
@@ -337,7 +357,7 @@
             </a>
         @endif
 
-        @if(!auth()->check() && request()->is('registroVehicular*') && !request()->routeIs('public.dashboard'))
+        @if(!auth()->check() && $isSystemArea && !request()->routeIs('public.dashboard'))
             <div class="guest-actions ms-auto d-flex align-items-center gap-2">
                 <a class="btn btn-outline-light btn-sm px-3" href="{{ route('login') }}">
                     <i class="bi bi-box-arrow-in-right me-1"></i>Entrar

@@ -26,7 +26,7 @@ class ComedorFeatureTest extends TestCase
 
     public function test_guest_is_redirected_to_login_when_trying_to_view_comedor_records(): void
     {
-        $response = $this->get('/registrosComedor');
+        $response = $this->get('/rrhh/registrosComedor');
 
         $response->assertRedirect(route('login'));
     }
@@ -47,7 +47,7 @@ class ComedorFeatureTest extends TestCase
             'recorded_at' => now('America/Mexico_City')->utc(),
         ]);
 
-        $response = $this->actingAs($admin)->get('/registrosComedor');
+        $response = $this->actingAs($admin)->get('/rrhh/registrosComedor');
 
         $response->assertOk();
         $response->assertSee('Registros');
@@ -65,7 +65,7 @@ class ComedorFeatureTest extends TestCase
             'active' => true,
         ]);
 
-        $response = $this->actingAs($user)->get('/registrosComedor');
+        $response = $this->actingAs($user)->get('/rrhh/registrosComedor');
 
         $response->assertForbidden();
     }
