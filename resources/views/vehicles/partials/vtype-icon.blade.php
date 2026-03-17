@@ -18,7 +18,7 @@
         'trompo' => 'tanker-truck-stroke-rounded.svg',
         default => 'car-03-stroke-rounded.svg',
     };
-    $iconUrl = asset('vendor/hugeicons/icons/' . $iconFile);
+    $iconUrl = asset('public/vendor/hugeicons/icons/' . $iconFile);
 @endphp
 
 <span class="{{ $class }}" style="display:inline-flex; align-items:center; justify-content:center; line-height:1;">

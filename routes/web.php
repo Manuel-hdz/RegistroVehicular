@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CardexImportController;
 use App\Http\Controllers\CardexController;
+use App\Http\Controllers\ComedorController;
 use App\Http\Controllers\DepartureController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\DriverDestroyController;
@@ -17,6 +18,11 @@ use App\Http\Controllers\VehicleDestroyController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'landing');
+Route::get('/comedor', [ComedorController::class, 'index'])->name('comedor.index');
+Route::post('/comedor', [ComedorController::class, 'store'])->name('comedor.store');
+Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'role:admin'])->group(function () {
+    Route::get('/registrosComedor', [ComedorController::class, 'records'])->name('comedor.records');
+});
 
 Route::prefix('registroVehicular')->group(function () {
     Route::redirect('/', '/registroVehicular/dashboard');

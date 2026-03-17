@@ -426,7 +426,7 @@
                             </li>
 
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle {{ request()->routeIs('hr.*') || request()->routeIs('personnel.*') || request()->routeIs('cardex.*') || request()->routeIs('drivers.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('hr.*') || request()->routeIs('personnel.*') || request()->routeIs('cardex.*') || request()->routeIs('drivers.*') || request()->routeIs('comedor.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                     <i class="bi bi-people"></i><span>Recursos Humanos</span>
                                 </a>
                                 <ul class="dropdown-menu">
@@ -448,6 +448,11 @@
                                     <li>
                                         <a class="dropdown-item {{ request()->routeIs('drivers.*') ? 'active' : '' }}" href="{{ route('drivers.index') }}">
                                             <i class="bi bi-person-vcard"></i><span>Conductores</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('comedor.records') ? 'active' : '' }}" href="{{ route('comedor.records') }}">
+                                            <i class="bi bi-cup-hot"></i><span>Comedor</span>
                                         </a>
                                     </li>
                                 </ul>
