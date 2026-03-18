@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CardexImportController;
 use App\Http\Controllers\CardexController;
 use App\Http\Controllers\ComedorController;
+use App\Http\Controllers\CostCenterController;
 use App\Http\Controllers\DepartureController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\DriverDestroyController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\HumanResourcesController;
 use App\Http\Controllers\MovementController;
 use App\Http\Controllers\PersonnelController;
 use App\Http\Controllers\PublicDashboardController;
+use App\Http\Controllers\RequisitionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleDestroyController;
@@ -20,6 +22,8 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'landing');
 Route::get('/comedor', [ComedorController::class, 'index'])->name('comedor.index');
 Route::post('/comedor', [ComedorController::class, 'store'])->name('comedor.store');
+Route::get('/requisitar', [RequisitionController::class, 'create'])->name('requisitions.create');
+Route::post('/requisitar', [RequisitionController::class, 'store'])->name('requisitions.store');
 
 Route::prefix('registroVehicular')->group(function () {
     Route::redirect('/', '/registroVehicular/dashboard');
@@ -77,6 +81,10 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(fu
                 ->parameters(['vehiculos' => 'vehicle'])
                 ->names('vehicles')
                 ->only(['index', 'create', 'store', 'edit', 'update']);
+            Route::resource('centros-costos', CostCenterController::class)
+                ->parameters(['centros-costos' => 'costCenter'])
+                ->names('cost-centers')
+                ->only(['index', 'create', 'store', 'edit', 'update']);
         });
 
         Route::middleware('role:superadmin')->group(function () {
@@ -121,5 +129,10 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(fu
             ->parameters(['refacciones' => 'part'])
             ->names('parts')
             ->only(['index', 'create', 'store', 'edit', 'update']);
+    });
+
+    Route::prefix('compras')->middleware('role:admin')->group(function () {
+        Route::get('/pendientes', [RequisitionController::class, 'pending'])->name('requisitions.pending');
+        Route::patch('/requisiciones/{requisition}/estatus', [RequisitionController::class, 'updateStatus'])->name('requisitions.status');
     });
 });

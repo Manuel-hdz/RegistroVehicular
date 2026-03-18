@@ -45,8 +45,8 @@
             @foreach($drivers as $d)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td>{{ $d->name }}</td>
-                    <td>{{ $d->employee_number }}</td>
+                    <td>{{ $d->personnel?->full_name ?? $d->name }}</td>
+                    <td>{{ $d->personnel?->employee_number ?? $d->employee_number }}</td>
                     <td>{{ $d->license }}</td>
                     <td>{{ $d->active ? 'Sí' : 'No' }}</td>
                     <td>
@@ -75,5 +75,4 @@
 @push('head-pre')
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 @endpush
-
 

@@ -42,6 +42,16 @@ class Personnel extends Model
         return $this->hasMany(PersonnelCardexEntry::class);
     }
 
+    public function drivers(): HasMany
+    {
+        return $this->hasMany(Driver::class);
+    }
+
+    public function mechanics(): HasMany
+    {
+        return $this->hasMany(Mechanic::class);
+    }
+
     public function getFullNameAttribute(): string
     {
         return trim(implode(' ', array_filter([
