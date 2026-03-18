@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\CostCenter;
 use App\Models\Requisition;
+use App\Models\RequisitionItem;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -149,5 +150,86 @@ class RequisitionFeatureTest extends TestCase
 
         $response->assertRedirect(route('requisitions.pending', ['status' => 'pending']));
         $this->assertSame('approved', $requisition->fresh()->status);
+    }
+
+    public function test_admin_can_update_material_check_flags(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin Almacen',
+            'username' => 'admin-checks',
+            'password' => 'secret',
+            'role' => 'admin',
+            'department' => 'almacen',
+            'active' => true,
+        ]);
+
+        $costCenter = CostCenter::create([
+            'code' => 'CC-05',
+            'name' => 'Operacion',
+            'active' => true,
+        ]);
+
+        $requisition = Requisition::create([
+            'cost_center_id' => $costCenter->id,
+            'requester_name' => 'Pedro Nava',
+            'status' => 'pending',
+        ]);
+
+        $item = $requisition->items()->create([
+            'material_name' => 'Filtro de aire',
+            'quantity' => '1',
+            'is_ordered' => false,
+            'is_in_storage' => false,
+        ]);
+
+        $orderedResponse = $this->actingAs($admin)->patch(route('requisitions.items.checks', $item), [
+            'field' => 'is_ordered',
+            'value' => '1',
+            'status_context' => 'pending',
+        ]);
+
+        $orderedResponse->assertRedirect(route('requisitions.pending', ['status' => 'pending']));
+        $this->assertTrue($item->fresh()->is_ordered);
+
+        $storageResponse = $this->actingAs($admin)->patch(route('requisitions.items.checks', $item), [
+            'field' => 'is_in_storage',
+            'value' => '1',
+            'status_context' => 'pending',
+        ]);
+
+        $storageResponse->assertRedirect(route('requisitions.pending', ['status' => 'pending']));
+        $this->assertTrue($item->fresh()->is_in_storage);
+    }
+
+    public function test_final_requisition_status_cannot_be_changed_again(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin Compras',
+            'username' => 'admin-final-status',
+            'password' => 'secret',
+            'role' => 'admin',
+            'department' => 'compras',
+            'active' => true,
+        ]);
+
+        $costCenter = CostCenter::create([
+            'code' => 'CC-06',
+            'name' => 'Patio',
+            'active' => true,
+        ]);
+
+        $requisition = Requisition::create([
+            'cost_center_id' => $costCenter->id,
+            'requester_name' => 'Ramon Silva',
+            'status' => Requisition::STATUS_DELIVERED,
+        ]);
+
+        $response = $this->actingAs($admin)->patch(route('requisitions.status', $requisition), [
+            'status' => Requisition::STATUS_APPROVED,
+            'status_context' => 'delivered',
+        ]);
+
+        $response->assertRedirect(route('requisitions.pending', ['status' => 'delivered']));
+        $this->assertSame(Requisition::STATUS_DELIVERED, $requisition->fresh()->status);
     }
 }

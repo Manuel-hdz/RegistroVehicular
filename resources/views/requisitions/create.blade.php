@@ -59,11 +59,8 @@
         <div id="requisitionItems" class="grid" style="gap:16px;">
             @foreach($oldItems as $index => $item)
                 <div class="card requisition-item" data-index="{{ $index }}" style="margin-bottom:0; border-color:#d7e8de; background:#fbfffc;">
-                    <div class="row" style="justify-content: space-between; align-items:center; margin-bottom:10px;">
+                    <div class="row" style="justify-content: flex-start; align-items:center; margin-bottom:10px;">
                         <strong>Registro {{ $loop->iteration }}</strong>
-                        <button type="button" class="btn btn-secondary btn-remove-item" {{ count($oldItems) === 1 ? 'style=display:none;' : '' }}>
-                            <i class="bi bi-trash"></i>
-                        </button>
                     </div>
                     <div class="grid grid-2">
                         <div>
@@ -90,6 +87,15 @@
                             <textarea name="items[{{ $index }}][justification]" maxlength="255" placeholder="Explica brevemente por que se solicita">{{ $item['justification'] ?? '' }}</textarea>
                         </div>
                     </div>
+                    <div class="row" style="justify-content:flex-end; margin-top:14px;">
+                        <button
+                            type="button"
+                            class="btn btn-danger btn-remove-item"
+                            style="width:auto; margin-left:auto; color:#ffffff;{{ count($oldItems) === 1 ? ' display:none;' : '' }}"
+                        >
+                            <i class="bi bi-trash"></i>Desechar registro
+                        </button>
+                    </div>
                 </div>
                 @if($loop->first)
                     <div class="row" id="addItemRow" style="justify-content:flex-start;">
@@ -103,11 +109,8 @@
 
         <template id="requisitionItemTemplate">
             <div class="card requisition-item" data-index="__INDEX__" style="margin-bottom:0; border-color:#d7e8de; background:#fbfffc;">
-                <div class="row" style="justify-content: space-between; align-items:center; margin-bottom:10px;">
+                <div class="row" style="justify-content: flex-start; align-items:center; margin-bottom:10px;">
                     <strong>Registro __NUMBER__</strong>
-                    <button type="button" class="btn btn-secondary btn-remove-item">
-                        <i class="bi bi-trash"></i>
-                    </button>
                 </div>
                 <div class="grid grid-2">
                     <div>
@@ -133,6 +136,11 @@
                         <label>Justificacion</label>
                         <textarea name="items[__INDEX__][justification]" maxlength="255" placeholder="Explica brevemente por que se solicita"></textarea>
                     </div>
+                </div>
+                <div class="row" style="justify-content:flex-end; margin-top:14px;">
+                    <button type="button" class="btn btn-danger btn-remove-item" style="width:auto; margin-left:auto; color:#ffffff;">
+                        <i class="bi bi-trash"></i>Desechar registro
+                    </button>
                 </div>
             </div>
         </template>

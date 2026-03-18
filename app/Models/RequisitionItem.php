@@ -15,11 +15,15 @@ class RequisitionItem extends Model
         'material_name',
         'quantity',
         'equipment_vehicle_id',
+        'is_ordered',
+        'is_in_storage',
         'justification',
     ];
 
     protected $casts = [
         'quantity' => 'decimal:2',
+        'is_ordered' => 'boolean',
+        'is_in_storage' => 'boolean',
     ];
 
     public function requisition(): BelongsTo

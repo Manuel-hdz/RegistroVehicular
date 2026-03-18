@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CostCenter;
 use App\Models\Part;
 use App\Models\Requisition;
+use App\Models\RequisitionItem;
 use App\Models\Vehicle;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -87,6 +88,14 @@ class RequisitionController extends Controller
             'status' => ['required', Rule::in(array_keys(Requisition::statuses()))],
         ]);
 
+        if ($requisition->isFinalStatus()) {
+            return redirect()
+                ->route('requisitions.pending', array_filter([
+                    'status' => $request->input('status_context'),
+                ]))
+                ->with('status', 'Esta requisicion ya esta cerrada y no permite mas cambios de estatus.');
+        }
+
         $requisition->update([
             'status' => $data['status'],
         ]);
@@ -96,5 +105,23 @@ class RequisitionController extends Controller
                 'status' => $request->input('status_context'),
             ]))
             ->with('status', 'Estatus actualizado correctamente.');
+    }
+
+    public function updateItemChecks(Request $request, RequisitionItem $requisitionItem): RedirectResponse
+    {
+        $data = $request->validate([
+            'field' => ['required', Rule::in(['is_ordered', 'is_in_storage'])],
+            'value' => ['required', 'boolean'],
+        ]);
+
+        $requisitionItem->update([
+            $data['field'] => (bool) $data['value'],
+        ]);
+
+        return redirect()
+            ->route('requisitions.pending', array_filter([
+                'status' => $request->input('status_context'),
+            ]))
+            ->with('status', 'Verificacion del material actualizada correctamente.');
     }
 }

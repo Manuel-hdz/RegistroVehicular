@@ -16,6 +16,7 @@ class Requisition extends Model
     public const STATUS_APPROVED = 'approved';
     public const STATUS_PURCHASED = 'purchased';
     public const STATUS_DELIVERED = 'delivered';
+    public const STATUS_CANCELLED = 'cancelled';
     public const STATUS_REJECTED = 'rejected';
 
     protected $fillable = [
@@ -55,12 +56,25 @@ class Requisition extends Model
             self::STATUS_APPROVED => 'Autorizada',
             self::STATUS_PURCHASED => 'Comprada',
             self::STATUS_DELIVERED => 'Entregada',
-            self::STATUS_REJECTED => 'Rechazada',
+            self::STATUS_CANCELLED => 'Cancelado',
         ];
     }
 
     public function getStatusLabelAttribute(): string
     {
+        if ($this->status === self::STATUS_REJECTED) {
+            return 'Cancelado';
+        }
+
         return self::statuses()[$this->status] ?? ucfirst((string) $this->status);
+    }
+
+    public function isFinalStatus(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_DELIVERED,
+            self::STATUS_CANCELLED,
+            self::STATUS_REJECTED,
+        ], true);
     }
 }

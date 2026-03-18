@@ -134,5 +134,6 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(fu
     Route::prefix('compras')->middleware('role:admin')->group(function () {
         Route::get('/pendientes', [RequisitionController::class, 'pending'])->name('requisitions.pending');
         Route::patch('/requisiciones/{requisition}/estatus', [RequisitionController::class, 'updateStatus'])->name('requisitions.status');
+        Route::patch('/requisiciones/materiales/{requisitionItem}/checks', [RequisitionController::class, 'updateItemChecks'])->name('requisitions.items.checks');
     });
 });
