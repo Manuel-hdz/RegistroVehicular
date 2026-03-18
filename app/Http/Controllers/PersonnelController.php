@@ -189,12 +189,36 @@ class PersonnelController extends Controller
             'emergency_contact_name' => ['nullable', 'string', 'max:150'],
             'emergency_contact_phone' => ['nullable', 'string', 'max:40'],
             'photo' => ['nullable', 'image', 'max:3072'],
+            'photo_cropped' => ['nullable', 'string'],
             'active' => ['nullable', 'boolean'],
         ]);
     }
 
     private function storePhoto(Request $request): ?string
     {
+        $croppedImage = (string) $request->input('photo_cropped', '');
+        if ($croppedImage !== '') {
+            if (!preg_match('/^data:image\/([a-zA-Z0-9.+-]+);base64,/', $croppedImage, $matches)) {
+                return null;
+            }
+
+            $extension = strtolower($matches[1]);
+            if ($extension === 'jpeg') {
+                $extension = 'jpg';
+            }
+
+            $binary = base64_decode(substr($croppedImage, strpos($croppedImage, ',') + 1), true);
+            if ($binary === false) {
+                return null;
+            }
+
+            $fileName = 'photo-' . Str::uuid()->toString() . '.' . $extension;
+            $path = 'personnel/photos/' . $fileName;
+            Storage::disk('local')->put($path, $binary);
+
+            return $path;
+        }
+
         if (!$request->hasFile('photo')) {
             return null;
         }

@@ -52,6 +52,14 @@
         background: #fff;
         display: block;
     }
+    .vehicle-photo-button {
+        display: block;
+        padding: 0;
+        border: none;
+        background: transparent;
+        width: 100%;
+        cursor: zoom-in;
+    }
     .vehicle-hero-text {
         display: flex;
         flex-direction: column;
@@ -168,6 +176,41 @@
         gap: 10px;
         flex-wrap: wrap;
     }
+    .vehicle-image-lightbox {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        background: rgba(15, 23, 42, .74);
+        backdrop-filter: blur(4px);
+        z-index: 2300;
+    }
+    .vehicle-image-lightbox[aria-hidden="false"] {
+        display: flex;
+    }
+    .vehicle-image-lightbox img {
+        max-width: min(100%, 1200px);
+        max-height: 86vh;
+        border-radius: 16px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, .35);
+        background: #fff;
+    }
+    .vehicle-image-lightbox button {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        border: none;
+        background: rgba(255,255,255,.14);
+        color: #fff;
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        font-size: 28px;
+        line-height: 1;
+        cursor: pointer;
+    }
     @media (max-width: 992px){
         .vehicle-toolbar {
             grid-template-columns: 1fr;
@@ -219,7 +262,9 @@
         <div class="vehicle-profile">
             <div class="vehicle-side-box">
                 @if($selectedVehicle->photo_url)
-                    <img class="vehicle-photo" src="{{ $selectedVehicle->photo_url }}" alt="Foto de {{ $selectedVehicle->identifier ?: $selectedVehicle->plate }}">
+                    <button class="vehicle-photo-button" type="button" data-lightbox-open="{{ $selectedVehicle->photo_url }}">
+                        <img class="vehicle-photo" src="{{ $selectedVehicle->photo_url }}" alt="Foto de {{ $selectedVehicle->identifier ?: $selectedVehicle->plate }}">
+                    </button>
                 @else
                     <div class="vehicle-hero">
                         <div class="vehicle-hero-text">
@@ -311,6 +356,11 @@
         </div>
     </div>
 @endif
+
+<div class="vehicle-image-lightbox" aria-hidden="true" id="vehicleImageLightbox">
+    <button type="button" aria-label="Cerrar" id="vehicleImageLightboxClose">&times;</button>
+    <img src="" alt="Imagen ampliada del equipo" id="vehicleImageLightboxImage">
+</div>
 @endsection
 
 @push('scripts')
@@ -348,6 +398,14 @@
 
             const originalOptions = Array.from(select.options);
 
+            function applyOption(opt) {
+                if (!opt) return;
+                select.value = opt.value;
+                input.value = opt.textContent;
+                list.hidden = true;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
             function render(filter) {
                 list.innerHTML = '';
                 const term = (filter || '').toLowerCase();
@@ -362,10 +420,7 @@
                     li.style.cursor = 'pointer';
                     li.addEventListener('mousedown', function (event) {
                         event.preventDefault();
-                        select.value = opt.value;
-                        input.value = text;
-                        list.hidden = true;
-                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                        applyOption(opt);
                     });
                     list.appendChild(li);
                 });
@@ -379,6 +434,18 @@
 
             input.addEventListener('input', function () {
                 render(this.value);
+            });
+
+            input.addEventListener('keydown', function (event) {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                const firstVisible = list.querySelector('li');
+                if (firstVisible) {
+                    const match = originalOptions.find(function (opt) {
+                        return opt.value === firstVisible.dataset.value;
+                    });
+                    applyOption(match);
+                }
             });
 
             document.addEventListener('click', function (event) {
@@ -399,6 +466,44 @@
         }
 
         document.querySelectorAll('.searchable-select').forEach(makeSearchable);
+    })();
+
+    (function () {
+        const lightbox = document.getElementById('vehicleImageLightbox');
+        const lightboxImage = document.getElementById('vehicleImageLightboxImage');
+        const closeButton = document.getElementById('vehicleImageLightboxClose');
+
+        function closeLightbox() {
+            if (!lightbox || !lightboxImage) return;
+            lightbox.setAttribute('aria-hidden', 'true');
+            lightboxImage.src = '';
+        }
+
+        document.querySelectorAll('[data-lightbox-open]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                if (!lightbox || !lightboxImage) return;
+                lightboxImage.src = button.getAttribute('data-lightbox-open') || '';
+                lightbox.setAttribute('aria-hidden', 'false');
+            });
+        });
+
+        if (closeButton) {
+            closeButton.addEventListener('click', closeLightbox);
+        }
+
+        if (lightbox) {
+            lightbox.addEventListener('click', function (event) {
+                if (event.target === lightbox) {
+                    closeLightbox();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeLightbox();
+            }
+        });
     })();
 </script>
 @endpush

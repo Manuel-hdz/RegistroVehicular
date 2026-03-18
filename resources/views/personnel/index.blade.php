@@ -35,6 +35,14 @@
         border: 1px solid #d1d5db;
         background: #fff;
     }
+    .personnel-photo-button {
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: none;
+        background: transparent;
+        cursor: zoom-in;
+    }
     .personnel-photo-placeholder {
         width: 100%;
         aspect-ratio: 3 / 4;
@@ -115,6 +123,41 @@
         display: flex;
         justify-content: flex-end;
     }
+    .personnel-image-lightbox {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        background: rgba(15, 23, 42, .74);
+        backdrop-filter: blur(4px);
+        z-index: 2300;
+    }
+    .personnel-image-lightbox[aria-hidden="false"] {
+        display: flex;
+    }
+    .personnel-image-lightbox img {
+        max-width: min(100%, 1000px);
+        max-height: 86vh;
+        border-radius: 16px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, .35);
+        background: #fff;
+    }
+    .personnel-image-lightbox button {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        border: none;
+        background: rgba(255,255,255,.14);
+        color: #fff;
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        font-size: 28px;
+        line-height: 1;
+        cursor: pointer;
+    }
     @media (max-width: 992px){
         .personnel-toolbar {
             grid-template-columns: 1fr;
@@ -166,7 +209,9 @@
         <div class="personnel-profile">
             <div class="personnel-photo-box">
                 @if($selectedPersonnel->photo_url)
-                    <img class="personnel-photo" src="{{ $selectedPersonnel->photo_url }}" alt="Foto de {{ $selectedPersonnel->full_name }}">
+                    <button class="personnel-photo-button" type="button" data-personnel-lightbox-open="{{ $selectedPersonnel->photo_url }}">
+                        <img class="personnel-photo" src="{{ $selectedPersonnel->photo_url }}" alt="Foto de {{ $selectedPersonnel->full_name }}">
+                    </button>
                 @else
                     <div class="personnel-photo-placeholder">
                         <i class="bi bi-person-badge"></i>
@@ -239,6 +284,11 @@
         </div>
     </div>
 @endif
+
+<div class="personnel-image-lightbox" aria-hidden="true" id="personnelImageLightbox">
+    <button type="button" aria-label="Cerrar" id="personnelImageLightboxClose">&times;</button>
+    <img src="" alt="Fotografia ampliada del personal" id="personnelImageLightboxImage">
+</div>
 @endsection
 
 @push('scripts')
@@ -276,6 +326,14 @@
 
             const originalOptions = Array.from(select.options);
 
+            function applyOption(opt) {
+                if (!opt) return;
+                select.value = opt.value;
+                input.value = opt.textContent;
+                list.hidden = true;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
             function render(filter) {
                 list.innerHTML = '';
                 const term = (filter || '').toLowerCase();
@@ -290,10 +348,7 @@
                     li.style.cursor = 'pointer';
                     li.addEventListener('mousedown', function (event) {
                         event.preventDefault();
-                        select.value = opt.value;
-                        input.value = text;
-                        list.hidden = true;
-                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                        applyOption(opt);
                     });
                     list.appendChild(li);
                 });
@@ -307,6 +362,18 @@
 
             input.addEventListener('input', function () {
                 render(this.value);
+            });
+
+            input.addEventListener('keydown', function (event) {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                const firstVisible = list.querySelector('li');
+                if (firstVisible) {
+                    const match = originalOptions.find(function (opt) {
+                        return opt.value === firstVisible.dataset.value;
+                    });
+                    applyOption(match);
+                }
             });
 
             document.addEventListener('click', function (event) {
@@ -327,6 +394,44 @@
         }
 
         document.querySelectorAll('.searchable-select').forEach(makeSearchable);
+    })();
+
+    (function () {
+        const lightbox = document.getElementById('personnelImageLightbox');
+        const lightboxImage = document.getElementById('personnelImageLightboxImage');
+        const closeButton = document.getElementById('personnelImageLightboxClose');
+
+        function closeLightbox() {
+            if (!lightbox || !lightboxImage) return;
+            lightbox.setAttribute('aria-hidden', 'true');
+            lightboxImage.src = '';
+        }
+
+        document.querySelectorAll('[data-personnel-lightbox-open]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                if (!lightbox || !lightboxImage) return;
+                lightboxImage.src = button.getAttribute('data-personnel-lightbox-open') || '';
+                lightbox.setAttribute('aria-hidden', 'false');
+            });
+        });
+
+        if (closeButton) {
+            closeButton.addEventListener('click', closeLightbox);
+        }
+
+        if (lightbox) {
+            lightbox.addEventListener('click', function (event) {
+                if (event.target === lightbox) {
+                    closeLightbox();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeLightbox();
+            }
+        });
     })();
 </script>
 @endpush

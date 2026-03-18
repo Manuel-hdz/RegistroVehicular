@@ -66,7 +66,7 @@ class VehicleController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validatePayload($request);
-        $data['photo_path'] = $this->storeDocument($request, 'photo', 'photo');
+        $data['photo_path'] = $this->storePhoto($request);
         $data['circulation_card_path'] = $this->storeDocument($request, 'circulation_card', 'circulation-card');
         $data['insurance_policy_path'] = $this->storeDocument($request, 'insurance_policy', 'insurance-policy');
         $data['active'] = $this->resolveActiveFlag($request, true);
@@ -86,7 +86,7 @@ class VehicleController extends Controller
         $data = $this->validatePayload($request, $vehicle->id);
         $data['active'] = $this->resolveActiveFlag($request, $vehicle->active);
 
-        $photoPath = $this->storeDocument($request, 'photo', 'photo');
+        $photoPath = $this->storePhoto($request);
         if ($photoPath) {
             $this->deleteDocument($vehicle->photo_path);
             $data['photo_path'] = $photoPath;
@@ -162,6 +162,7 @@ class VehicleController extends Controller
             'assigned_personnel' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:2000'],
             'photo' => ['nullable', 'image', 'max:5120'],
+            'photo_cropped' => ['nullable', 'string'],
             'circulation_card' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'insurance_policy' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'active' => ['nullable', 'boolean'],
@@ -188,6 +189,33 @@ class VehicleController extends Controller
         $request->file($field)->storeAs('vehicles/documents', $fileName, 'local');
 
         return 'vehicles/documents/' . $fileName;
+    }
+
+    private function storePhoto(Request $request): ?string
+    {
+        $croppedImage = (string) $request->input('photo_cropped', '');
+        if ($croppedImage !== '') {
+            if (!preg_match('/^data:image\/([a-zA-Z0-9.+-]+);base64,/', $croppedImage, $matches)) {
+                return null;
+            }
+
+            $extension = strtolower($matches[1]);
+            if ($extension === 'jpeg') {
+                $extension = 'jpg';
+            }
+
+            $binary = base64_decode(substr($croppedImage, strpos($croppedImage, ',') + 1), true);
+            if ($binary === false) {
+                return null;
+            }
+
+            $fileName = 'photo-' . Str::uuid()->toString() . '.' . $extension;
+            Storage::disk('local')->put('vehicles/photos/' . $fileName, $binary);
+
+            return 'vehicles/photos/' . $fileName;
+        }
+
+        return $this->storeDocument($request, 'photo', 'photo');
     }
 
     private function deleteDocument(?string $path): void

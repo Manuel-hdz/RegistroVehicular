@@ -69,12 +69,7 @@
         </div>
         <div>
             <label>Fotografia</label>
-            <input type="file" name="photo" accept="image/*">
-            @if($personnel->photo_url)
-                <div style="margin-top:8px;">
-                    <img src="{{ $personnel->photo_url }}" alt="Foto actual" style="max-width:120px; border-radius:8px; border:1px solid #d1d5db;">
-                </div>
-            @endif
+            @include('personnel.partials.photo-picker', ['photoUrl' => $personnel->photo_url])
         </div>
         <div>
             <label><input type="checkbox" name="active" value="1" {{ old('active', $personnel->active) ? 'checked' : '' }}> Activo</label>

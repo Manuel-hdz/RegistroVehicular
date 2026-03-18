@@ -51,6 +51,18 @@ return new class extends Migration
 
     private function columnExists(string $column): bool
     {
+        if (DB::getDriverName() === 'sqlite') {
+            $rows = DB::select("PRAGMA table_info('vehicles')");
+
+            foreach ($rows as $row) {
+                if (($row->name ?? null) === $column) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         $rows = DB::select(
             'SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
             ['vehicles', $column]

@@ -67,7 +67,7 @@
         </div>
         <div>
             <label>Fotografia</label>
-            <input type="file" name="photo" accept="image/*">
+            @include('personnel.partials.photo-picker')
         </div>
         <div>
             <label><input type="checkbox" name="active" value="1" checked> Activo</label>

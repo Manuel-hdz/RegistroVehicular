@@ -149,6 +149,14 @@
 
             var originalOptions = Array.from(select.options);
 
+            function applyOption(opt){
+                if(!opt) return;
+                select.value = opt.value;
+                input.value = opt.textContent;
+                list.hidden = true;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
             function render(filter){
                 list.innerHTML = '';
                 var term = (filter || '').toLowerCase();
@@ -163,9 +171,7 @@
                     li.style.cursor = 'pointer';
                     li.addEventListener('mousedown', function(e){
                         e.preventDefault();
-                        select.value = opt.value;
-                        input.value = text;
-                        list.hidden = true;
+                        applyOption(opt);
                     });
                     list.appendChild(li);
                 });
@@ -179,6 +185,18 @@
 
             input.addEventListener('input', function(){
                 render(this.value);
+            });
+
+            input.addEventListener('keydown', function(e){
+                if(e.key !== 'Enter') return;
+                e.preventDefault();
+                var firstVisible = list.querySelector('li');
+                if(firstVisible){
+                    var match = originalOptions.find(function(opt){
+                        return opt.value === firstVisible.dataset.value;
+                    });
+                    applyOption(match);
+                }
             });
 
             document.addEventListener('click', function(e){
