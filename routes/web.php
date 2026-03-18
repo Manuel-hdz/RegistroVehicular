@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BulkImportController;
 use App\Http\Controllers\CardexImportController;
 use App\Http\Controllers\CardexController;
 use App\Http\Controllers\ComedorController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\PersonnelController;
 use App\Http\Controllers\PublicDashboardController;
 use App\Http\Controllers\RequisitionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VacationPolicyController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleDestroyController;
 use Illuminate\Support\Facades\Route;
@@ -81,10 +83,6 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(fu
                 ->parameters(['vehiculos' => 'vehicle'])
                 ->names('vehicles')
                 ->only(['index', 'create', 'store', 'edit', 'update']);
-            Route::resource('centros-costos', CostCenterController::class)
-                ->parameters(['centros-costos' => 'costCenter'])
-                ->names('cost-centers')
-                ->only(['index', 'create', 'store', 'edit', 'update']);
         });
 
         Route::middleware('role:superadmin')->group(function () {
@@ -94,6 +92,18 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(fu
                 ->only(['index', 'create', 'store', 'edit', 'update']);
             Route::delete('/vehiculos/{vehicle}', VehicleDestroyController::class)->name('vehicles.destroy');
         });
+    });
+
+    Route::prefix('configuracion')->middleware('department:sistemas')->group(function () {
+        Route::resource('centros-costos', CostCenterController::class)
+            ->parameters(['centros-costos' => 'costCenter'])
+            ->names('cost-centers')
+            ->only(['index', 'create', 'store', 'edit', 'update']);
+        Route::get('/cargas-masivas', [BulkImportController::class, 'index'])->name('bulk-imports.index');
+        Route::get('/cargas-masivas/plantillas/{type}', [BulkImportController::class, 'template'])->name('bulk-imports.template');
+        Route::post('/cargas-masivas/{type}', [BulkImportController::class, 'store'])->name('bulk-imports.store');
+        Route::get('/tabla-vacaciones', [VacationPolicyController::class, 'index'])->name('vacation-policies.index');
+        Route::put('/tabla-vacaciones', [VacationPolicyController::class, 'updateTable'])->name('vacation-policies.update-table');
     });
 
     Route::prefix('rrhh')->group(function () {

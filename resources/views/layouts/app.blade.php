@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Registro Vehicular</title>
+    <title>Sistema de Administracion Integral</title>
     @stack('head-pre')
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -96,6 +96,41 @@
             background: rgba(255,255,255,.25);
             transform: translateY(-1px);
             color: #fff;
+        }
+        .home-link.active {
+            background: linear-gradient(180deg, #ffe38c, var(--yellow));
+            color: #04281b;
+            border-color: rgba(0,0,0,.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,.16);
+        }
+        .brand-shortcut .dropdown-menu {
+            border-radius: 18px;
+            border: 1px solid rgba(8, 48, 33, .10);
+            background: rgba(247,255,249,.96);
+            padding: .45rem;
+            min-width: 220px;
+            box-shadow: 0 20px 34px rgba(0,0,0,.14);
+            backdrop-filter: blur(10px);
+        }
+        .brand-shortcut .dropdown-item {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            border-radius: 12px;
+            font-size: .88rem;
+            font-weight: 700;
+            color: #13412f;
+            padding: .58rem .72rem;
+        }
+        .brand-shortcut .dropdown-item:hover,
+        .brand-shortcut .dropdown-item:focus {
+            color: #0e2f22;
+            background: #e6f7ec;
+        }
+        .brand-shortcut .dropdown-item.active,
+        .brand-shortcut .dropdown-item:active {
+            color: #04281b;
+            background: #c8f0d5;
         }
 
         .app-navbar .navbar-toggler {
@@ -548,8 +583,11 @@
     'parts.*',
     'comedor.*',
     'cost-centers.*',
+    'vacation-policies.*',
+    'bulk-imports.*',
     'requisitions.*'
 ))
+@php($canAccessConfiguration = auth()->check() && trim(mb_strtolower(\Illuminate\Support\Str::ascii((string) auth()->user()->department), 'UTF-8')) === 'sistemas')
 <header class="navbar navbar-expand-lg navbar-dark sticky-top app-navbar">
     <div class="container-fluid">
         <div class="d-flex align-items-center gap-2">
@@ -565,13 +603,14 @@
                 <img class="logo" src="{{ asset('images/logo_marca.png') }}" alt="Concreto Lanzado de Fresnillo MARCA" onerror="this.style.display='none'" style="height:36px;">
                 <span>
                     @if($isSystemArea)
-                        <strong>Registro Vehicular</strong>
+                        <strong>Sistema de Administracion Integral</strong>
                         <span class="d-block small">Concreto Lanzado de Fresnillo MARCA</span>
                     @else
                         <strong>Concreto Lanzado de Fresnillo MARCA</strong>
                     @endif
                 </span>
             </a>
+
         </div>
 
         @if(request()->routeIs('public.dashboard') && !auth()->check())
@@ -603,7 +642,7 @@
                         @if($isAdminMenu)
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle {{ request()->routeIs('movements.*') || request()->routeIs('departures.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                                    <i class="bi bi-arrow-left-right"></i><span>Movimientos</span>
+                                    <i class="bi bi-arrow-left-right"></i><span>Registro Vehicular</span>
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li>
@@ -666,18 +705,13 @@
                             </li>
 
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle {{ request()->routeIs('vehicles.*') || request()->routeIs('cost-centers.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('vehicles.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                     <i class="bi bi-building-gear"></i><span>Administración</span>
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li>
                                         <a class="dropdown-item {{ request()->routeIs('vehicles.*') ? 'active' : '' }}" href="{{ route('vehicles.index') }}">
                                             <i class="bi bi-truck"></i><span>Vehículos</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item {{ request()->routeIs('cost-centers.*') ? 'active' : '' }}" href="{{ route('cost-centers.index') }}">
-                                            <i class="bi bi-diagram-3"></i><span>Centros de costos</span>
                                         </a>
                                     </li>
                                 </ul>
@@ -765,6 +799,38 @@
                     <div class="nav-divider d-lg-none"></div>
 
                     <ul class="navbar-nav align-items-lg-center gap-2 user-nav">
+                        @if($canAccessConfiguration)
+                            <li class="nav-item dropdown brand-shortcut">
+                                <a
+                                    href="#"
+                                    class="home-link dropdown-toggle {{ request()->routeIs('cost-centers.*') || request()->routeIs('bulk-imports.*') || request()->routeIs('vacation-policies.*') ? 'active' : '' }}"
+                                    title="Configuración"
+                                    aria-label="Configuración"
+                                    data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside"
+                                    aria-expanded="false"
+                                >
+                                    <i class="bi bi-gear-fill"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('vacation-policies.*') ? 'active' : '' }}" href="{{ route('vacation-policies.index') }}">
+                                            <i class="bi bi-calendar-heart"></i><span>Tabla de vacaciones</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('cost-centers.*') ? 'active' : '' }}" href="{{ route('cost-centers.index') }}">
+                                            <i class="bi bi-diagram-3"></i><span>Centros de costos</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('bulk-imports.*') ? 'active' : '' }}" href="{{ route('bulk-imports.index') }}">
+                                            <i class="bi bi-file-earmark-spreadsheet"></i><span>Cargas masivas</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        @endif
                         <li class="nav-item">
                             <span class="user-pill">
                                 <i class="bi bi-person-circle"></i>

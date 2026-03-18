@@ -202,6 +202,8 @@
     }
     .status-A { background: #e8f8ef !important; }
     .status-A .cardex-code { background: #166534; color: #fff; border-color: #14532d; }
+    .status-V { background: #ecfdf3 !important; }
+    .status-V .cardex-code { background: #16a34a; color: #fff; border-color: #15803d; }
     .status-F { background: #feeff0 !important; }
     .status-F .cardex-code { background: #b91c1c; color: #fff; border-color: #7f1d1d; }
     .status-I { background: #fff4e5 !important; }
@@ -217,6 +219,7 @@
     .status-S { background: #ffffff !important; color: #111827; }
     .status-S .cardex-code { background: #ffffff; color: #111827; border-color: #9ca3af; }
     .legend-A { background: #e8f8ef; border-color: #166534; color: #14532d; }
+    .legend-V { background: #ecfdf3; border-color: #16a34a; color: #166534; }
     .legend-F { background: #feeff0; border-color: #b91c1c; color: #7f1d1d; }
     .legend-I { background: #fff4e5; border-color: #b45309; color: #92400e; }
     .legend-PSG { background: #f2f4f7; border-color: #475467; color: #344054; }
@@ -364,6 +367,19 @@
         color: #111827;
         line-height: 1.1;
         margin-top: 0;
+    }
+    .cardex-vacation-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 54px;
+        height: 54px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #34d399, #16a34a);
+        color: #fff;
+        font-size: 22px;
+        font-weight: 800;
+        box-shadow: 0 10px 22px rgba(22, 163, 74, .24);
     }
     .cardex-print-action {
         margin-top: 12px;
@@ -596,6 +612,9 @@
                         </div>
                     </div>
                     <div>
+                        <div style="margin:0 0 6px; font-size:13px; color:#166534; font-weight:700;">
+                            Vacaciones pendientes disponibles: {{ $pendingVacationDays }}
+                        </div>
                         <label>Notas (opcional)</label>
                         <input name="notes" value="{{ old('notes') }}">
                     </div>
@@ -621,6 +640,12 @@
                 <div>
                     <div class="cardex-context-label">Periodo consultado</div>
                     <div class="cardex-context-value">{{ $periodTitle }}</div>
+                </div>
+                <div>
+                    <div class="cardex-context-label">Vacaciones pendientes</div>
+                    <div class="cardex-context-value">
+                        <span class="cardex-vacation-pill">{{ $pendingVacationDays }}</span>
+                    </div>
                 </div>
             </div>
 

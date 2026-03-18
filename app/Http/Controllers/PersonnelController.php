@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Personnel;
+use App\Services\VacationAccrualService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -28,13 +29,21 @@ class PersonnelController extends Controller
         $emptyFields = [];
 
         if ($selectedPersonnel) {
+            $selectedPersonnel = $this->vacationAccrualService()->sync($selectedPersonnel);
+
             $fieldLabels = [
                 'curp' => 'CURP',
                 'rfc' => 'RFC',
                 'nss' => 'NSS',
+                'marital_status' => 'Estado civil',
+                'sex' => 'Sexo',
+                'birth_date' => 'Fecha de nacimiento',
                 'department' => 'Departamento',
                 'position' => 'Puesto',
                 'hire_date' => 'Fecha de ingreso',
+                'pending_vacation_days' => 'Dias de vacaciones pendientes',
+                'account_number' => 'Numero de cuenta',
+                'account_type' => 'Tipo de cuenta',
                 'phone' => 'Telefono',
                 'email' => 'Correo',
                 'address' => 'Domicilio',
@@ -180,9 +189,15 @@ class PersonnelController extends Controller
             'curp' => ['nullable', 'string', 'max:18'],
             'rfc' => ['nullable', 'string', 'max:13'],
             'nss' => ['nullable', 'string', 'max:20'],
+            'marital_status' => ['nullable', 'string', 'max:50'],
+            'sex' => ['nullable', 'string', 'max:20'],
+            'birth_date' => ['nullable', 'date'],
             'department' => ['nullable', 'string', 'max:120'],
             'position' => ['nullable', 'string', 'max:120'],
             'hire_date' => ['nullable', 'date'],
+            'pending_vacation_days' => ['nullable', 'integer', 'min:0', 'max:3650'],
+            'account_number' => ['nullable', 'string', 'max:50'],
+            'account_type' => ['nullable', 'string', 'max:50'],
             'phone' => ['nullable', 'string', 'max:40'],
             'email' => ['nullable', 'email', 'max:150'],
             'address' => ['nullable', 'string', 'max:255'],
@@ -246,5 +261,10 @@ class PersonnelController extends Controller
         }
 
         Storage::disk('local')->delete($photoPath);
+    }
+
+    private function vacationAccrualService(): VacationAccrualService
+    {
+        return app(VacationAccrualService::class);
     }
 }

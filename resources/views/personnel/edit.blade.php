@@ -1,6 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $maritalStatusOptions = ['Soltero(a)', 'Casado(a)', 'Union libre', 'Divorciado(a)', 'Viudo(a)', 'Otro'];
+    $sexOptions = ['Masculino', 'Femenino', 'Otro', 'Prefiero no decir'];
+    $accountTypeOptions = ['Nomina', 'Ahorro', 'Cheques', 'Tarjeta', 'Otra'];
+    $selectedMaritalStatus = old('marital_status', $personnel->marital_status);
+    $selectedSex = old('sex', $personnel->sex);
+    $selectedAccountType = old('account_type', $personnel->account_type);
+@endphp
 <div class="card">
     <h2 style="margin-top:0">Editar personal</h2>
     <form method="POST" action="{{ route('personnel.update', $personnel) }}" class="grid grid-3" enctype="multipart/form-data">
@@ -36,6 +44,34 @@
             <input name="nss" value="{{ old('nss', $personnel->nss) }}">
         </div>
         <div>
+            <label>Estado civil</label>
+            <select name="marital_status">
+                <option value="">Selecciona una opcion</option>
+                @foreach($maritalStatusOptions as $option)
+                    <option value="{{ $option }}" {{ $selectedMaritalStatus === $option ? 'selected' : '' }}>{{ $option }}</option>
+                @endforeach
+                @if($selectedMaritalStatus && !in_array($selectedMaritalStatus, $maritalStatusOptions, true))
+                    <option value="{{ $selectedMaritalStatus }}" selected>{{ $selectedMaritalStatus }}</option>
+                @endif
+            </select>
+        </div>
+        <div>
+            <label>Sexo</label>
+            <select name="sex">
+                <option value="">Selecciona una opcion</option>
+                @foreach($sexOptions as $option)
+                    <option value="{{ $option }}" {{ $selectedSex === $option ? 'selected' : '' }}>{{ $option }}</option>
+                @endforeach
+                @if($selectedSex && !in_array($selectedSex, $sexOptions, true))
+                    <option value="{{ $selectedSex }}" selected>{{ $selectedSex }}</option>
+                @endif
+            </select>
+        </div>
+        <div>
+            <label>Fecha de nacimiento</label>
+            <input type="date" name="birth_date" value="{{ old('birth_date', optional($personnel->birth_date)->format('Y-m-d')) }}">
+        </div>
+        <div>
             <label>Puesto</label>
             <input name="position" value="{{ old('position', $personnel->position) }}">
         </div>
@@ -46,6 +82,26 @@
         <div>
             <label>Fecha de ingreso</label>
             <input type="date" name="hire_date" value="{{ old('hire_date', optional($personnel->hire_date)->format('Y-m-d')) }}">
+        </div>
+        <div>
+            <label>Dias de vacaciones pendientes</label>
+            <input type="number" name="pending_vacation_days" min="0" step="1" value="{{ old('pending_vacation_days', $personnel->pending_vacation_days ?? 0) }}">
+        </div>
+        <div>
+            <label>Numero de cuenta</label>
+            <input name="account_number" value="{{ old('account_number', $personnel->account_number) }}">
+        </div>
+        <div>
+            <label>Tipo de cuenta</label>
+            <select name="account_type">
+                <option value="">Selecciona una opcion</option>
+                @foreach($accountTypeOptions as $option)
+                    <option value="{{ $option }}" {{ $selectedAccountType === $option ? 'selected' : '' }}>{{ $option }}</option>
+                @endforeach
+                @if($selectedAccountType && !in_array($selectedAccountType, $accountTypeOptions, true))
+                    <option value="{{ $selectedAccountType }}" selected>{{ $selectedAccountType }}</option>
+                @endif
+            </select>
         </div>
         <div>
             <label>Telefono</label>

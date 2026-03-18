@@ -16,6 +16,7 @@ class CardexImportController extends Controller
 {
     private const CODES = [
         'A' => 'Asistencia',
+        'V' => 'Vacaciones',
         'F' => 'Falta',
         'I' => 'Incapacidad',
         'PSG' => 'Permiso sin goce',

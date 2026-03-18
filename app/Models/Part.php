@@ -12,9 +12,13 @@ class Part extends Model
 
     protected $fillable = ['name','unit_cost','active'];
 
+    protected $casts = [
+        'unit_cost' => 'decimal:2',
+        'active' => 'boolean',
+    ];
+
     public function repairs(): BelongsToMany
     {
         return $this->belongsToMany(Repair::class)->withPivot('quantity')->withTimestamps();
     }
 }
-

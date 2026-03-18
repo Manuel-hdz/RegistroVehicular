@@ -397,6 +397,7 @@
             list.hidden = true;
 
             const originalOptions = Array.from(select.options);
+            let filteredOptions = [];
 
             function applyOption(opt) {
                 if (!opt) return;
@@ -409,22 +410,38 @@
             function render(filter) {
                 list.innerHTML = '';
                 const term = (filter || '').toLowerCase();
-                originalOptions.forEach(function (opt) {
+                filteredOptions = originalOptions.filter(function (opt) {
                     if (!opt.value) return;
                     const text = opt.textContent;
-                    if (term && !text.toLowerCase().includes(term)) return;
+                    return !term || text.toLowerCase().includes(term);
+                });
+
+                filteredOptions.forEach(function (opt) {
+                    const text = opt.textContent;
                     const li = document.createElement('li');
                     li.textContent = text;
                     li.dataset.value = opt.value;
                     li.style.padding = '6px 8px';
                     li.style.cursor = 'pointer';
+                    li.style.borderBottom = '1px solid #eef2f7';
+                    li.style.background = '#fff';
+                    li.addEventListener('mouseenter', function () {
+                        li.style.background = '#eef6f1';
+                    });
+                    li.addEventListener('mouseleave', function () {
+                        li.style.background = '#fff';
+                    });
                     li.addEventListener('mousedown', function (event) {
                         event.preventDefault();
                         applyOption(opt);
                     });
                     list.appendChild(li);
                 });
-                list.hidden = list.children.length === 0;
+                const lastItem = list.lastElementChild;
+                if (lastItem) {
+                    lastItem.style.borderBottom = 'none';
+                }
+                list.hidden = filteredOptions.length === 0;
             }
 
             input.addEventListener('focus', function () {
@@ -436,15 +453,15 @@
                 render(this.value);
             });
 
+            input.addEventListener('click', function () {
+                render(this.value);
+            });
+
             input.addEventListener('keydown', function (event) {
                 if (event.key !== 'Enter') return;
                 event.preventDefault();
-                const firstVisible = list.querySelector('li');
-                if (firstVisible) {
-                    const match = originalOptions.find(function (opt) {
-                        return opt.value === firstVisible.dataset.value;
-                    });
-                    applyOption(match);
+                if (filteredOptions.length > 0) {
+                    applyOption(filteredOptions[0]);
                 }
             });
 

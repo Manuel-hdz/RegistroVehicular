@@ -56,13 +56,14 @@
         font-size: 44px;
     }
     .personnel-status {
-        margin-top: 10px;
         font-size: 13px;
         font-weight: 700;
         border-radius: 999px;
         display: inline-flex;
         padding: 4px 10px;
         border: 1px solid transparent;
+        align-items: center;
+        min-height: 32px;
     }
     .personnel-status.active {
         background: #e8f8ef;
@@ -73,6 +74,78 @@
         background: #feeff0;
         color: #b91c1c;
         border-color: #f87171;
+    }
+    .personnel-status-row {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .personnel-cardex-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .personnel-meta-stack {
+        display: grid;
+        gap: 12px;
+        margin-top: 14px;
+    }
+    .personnel-metric-card {
+        border: 1px solid #d7e5db;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #f7fbf8, #edf7f0);
+        padding: 12px;
+    }
+    .personnel-metric-card small {
+        display: block;
+        margin-bottom: 4px;
+        color: #567164;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-weight: 800;
+    }
+    .personnel-metric-card strong {
+        color: #16362a;
+        font-size: 15px;
+    }
+    .personnel-vacation-badge {
+        width: 88px;
+        height: 88px;
+        aspect-ratio: 1;
+        margin: 0 auto;
+        border-radius: 999px;
+        background: radial-gradient(circle at top, #56d66f, #149647 68%, #0d6b34);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 8px;
+        box-shadow: 0 16px 28px rgba(20, 150, 71, .22);
+    }
+    .personnel-vacation-badge strong {
+        font-size: 30px;
+        line-height: 1;
+        color: #fff;
+    }
+    .personnel-vacation-caption {
+        margin-top: 8px;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #486556;
     }
     .personnel-details {
         border: 1px solid #d1d5db;
@@ -218,8 +291,13 @@
                     </div>
                 @endif
 
-                <div class="personnel-status {{ $selectedPersonnel->active ? 'active' : 'inactive' }}">
-                    {{ $selectedPersonnel->active ? 'Activo' : 'Baja' }}
+                <div class="personnel-status-row">
+                    <div class="personnel-status {{ $selectedPersonnel->active ? 'active' : 'inactive' }}">
+                        {{ $selectedPersonnel->active ? 'Activo' : 'Baja' }}
+                    </div>
+                    <a class="btn btn-outline-primary btn-sm personnel-cardex-link" href="{{ route('cardex.index', ['personnel_id' => $selectedPersonnel->id, 'quick_code' => 'A']) }}">
+                        Consultar Kardex
+                    </a>
                 </div>
 
                 @if($selectedPersonnel->terminated_at)
@@ -228,10 +306,15 @@
                     </div>
                 @endif
 
-                <div style="margin-top:12px;">
-                    <a class="btn btn-outline-primary btn-sm" href="{{ route('cardex.index', ['personnel_id' => $selectedPersonnel->id, 'quick_code' => 'A']) }}">
-                        Consultar Kardex
-                    </a>
+                <div class="personnel-meta-stack">
+                    <div class="personnel-metric-card">
+                        <small>Antiguedad</small>
+                        <strong>{{ $selectedPersonnel->seniority_label }}</strong>
+                    </div>
+                    <div class="personnel-vacation-badge">
+                        <strong>{{ (int) ($selectedPersonnel->pending_vacation_days ?? 0) }}</strong>
+                    </div>
+                    <div class="personnel-vacation-caption">Dias de vacaciones pendientes</div>
                 </div>
             </div>
 
@@ -242,9 +325,14 @@
                     <div class="personnel-field"><small>Puesto</small><strong>{{ $selectedPersonnel->position ?: '-' }}</strong></div>
                     <div class="personnel-field"><small>Departamento</small><strong>{{ $selectedPersonnel->department ?: '-' }}</strong></div>
                     <div class="personnel-field"><small>Fecha de ingreso</small><strong>{{ $selectedPersonnel->hire_date ? $selectedPersonnel->hire_date->format('d/m/Y') : '-' }}</strong></div>
+                    <div class="personnel-field"><small>Estado civil</small><strong>{{ $selectedPersonnel->marital_status ?: '-' }}</strong></div>
+                    <div class="personnel-field"><small>Sexo</small><strong>{{ $selectedPersonnel->sex ?: '-' }}</strong></div>
+                    <div class="personnel-field"><small>Fecha de nacimiento</small><strong>{{ $selectedPersonnel->birth_date ? $selectedPersonnel->birth_date->format('d/m/Y') : '-' }}</strong></div>
                     <div class="personnel-field"><small>CURP</small><strong>{{ $selectedPersonnel->curp ?: '-' }}</strong></div>
                     <div class="personnel-field"><small>RFC</small><strong>{{ $selectedPersonnel->rfc ?: '-' }}</strong></div>
                     <div class="personnel-field"><small>NSS</small><strong>{{ $selectedPersonnel->nss ?: '-' }}</strong></div>
+                    <div class="personnel-field"><small>Numero de cuenta</small><strong>{{ $selectedPersonnel->account_number ?: '-' }}</strong></div>
+                    <div class="personnel-field"><small>Tipo de cuenta</small><strong>{{ $selectedPersonnel->account_type ?: '-' }}</strong></div>
                     <div class="personnel-field"><small>Telefono</small><strong>{{ $selectedPersonnel->phone ?: '-' }}</strong></div>
                     <div class="personnel-field"><small>Correo</small><strong>{{ $selectedPersonnel->email ?: '-' }}</strong></div>
                     <div class="personnel-field"><small>Domicilio</small><strong>{{ $selectedPersonnel->address ?: '-' }}</strong></div>
@@ -325,6 +413,7 @@
             list.hidden = true;
 
             const originalOptions = Array.from(select.options);
+            let filteredOptions = [];
 
             function applyOption(opt) {
                 if (!opt) return;
@@ -337,22 +426,38 @@
             function render(filter) {
                 list.innerHTML = '';
                 const term = (filter || '').toLowerCase();
-                originalOptions.forEach(function (opt) {
+                filteredOptions = originalOptions.filter(function (opt) {
                     if (!opt.value) return;
                     const text = opt.textContent;
-                    if (term && !text.toLowerCase().includes(term)) return;
+                    return !term || text.toLowerCase().includes(term);
+                });
+
+                filteredOptions.forEach(function (opt) {
+                    const text = opt.textContent;
                     const li = document.createElement('li');
                     li.textContent = text;
                     li.dataset.value = opt.value;
                     li.style.padding = '6px 8px';
                     li.style.cursor = 'pointer';
+                    li.style.borderBottom = '1px solid #eef2f7';
+                    li.style.background = '#fff';
+                    li.addEventListener('mouseenter', function () {
+                        li.style.background = '#eef6f1';
+                    });
+                    li.addEventListener('mouseleave', function () {
+                        li.style.background = '#fff';
+                    });
                     li.addEventListener('mousedown', function (event) {
                         event.preventDefault();
                         applyOption(opt);
                     });
                     list.appendChild(li);
                 });
-                list.hidden = list.children.length === 0;
+                const lastItem = list.lastElementChild;
+                if (lastItem) {
+                    lastItem.style.borderBottom = 'none';
+                }
+                list.hidden = filteredOptions.length === 0;
             }
 
             input.addEventListener('focus', function () {
@@ -364,15 +469,15 @@
                 render(this.value);
             });
 
+            input.addEventListener('click', function () {
+                render(this.value);
+            });
+
             input.addEventListener('keydown', function (event) {
                 if (event.key !== 'Enter') return;
                 event.preventDefault();
-                const firstVisible = list.querySelector('li');
-                if (firstVisible) {
-                    const match = originalOptions.find(function (opt) {
-                        return opt.value === firstVisible.dataset.value;
-                    });
-                    applyOption(match);
+                if (filteredOptions.length > 0) {
+                    applyOption(filteredOptions[0]);
                 }
             });
 

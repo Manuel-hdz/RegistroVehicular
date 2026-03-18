@@ -4,17 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Personnel;
 use App\Models\PersonnelCardexEntry;
+use App\Services\VacationAccrualService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class CardexController extends Controller
 {
     private const CODES = [
         'A' => 'Asistencia',
+        'V' => 'Vacaciones',
         'F' => 'Falta',
         'I' => 'Incapacidad',
         'PSG' => 'Permiso sin goce',
@@ -56,6 +59,8 @@ class CardexController extends Controller
         if ($selectedPersonnelId > 0) {
             $selectedPersonnel = $personnelList->firstWhere('id', $selectedPersonnelId);
             if ($selectedPersonnel) {
+                $selectedPersonnel = $this->vacationAccrualService()->sync($selectedPersonnel);
+
                 $this->ensureDefaultEntries(
                     $selectedPersonnel->id,
                     $periodConfig['query_start'],
@@ -131,6 +136,7 @@ class CardexController extends Controller
             'quickDate' => $quickDate,
             'periodSummary' => $periodSummary,
             'periodTotal' => $periodTotal,
+            'pendingVacationDays' => (int) ($selectedPersonnel?->pending_vacation_days ?? 0),
         ]);
     }
 
@@ -143,17 +149,44 @@ class CardexController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        PersonnelCardexEntry::updateOrCreate(
-            [
-                'personnel_id' => (int) $data['personnel_id'],
-                'entry_date' => $data['entry_date'],
-            ],
-            [
-                'code' => $data['code'],
-                'notes' => $data['notes'] ?? null,
-                'updated_by' => optional($request->user())->id,
-            ]
-        );
+        DB::transaction(function () use ($data, $request): void {
+            $personnel = Personnel::whereKey((int) $data['personnel_id'])->lockForUpdate()->firstOrFail();
+            $personnel = $this->vacationAccrualService()->syncLockedPersonnel($personnel);
+
+            $entry = PersonnelCardexEntry::where('personnel_id', $personnel->id)
+                ->whereDate('entry_date', $data['entry_date'])
+                ->lockForUpdate()
+                ->first();
+
+            $previousCode = $entry?->code;
+            $newCode = $data['code'];
+
+            if ($previousCode !== 'V' && $newCode === 'V') {
+                if ((int) $personnel->pending_vacation_days <= 0) {
+                    throw ValidationException::withMessages([
+                        'code' => 'La persona no tiene dias de vacaciones pendientes para registrar esta clave.',
+                    ]);
+                }
+
+                $personnel->pending_vacation_days = (int) $personnel->pending_vacation_days - 1;
+                $personnel->save();
+            } elseif ($previousCode === 'V' && $newCode !== 'V') {
+                $personnel->pending_vacation_days = (int) $personnel->pending_vacation_days + 1;
+                $personnel->save();
+            }
+
+            if (!$entry) {
+                $entry = new PersonnelCardexEntry([
+                    'personnel_id' => (int) $data['personnel_id'],
+                    'entry_date' => $data['entry_date'],
+                ]);
+            }
+
+            $entry->code = $newCode;
+            $entry->notes = $data['notes'] ?? null;
+            $entry->updated_by = optional($request->user())->id;
+            $entry->save();
+        });
 
         $entryDate = Carbon::parse($data['entry_date']);
         $viewMode = (string) $request->input('view_mode', 'month');
@@ -448,5 +481,10 @@ class CardexController extends Controller
         if (count($rows) > 0) {
             DB::table('personnel_cardex_entries')->insertOrIgnore($rows);
         }
+    }
+
+    private function vacationAccrualService(): VacationAccrualService
+    {
+        return app(VacationAccrualService::class);
     }
 }
