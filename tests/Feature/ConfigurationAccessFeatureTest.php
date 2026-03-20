@@ -41,4 +41,21 @@ class ConfigurationAccessFeatureTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    public function test_user_role_cannot_access_configuration_even_with_additional_permission(): void
+    {
+        $user = User::create([
+            'name' => 'Compras Config',
+            'username' => 'compras-config-extra',
+            'password' => 'secret',
+            'role' => 'user',
+            'department' => 'compras',
+            'module_permissions' => ['configuracion'],
+            'active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('vacation-policies.index'));
+
+        $response->assertForbidden();
+    }
 }

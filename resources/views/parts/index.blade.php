@@ -2,16 +2,33 @@
 
 @section('content')
 <div class="card">
-    <div class="row" style="justify-content: space-between;">
-        <h2 style="margin:0">Refacciones</h2>
-        <a href="{{ route('parts.create') }}" class="btn btn-primary">Nueva Refacción</a>
+    <div class="row" style="justify-content: space-between; align-items:center; gap:12px;">
+        <div>
+            <h2 style="margin:0">Refacciones</h2>
+            @unless($canManageParts)
+                <p style="margin:6px 0 0; color:#6b7280;">Consulta compartida. Solo Almacén puede editar este catálogo.</p>
+            @endunless
+        </div>
+        @if($canManageParts)
+            <a href="{{ route('parts.create') }}" class="btn btn-primary">Nueva Refacción</a>
+        @endif
     </div>
 </div>
 
 <div class="card">
     <div class="table-responsive">
     <table class="table table-striped align-middle" style="width:100%">
-        <thead><tr><th>#</th><th>Nombre</th><th>Costo</th><th>Activa</th><th></th></tr></thead>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Costo</th>
+                <th>Activa</th>
+                @if($canManageParts)
+                    <th></th>
+                @endif
+            </tr>
+        </thead>
         <tbody>
             @foreach($parts as $p)
                 <tr>
@@ -19,7 +36,9 @@
                     <td>{{ $p->name }}</td>
                     <td>${{ number_format($p->unit_cost, 2) }}</td>
                     <td>{{ $p->active ? 'Sí' : 'No' }}</td>
-                    <td><a class="btn btn-secondary" href="{{ route('parts.edit', $p) }}">Editar</a></td>
+                    @if($canManageParts)
+                        <td><a class="btn btn-secondary" href="{{ route('parts.edit', $p) }}">Editar</a></td>
+                    @endif
                 </tr>
             @endforeach
         </tbody>

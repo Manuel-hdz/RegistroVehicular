@@ -361,9 +361,13 @@
                             <button class="btn btn-link text-danger btn-sm" type="submit">Dar de baja</button>
                         </form>
                     @else
-                        <form method="POST" action="{{ route('personnel.reactivate', $selectedPersonnel) }}" onsubmit="return confirm('Reactivar a este personal?');">
+                        <form method="POST" action="{{ route('personnel.reactivate', $selectedPersonnel) }}" onsubmit="return confirm('Reactivar a este personal con la fecha de reingreso indicada?');" style="display:flex; align-items:flex-end; gap:8px; flex-wrap:wrap;">
                             @csrf
                             @method('PATCH')
+                            <div>
+                                <label style="margin-bottom:4px;">Fecha de reingreso</label>
+                                <input type="date" name="rehire_date" value="{{ old('rehire_date', now()->format('Y-m-d')) }}" required style="min-width:170px;">
+                            </div>
                             <button class="btn btn-link text-success btn-sm" type="submit">Reactivar</button>
                         </form>
                     @endif

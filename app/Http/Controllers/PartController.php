@@ -12,7 +12,10 @@ class PartController extends Controller
     public function index(): View
     {
         $parts = Part::orderBy('name')->paginate(20);
-        return view('parts.index', compact('parts'));
+        return view('parts.index', [
+            'parts' => $parts,
+            'canManageParts' => request()->user()?->canManageParts() ?? false,
+        ]);
     }
     public function create(): View { return view('parts.create'); }
     public function store(Request $request): RedirectResponse
@@ -39,4 +42,3 @@ class PartController extends Controller
         return redirect()->route('parts.index')->with('status','Refacción actualizada.');
     }
 }
-

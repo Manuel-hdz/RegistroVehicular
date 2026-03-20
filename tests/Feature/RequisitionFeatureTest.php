@@ -61,11 +61,11 @@ class RequisitionFeatureTest extends TestCase
     public function test_admin_can_create_cost_center(): void
     {
         $admin = User::create([
-            'name' => 'Admin Compras',
-            'username' => 'admin-compras',
+            'name' => 'Admin Sistemas',
+            'username' => 'admin-sistemas-cost-centers',
             'password' => 'secret',
             'role' => 'admin',
-            'department' => 'compras',
+            'department' => 'sistemas',
             'active' => true,
         ]);
 
@@ -231,5 +231,85 @@ class RequisitionFeatureTest extends TestCase
 
         $response->assertRedirect(route('requisitions.pending', ['status' => 'delivered']));
         $this->assertSame(Requisition::STATUS_DELIVERED, $requisition->fresh()->status);
+    }
+
+    public function test_maintenance_user_can_view_pending_but_cannot_edit_shared_requisition_controls(): void
+    {
+        $viewer = User::create([
+            'name' => 'Mantenimiento',
+            'username' => 'maintenance-viewer',
+            'password' => 'secret',
+            'role' => 'admin',
+            'department' => 'mantenimiento',
+            'active' => true,
+        ]);
+
+        $costCenter = CostCenter::create([
+            'code' => 'CC-07',
+            'name' => 'Mantenimiento',
+            'active' => true,
+        ]);
+
+        $requisition = Requisition::create([
+            'cost_center_id' => $costCenter->id,
+            'requester_name' => 'Rosa Villa',
+            'status' => 'pending',
+        ]);
+
+        $item = $requisition->items()->create([
+            'material_name' => 'Bandas',
+            'quantity' => '2',
+            'is_ordered' => false,
+            'is_in_storage' => false,
+        ]);
+
+        $this->actingAs($viewer)->get(route('requisitions.pending'))
+            ->assertOk()
+            ->assertSee('Vista compartida en modo consulta');
+
+        $this->actingAs($viewer)->patch(route('requisitions.status', $requisition), [
+            'status' => 'approved',
+        ])->assertForbidden();
+
+        $this->actingAs($viewer)->patch(route('requisitions.items.checks', $item), [
+            'field' => 'is_ordered',
+            'value' => '1',
+        ])->assertForbidden();
+    }
+
+    public function test_purchases_user_cannot_update_warehouse_checks(): void
+    {
+        $user = User::create([
+            'name' => 'Compras',
+            'username' => 'purchases-readonly-checks',
+            'password' => 'secret',
+            'role' => 'admin',
+            'department' => 'compras',
+            'active' => true,
+        ]);
+
+        $costCenter = CostCenter::create([
+            'code' => 'CC-08',
+            'name' => 'Compras',
+            'active' => true,
+        ]);
+
+        $requisition = Requisition::create([
+            'cost_center_id' => $costCenter->id,
+            'requester_name' => 'Laura Diaz',
+            'status' => 'pending',
+        ]);
+
+        $item = $requisition->items()->create([
+            'material_name' => 'Tornillos',
+            'quantity' => '10',
+            'is_ordered' => false,
+            'is_in_storage' => false,
+        ]);
+
+        $this->actingAs($user)->patch(route('requisitions.items.checks', $item), [
+            'field' => 'is_ordered',
+            'value' => '1',
+        ])->assertForbidden();
     }
 }

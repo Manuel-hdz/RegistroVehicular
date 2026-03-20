@@ -79,6 +79,8 @@ class RequisitionController extends Controller
             'requisitions' => $requisitions,
             'statuses' => $statuses,
             'selectedStatus' => $selectedStatus,
+            'canManageRequisitionItems' => request()->user()?->canManageRequisitionItems() ?? false,
+            'canManageRequisitionStatus' => request()->user()?->canManageRequisitionStatus() ?? false,
         ]);
     }
 

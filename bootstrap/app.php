@@ -14,7 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminOnly::class,
             'department' => \App\Http\Middleware\DepartmentMiddleware::class,
+            'impersonation-preview' => \App\Http\Middleware\ImpersonationPreviewMiddleware::class,
+            'module-owner' => \App\Http\Middleware\ModuleOwnerMiddleware::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'section' => \App\Http\Middleware\SectionAccessMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

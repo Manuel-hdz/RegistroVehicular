@@ -6,6 +6,9 @@ use App\Models\Driver;
 use App\Models\Personnel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -27,8 +30,15 @@ class DriverController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $supportsPersonnelLink = $this->supportsPersonnelLink();
+
+        $personnelRules = ['required', 'exists:personnels,id'];
+        if ($supportsPersonnelLink) {
+            $personnelRules[] = Rule::unique('drivers', 'personnel_id');
+        }
+
         $data = $request->validate([
-            'personnel_id' => ['required', 'exists:personnels,id', Rule::unique('drivers', 'personnel_id')],
+            'personnel_id' => $personnelRules,
             'license' => ['nullable', 'string', 'max:50'],
             'active' => ['nullable', 'boolean'],
         ]);
@@ -38,6 +48,9 @@ class DriverController extends Controller
         $data['name'] = $personnel->full_name;
         $data['employee_number'] = $personnel->employee_number;
         $data['active'] = $request->has('active');
+        if (!$supportsPersonnelLink) {
+            unset($data['personnel_id']);
+        }
 
         Driver::create($data);
 
@@ -54,12 +67,15 @@ class DriverController extends Controller
 
     public function update(Request $request, Driver $driver): RedirectResponse
     {
+        $supportsPersonnelLink = $this->supportsPersonnelLink();
+
+        $personnelRules = ['required', 'exists:personnels,id'];
+        if ($supportsPersonnelLink) {
+            $personnelRules[] = Rule::unique('drivers', 'personnel_id')->ignore($driver->id);
+        }
+
         $data = $request->validate([
-            'personnel_id' => [
-                'required',
-                'exists:personnels,id',
-                Rule::unique('drivers', 'personnel_id')->ignore($driver->id),
-            ],
+            'personnel_id' => $personnelRules,
             'license' => ['nullable', 'string', 'max:50'],
             'active' => ['nullable', 'boolean'],
         ]);
@@ -69,6 +85,9 @@ class DriverController extends Controller
         $data['name'] = $personnel->full_name;
         $data['employee_number'] = $personnel->employee_number;
         $data['active'] = $request->has('active');
+        if (!$supportsPersonnelLink) {
+            unset($data['personnel_id']);
+        }
 
         $driver->update($data);
 
@@ -93,5 +112,24 @@ class DriverController extends Controller
             ->orderBy('last_name')
             ->orderBy('middle_name')
             ->get();
+    }
+
+    private function supportsPersonnelLink(): bool
+    {
+        if (!Schema::hasTable('drivers')) {
+            return false;
+        }
+
+        try {
+            DB::table('drivers')->select('personnel_id')->limit(1)->get();
+
+            return true;
+        } catch (QueryException $exception) {
+            if (($exception->errorInfo[1] ?? null) === 1054) {
+                return false;
+            }
+
+            throw $exception;
+        }
     }
 }

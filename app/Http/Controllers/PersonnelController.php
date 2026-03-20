@@ -133,11 +133,16 @@ class PersonnelController extends Controller
             ->with('status', 'Personal dado de baja.');
     }
 
-    public function reactivate(Personnel $personnel): RedirectResponse
+    public function reactivate(Request $request, Personnel $personnel): RedirectResponse
     {
+        $data = $request->validate([
+            'rehire_date' => ['required', 'date'],
+        ]);
+
         $personnel->update([
             'active' => true,
             'terminated_at' => null,
+            'hire_date' => $data['rehire_date'],
         ]);
 
         return redirect()->route('personnel.index', ['personnel_id' => $personnel->id])

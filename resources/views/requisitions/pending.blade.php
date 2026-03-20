@@ -18,6 +18,9 @@
         <div>
             <h2 style="margin:0;">Pendientes</h2>
             <p style="margin:6px 0 0; color:#6b7280;">Solicitudes registradas desde el formulario publico de requisiciones.</p>
+            @if(!$canManageRequisitionItems && !$canManageRequisitionStatus)
+                <p style="margin:6px 0 0; color:#6b7280;">Vista compartida en modo consulta. Solo Compras y Almacén pueden editar.</p>
+            @endif
         </div>
         <div class="row" style="gap:10px;">
             <a href="{{ route('requisitions.create') }}" class="btn btn-secondary">Abrir formulario</a>
@@ -80,40 +83,54 @@
                             </td>
                             <td>{{ $item->justification ?: 'Sin justificacion' }}</td>
                             <td>
-                                <form method="POST" action="{{ route('requisitions.items.checks', $item) }}" class="item-check-form">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="status_context" value="{{ $selectedStatus }}">
-                                    <input type="hidden" name="field" value="is_ordered">
-                                    <input type="hidden" name="value" value="{{ $item->is_ordered ? 0 : 1 }}">
-                                    <label style="display:inline-flex; align-items:center; gap:8px; margin:0; font-size:.9rem; text-transform:none; letter-spacing:0; color:#203129; font-weight:700;">
-                                        <input
-                                            type="checkbox"
-                                            class="item-check-toggle"
-                                            data-confirm-check="Ya fue encargado este material?"
-                                            {{ $item->is_ordered ? 'checked' : '' }}
-                                        >
+                                @if($canManageRequisitionItems)
+                                    <form method="POST" action="{{ route('requisitions.items.checks', $item) }}" class="item-check-form">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="status_context" value="{{ $selectedStatus }}">
+                                        <input type="hidden" name="field" value="is_ordered">
+                                        <input type="hidden" name="value" value="{{ $item->is_ordered ? 0 : 1 }}">
+                                        <label style="display:inline-flex; align-items:center; gap:8px; margin:0; font-size:.9rem; text-transform:none; letter-spacing:0; color:#203129; font-weight:700;">
+                                            <input
+                                                type="checkbox"
+                                                class="item-check-toggle"
+                                                data-confirm-check="Ya fue encargado este material?"
+                                                {{ $item->is_ordered ? 'checked' : '' }}
+                                            >
+                                            <span>{{ $item->is_ordered ? 'Si' : 'No' }}</span>
+                                        </label>
+                                    </form>
+                                @else
+                                    <span style="display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:#f3f4f6; color:#374151; font-weight:700;">
+                                        <i class="bi {{ $item->is_ordered ? 'bi-check-circle-fill' : 'bi-dash-circle' }}"></i>
                                         <span>{{ $item->is_ordered ? 'Si' : 'No' }}</span>
-                                    </label>
-                                </form>
+                                    </span>
+                                @endif
                             </td>
                             <td>
-                                <form method="POST" action="{{ route('requisitions.items.checks', $item) }}" class="item-check-form">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="status_context" value="{{ $selectedStatus }}">
-                                    <input type="hidden" name="field" value="is_in_storage">
-                                    <input type="hidden" name="value" value="{{ $item->is_in_storage ? 0 : 1 }}">
-                                    <label style="display:inline-flex; align-items:center; gap:8px; margin:0; font-size:.9rem; text-transform:none; letter-spacing:0; color:#203129; font-weight:700;">
-                                        <input
-                                            type="checkbox"
-                                            class="item-check-toggle"
-                                            data-confirm-check="Este material ya se encuentra en almacen?"
-                                            {{ $item->is_in_storage ? 'checked' : '' }}
-                                        >
+                                @if($canManageRequisitionItems)
+                                    <form method="POST" action="{{ route('requisitions.items.checks', $item) }}" class="item-check-form">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="status_context" value="{{ $selectedStatus }}">
+                                        <input type="hidden" name="field" value="is_in_storage">
+                                        <input type="hidden" name="value" value="{{ $item->is_in_storage ? 0 : 1 }}">
+                                        <label style="display:inline-flex; align-items:center; gap:8px; margin:0; font-size:.9rem; text-transform:none; letter-spacing:0; color:#203129; font-weight:700;">
+                                            <input
+                                                type="checkbox"
+                                                class="item-check-toggle"
+                                                data-confirm-check="Este material ya se encuentra en almacen?"
+                                                {{ $item->is_in_storage ? 'checked' : '' }}
+                                            >
+                                            <span>{{ $item->is_in_storage ? 'Si' : 'No' }}</span>
+                                        </label>
+                                    </form>
+                                @else
+                                    <span style="display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:#f3f4f6; color:#374151; font-weight:700;">
+                                        <i class="bi {{ $item->is_in_storage ? 'bi-check-circle-fill' : 'bi-dash-circle' }}"></i>
                                         <span>{{ $item->is_in_storage ? 'Si' : 'No' }}</span>
-                                    </label>
-                                </form>
+                                    </span>
+                                @endif
                             </td>
                         </tr>
                     @endforeach
@@ -128,7 +145,7 @@
                 >
                     {{ $requisition->status_label }}
                 </div>
-            @else
+            @elseif($canManageRequisitionStatus)
                 <form method="POST" action="{{ route('requisitions.status', $requisition) }}" class="requisition-status-form" data-requisition-status-form>
                     @csrf
                     @method('PATCH')
@@ -148,6 +165,12 @@
                         </div>
                     </div>
                 </form>
+            @else
+                <div style="display:flex; justify-content:flex-end;">
+                    <div style="padding:14px 16px; border-radius:18px; font-weight:800; text-align:center; min-width:220px; {{ $badgeStyles[$requisition->status] ?? 'background:#e5e7eb; color:#374151;' }}">
+                        {{ $requisition->status_label }}
+                    </div>
+                </div>
             @endif
         </div>
     </div>

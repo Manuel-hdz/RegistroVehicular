@@ -587,7 +587,17 @@
     'bulk-imports.*',
     'requisitions.*'
 ))
-@php($canAccessConfiguration = auth()->check() && trim(mb_strtolower(\Illuminate\Support\Str::ascii((string) auth()->user()->department), 'UTF-8')) === 'sistemas')
+@php($currentUser = auth()->user())
+@php($originalUser = request()->attributes->get('original_user'))
+@php($previewUser = request()->attributes->get('preview_user'))
+@php($canUsePreviewMode = $originalUser instanceof \App\Models\User && $originalUser->role === 'superadmin')
+@php($previewOptions = $canUsePreviewMode ? \App\Models\User::where('active', true)->orderBy('name')->get(['id', 'name', 'username']) : collect())
+@php($canAccessConfiguration = $currentUser?->canAccessSection('configuracion') ?? false)
+@php($canAccessAdministration = (($currentUser?->role ?? '') !== 'user') && ($currentUser?->canAccessSection('administracion') ?? false))
+@php($canAccessMaintenance = $currentUser?->canAccessSection('mantenimiento') ?? false)
+@php($canAccessHumanResources = $currentUser?->canAccessSection('rrhh') ?? false)
+@php($canAccessWarehouse = $currentUser?->canAccessSection('almacen') ?? false)
+@php($canAccessPurchases = $currentUser?->canAccessSection('compras') ?? false)
 <header class="navbar navbar-expand-lg navbar-dark sticky-top app-navbar">
     <div class="container-fluid">
         <div class="d-flex align-items-center gap-2">
@@ -637,24 +647,31 @@
 
             <div class="collapse navbar-collapse app-navbar-collapse" id="appNavbar">
                 <div class="navbar-shell">
-                    @php($isAdminMenu = in_array(auth()->user()->role, ['admin','superadmin']))
+                    @php($isAdminMenu = auth()->check())
                     <ul class="navbar-nav main-nav me-auto mb-0">
                         @if($isAdminMenu)
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle {{ request()->routeIs('movements.*') || request()->routeIs('departures.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('public.dashboard') || request()->routeIs('movements.*') || request()->routeIs('departures.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                     <i class="bi bi-arrow-left-right"></i><span>Registro Vehicular</span>
                                 </a>
                                 <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('public.dashboard') ? 'active' : '' }}" href="{{ route('public.dashboard') }}">
+                                            <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                                        </a>
+                                    </li>
                                     <li>
                                         <a class="dropdown-item {{ request()->routeIs('movements.*') ? 'active' : '' }}" href="{{ route('movements.index') }}">
                                             <i class="bi bi-arrow-left-right"></i><span>Movimientos</span>
                                         </a>
                                     </li>
-                                    <li>
-                                        <a class="dropdown-item {{ request()->routeIs('departures.*') ? 'active' : '' }}" href="{{ route('departures.index') }}">
-                                            <i class="bi bi-box-arrow-up-right"></i><span>Salidas</span>
-                                        </a>
-                                    </li>
+                                    @if(auth()->user()->role !== 'user')
+                                        <li>
+                                            <a class="dropdown-item {{ request()->routeIs('departures.*') ? 'active' : '' }}" href="{{ route('departures.index') }}">
+                                                <i class="bi bi-box-arrow-up-right"></i><span>Salidas</span>
+                                            </a>
+                                        </li>
+                                    @endif
                                 </ul>
                             </li>
                         @else
@@ -665,7 +682,7 @@
                             </li>
                         @endif
 
-                        @if($isAdminMenu)
+                        @if($canAccessMaintenance)
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle {{ request()->routeIs('maintenance.*') || request()->routeIs('repairs.*') || request()->routeIs('mechanics.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                     <i class="bi bi-tools"></i><span>Mantenimiento</span>
@@ -703,7 +720,9 @@
                                     </li>
                                 </ul>
                             </li>
+                        @endif
 
+                        @if($canAccessAdministration)
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle {{ request()->routeIs('vehicles.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                     <i class="bi bi-building-gear"></i><span>Administración</span>
@@ -716,7 +735,9 @@
                                     </li>
                                 </ul>
                             </li>
+                        @endif
 
+                        @if($canAccessHumanResources)
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle {{ request()->routeIs('hr.*') || request()->routeIs('personnel.*') || request()->routeIs('cardex.*') || request()->routeIs('drivers.*') || request()->routeIs('comedor.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                     <i class="bi bi-people"></i><span>Recursos Humanos</span>
@@ -749,7 +770,9 @@
                                     </li>
                                 </ul>
                             </li>
+                        @endif
 
+                        @if($canAccessWarehouse)
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle {{ request()->routeIs('parts.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                     <i class="bi bi-box-seam"></i><span>Almacén</span>
@@ -772,7 +795,9 @@
                                     </li>
                                 </ul>
                             </li>
+                        @endif
 
+                        @if($canAccessPurchases)
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle {{ request()->routeIs('requisitions.pending') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                     <i class="bi bi-bag-check"></i><span>Compras</span>
@@ -786,14 +811,6 @@
                                 </ul>
                             </li>
                         @endif
-
-                        @if(auth()->user()->role === 'superadmin')
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
-                                    <i class="bi bi-people"></i><span>Usuarios</span>
-                                </a>
-                            </li>
-                        @endif
                     </ul>
 
                     <div class="nav-divider d-lg-none"></div>
@@ -803,7 +820,7 @@
                             <li class="nav-item dropdown brand-shortcut">
                                 <a
                                     href="#"
-                                    class="home-link dropdown-toggle {{ request()->routeIs('cost-centers.*') || request()->routeIs('bulk-imports.*') || request()->routeIs('vacation-policies.*') ? 'active' : '' }}"
+                                    class="home-link dropdown-toggle {{ request()->routeIs('cost-centers.*') || request()->routeIs('bulk-imports.*') || request()->routeIs('vacation-policies.*') || request()->routeIs('users.*') ? 'active' : '' }}"
                                     title="Configuración"
                                     aria-label="Configuración"
                                     data-bs-toggle="dropdown"
@@ -828,14 +845,64 @@
                                             <i class="bi bi-file-earmark-spreadsheet"></i><span>Cargas masivas</span>
                                         </a>
                                     </li>
+                                    @if(auth()->user()->role === 'superadmin')
+                                        <li>
+                                            <a class="dropdown-item {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
+                                                <i class="bi bi-people"></i><span>Usuarios</span>
+                                            </a>
+                                        </li>
+                                    @endif
                                 </ul>
                             </li>
                         @endif
-                        <li class="nav-item">
-                            <span class="user-pill">
-                                <i class="bi bi-person-circle"></i>
-                                <span>{{ trim(auth()->user()->name ?? '') !== '' ? auth()->user()->name : auth()->user()->username }}</span>
-                            </span>
+                        <li class="nav-item dropdown">
+                            @if($canUsePreviewMode)
+                                <a
+                                    href="#"
+                                    class="user-pill dropdown-toggle"
+                                    data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside"
+                                    aria-expanded="false"
+                                    style="text-decoration:none;"
+                                >
+                                    <i class="bi bi-person-circle"></i>
+                                    <span>{{ trim(($previewUser?->name ?? auth()->user()->name) ?? '') !== '' ? ($previewUser?->name ?? auth()->user()->name) : ($previewUser?->username ?? auth()->user()->username) }}</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" style="min-width:300px;">
+                                    <li style="padding:.35rem .7rem .25rem; color:#4a5f56; font-size:.82rem; font-weight:700;">
+                                        {{ $previewUser ? 'Vista como otro usuario' : 'Cambiar vista de usuario' }}
+                                    </li>
+                                    <li>
+                                        <form method="POST" action="{{ route('impersonation.start') }}" style="padding:.35rem .7rem .2rem;">
+                                            @csrf
+                                            <label style="margin-bottom:6px;">Usuario a visualizar</label>
+                                            <select name="preview_user_id" style="min-width:100%;">
+                                                @foreach($previewOptions as $previewOption)
+                                                    <option value="{{ $previewOption->id }}" @selected((int) ($previewUser?->id ?? $originalUser->id) === (int) $previewOption->id)>
+                                                        {{ $previewOption->name }} - {{ $previewOption->username }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <button type="submit" class="btn btn-secondary" style="width:100%; margin-top:10px;">Cambiar vista</button>
+                                        </form>
+                                    </li>
+                                    @if($previewUser)
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li style="padding:.2rem .7rem .55rem;">
+                                            <form method="POST" action="{{ route('impersonation.stop') }}">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-primary" style="width:100%;">Volver a mi usuario</button>
+                                            </form>
+                                        </li>
+                                    @endif
+                                </ul>
+                            @else
+                                <span class="user-pill">
+                                    <i class="bi bi-person-circle"></i>
+                                    <span>{{ trim(auth()->user()->name ?? '') !== '' ? auth()->user()->name : auth()->user()->username }}</span>
+                                </span>
+                            @endif
                         </li>
                         <li class="nav-item">
                             <form action="{{ route('logout') }}" method="POST" class="d-inline">
@@ -854,6 +921,14 @@
 <div class="wrap">
     @if (session('status'))
         <div class="status">{{ session('status') }}</div>
+    @endif
+    @if($previewUser instanceof \App\Models\User && $originalUser instanceof \App\Models\User)
+        <div class="card" style="padding:14px 18px; border:1px solid rgba(59,130,246,.22); background:rgba(219,234,254,.82);">
+            <div class="row" style="justify-content:space-between; align-items:center; gap:12px;">
+                <div style="color:#1d4ed8; font-weight:800;">Vista activa como {{ $previewUser->name }} ({{ $previewUser->username }})</div>
+                <div style="color:#475569;">Sesion original: {{ $originalUser->name }}</div>
+            </div>
+        </div>
     @endif
     @if ($errors->any())
         <div class="error">

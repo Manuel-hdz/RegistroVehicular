@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Mechanic;
 use App\Models\Personnel;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -27,8 +30,15 @@ class MechanicController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $supportsPersonnelLink = $this->supportsPersonnelLink();
+
+        $personnelRules = ['required', 'exists:personnels,id'];
+        if ($supportsPersonnelLink) {
+            $personnelRules[] = Rule::unique('mechanics', 'personnel_id');
+        }
+
         $data = $request->validate([
-            'personnel_id' => ['required', 'exists:personnels,id', Rule::unique('mechanics', 'personnel_id')],
+            'personnel_id' => $personnelRules,
             'daily_salary' => ['required', 'numeric', 'min:0'],
             'active' => ['nullable', 'boolean'],
         ]);
@@ -37,6 +47,9 @@ class MechanicController extends Controller
 
         $data['name'] = $personnel->full_name;
         $data['active'] = $request->has('active');
+        if (!$supportsPersonnelLink) {
+            unset($data['personnel_id']);
+        }
 
         Mechanic::create($data);
 
@@ -53,12 +66,15 @@ class MechanicController extends Controller
 
     public function update(Request $request, Mechanic $mechanic): RedirectResponse
     {
+        $supportsPersonnelLink = $this->supportsPersonnelLink();
+
+        $personnelRules = ['required', 'exists:personnels,id'];
+        if ($supportsPersonnelLink) {
+            $personnelRules[] = Rule::unique('mechanics', 'personnel_id')->ignore($mechanic->id);
+        }
+
         $data = $request->validate([
-            'personnel_id' => [
-                'required',
-                'exists:personnels,id',
-                Rule::unique('mechanics', 'personnel_id')->ignore($mechanic->id),
-            ],
+            'personnel_id' => $personnelRules,
             'daily_salary' => ['required', 'numeric', 'min:0'],
             'active' => ['nullable', 'boolean'],
         ]);
@@ -67,6 +83,9 @@ class MechanicController extends Controller
 
         $data['name'] = $personnel->full_name;
         $data['active'] = $request->has('active');
+        if (!$supportsPersonnelLink) {
+            unset($data['personnel_id']);
+        }
 
         $mechanic->update($data);
 
@@ -87,5 +106,24 @@ class MechanicController extends Controller
             ->orderBy('last_name')
             ->orderBy('middle_name')
             ->get();
+    }
+
+    private function supportsPersonnelLink(): bool
+    {
+        if (!Schema::hasTable('mechanics')) {
+            return false;
+        }
+
+        try {
+            DB::table('mechanics')->select('personnel_id')->limit(1)->get();
+
+            return true;
+        } catch (QueryException $exception) {
+            if (($exception->errorInfo[1] ?? null) === 1054) {
+                return false;
+            }
+
+            throw $exception;
+        }
     }
 }

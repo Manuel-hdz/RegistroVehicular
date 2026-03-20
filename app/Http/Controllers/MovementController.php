@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Driver;
 use App\Models\Movement;
+use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -66,7 +67,7 @@ class MovementController extends Controller
         $data['fuel_out'] = $this->fuelToPercent($data['fuel_out_base'], $data['fuel_out_dir']);
         unset($data['fuel_out_base'], $data['fuel_out_dir']);
 
-        $data['guard_out_id'] = Auth::id();
+        $data['guard_out_id'] = $this->resolveGuardUserId();
         $data['status'] = 'open';
 
         Movement::create($data);
@@ -98,7 +99,7 @@ class MovementController extends Controller
         $data['fuel_in'] = $this->fuelToPercent($data['fuel_in_base'], $data['fuel_in_dir']);
         unset($data['fuel_in_base'], $data['fuel_in_dir']);
 
-        $data['guard_in_id'] = Auth::id();
+        $data['guard_in_id'] = $this->resolveGuardUserId();
         $data['status'] = 'closed';
 
         $movement->update($data);
@@ -184,5 +185,20 @@ class MovementController extends Controller
             }
         }
         return (int) $pct;
+    }
+
+    private function resolveGuardUserId(): ?int
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return null;
+        }
+
+        // Los usuarios operativos pueden registrar salidas sin quedar como guardia en la FK.
+        if ($user->role === 'user') {
+            return null;
+        }
+
+        return User::query()->whereKey($user->id)->exists() ? (int) $user->id : null;
     }
 }

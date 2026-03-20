@@ -21,6 +21,7 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleDestroyController;
 use Illuminate\Support\Facades\Route;
 
+Route::middleware('impersonation-preview')->group(function () {
 Route::view('/', 'landing');
 Route::get('/comedor', [ComedorController::class, 'index'])->name('comedor.index');
 Route::post('/comedor', [ComedorController::class, 'store'])->name('comedor.store');
@@ -61,9 +62,13 @@ Route::prefix('registroVehicular')->group(function () {
     Route::get('/dashboard/graph/top-drivers.png', [GraphController::class, 'topDriversDepartures'])->name('dashboard.graph.topdrivers');
     Route::get('/dashboard/graph/status', [GraphController::class, 'status'])->name('dashboard.graph.status');
 });
+});
 
-Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(function () {
-    Route::prefix('mantenimiento')->middleware('role:admin')->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'impersonation-preview'])->group(function () {
+    Route::post('/vista-usuario', [UserController::class, 'startPreview'])->name('impersonation.start');
+    Route::delete('/vista-usuario', [UserController::class, 'stopPreview'])->name('impersonation.stop');
+
+    Route::prefix('mantenimiento')->middleware('section:mantenimiento')->group(function () {
         Route::get('/', [\App\Http\Controllers\MaintenanceController::class, 'index'])->name('maintenance.index');
         Route::put('/vehiculos/{vehicle}', [\App\Http\Controllers\MaintenanceController::class, 'update'])->name('maintenance.update');
         Route::resource('mecanicos', \App\Http\Controllers\MechanicController::class)
@@ -77,7 +82,7 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(fu
     });
 
     Route::prefix('administracion')->group(function () {
-        Route::middleware('role:admin')->group(function () {
+        Route::middleware('section:administracion')->group(function () {
             Route::get('/vehiculos/{vehicle}/documentos/{document}', [VehicleController::class, 'document'])->name('vehicles.document');
             Route::resource('vehiculos', VehicleController::class)
                 ->parameters(['vehiculos' => 'vehicle'])
@@ -85,16 +90,12 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(fu
                 ->only(['index', 'create', 'store', 'edit', 'update']);
         });
 
-        Route::middleware('role:superadmin')->group(function () {
-            Route::resource('usuarios', UserController::class)
-                ->parameters(['usuarios' => 'user'])
-                ->names('users')
-                ->only(['index', 'create', 'store', 'edit', 'update']);
+        Route::middleware(['role:superadmin', 'section:administracion'])->group(function () {
             Route::delete('/vehiculos/{vehicle}', VehicleDestroyController::class)->name('vehicles.destroy');
         });
     });
 
-    Route::prefix('configuracion')->middleware('department:sistemas')->group(function () {
+    Route::prefix('configuracion')->middleware('section:configuracion')->group(function () {
         Route::resource('centros-costos', CostCenterController::class)
             ->parameters(['centros-costos' => 'costCenter'])
             ->names('cost-centers')
@@ -104,10 +105,17 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(fu
         Route::post('/cargas-masivas/{type}', [BulkImportController::class, 'store'])->name('bulk-imports.store');
         Route::get('/tabla-vacaciones', [VacationPolicyController::class, 'index'])->name('vacation-policies.index');
         Route::put('/tabla-vacaciones', [VacationPolicyController::class, 'updateTable'])->name('vacation-policies.update-table');
+        Route::middleware('role:superadmin')->group(function () {
+            Route::resource('usuarios', UserController::class)
+                ->parameters(['usuarios' => 'user'])
+                ->names('users')
+                ->only(['index', 'create', 'store', 'edit', 'update']);
+            Route::patch('/usuarios/{user}/permisos', [UserController::class, 'updatePermissions'])->name('users.permissions');
+        });
     });
 
     Route::prefix('rrhh')->group(function () {
-        Route::middleware('role:admin')->group(function () {
+        Route::middleware('section:rrhh')->group(function () {
             Route::get('/', [HumanResourcesController::class, 'index'])->name('hr.index');
             Route::resource('personal', PersonnelController::class)
                 ->parameters(['personal' => 'personnel'])
@@ -128,22 +136,36 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(fu
             Route::get('/registrosComedor', [ComedorController::class, 'records'])->name('comedor.records');
         });
 
-        Route::middleware('role:superadmin')->group(function () {
+        Route::middleware(['role:superadmin', 'section:rrhh'])->group(function () {
             Route::delete('/conductores/{driver}', DriverDestroyController::class)->name('drivers.destroy');
             Route::delete('/personal/{personnel}', [PersonnelController::class, 'destroy'])->name('personnel.destroy');
         });
     });
 
-    Route::prefix('almacen')->middleware('role:admin')->group(function () {
-        Route::resource('refacciones', \App\Http\Controllers\PartController::class)
-            ->parameters(['refacciones' => 'part'])
-            ->names('parts')
-            ->only(['index', 'create', 'store', 'edit', 'update']);
+    Route::prefix('almacen')->group(function () {
+        Route::middleware('section:refacciones')->group(function () {
+            Route::get('/refacciones', [\App\Http\Controllers\PartController::class, 'index'])->name('parts.index');
+        });
+
+        Route::middleware(['section:almacen', 'module-owner:almacen'])->group(function () {
+            Route::get('/refacciones/create', [\App\Http\Controllers\PartController::class, 'create'])->name('parts.create');
+            Route::post('/refacciones', [\App\Http\Controllers\PartController::class, 'store'])->name('parts.store');
+            Route::get('/refacciones/{part}/edit', [\App\Http\Controllers\PartController::class, 'edit'])->name('parts.edit');
+            Route::put('/refacciones/{part}', [\App\Http\Controllers\PartController::class, 'update'])->name('parts.update');
+        });
     });
 
-    Route::prefix('compras')->middleware('role:admin')->group(function () {
-        Route::get('/pendientes', [RequisitionController::class, 'pending'])->name('requisitions.pending');
-        Route::patch('/requisiciones/{requisition}/estatus', [RequisitionController::class, 'updateStatus'])->name('requisitions.status');
-        Route::patch('/requisiciones/materiales/{requisitionItem}/checks', [RequisitionController::class, 'updateItemChecks'])->name('requisitions.items.checks');
+    Route::prefix('compras')->group(function () {
+        Route::middleware('section:pendientes')->group(function () {
+            Route::get('/pendientes', [RequisitionController::class, 'pending'])->name('requisitions.pending');
+        });
+
+        Route::middleware(['section:compras', 'module-owner:compras'])->group(function () {
+            Route::patch('/requisiciones/{requisition}/estatus', [RequisitionController::class, 'updateStatus'])->name('requisitions.status');
+        });
+
+        Route::middleware(['section:almacen', 'module-owner:almacen'])->group(function () {
+            Route::patch('/requisiciones/materiales/{requisitionItem}/checks', [RequisitionController::class, 'updateItemChecks'])->name('requisitions.items.checks');
+        });
     });
 });

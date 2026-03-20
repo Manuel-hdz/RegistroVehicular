@@ -75,4 +75,34 @@ class PersonnelFeatureTest extends TestCase
         $response->assertRedirect(route('personnel.index', ['personnel_id' => $personnel->id]));
         $this->assertSame(12, $personnel->fresh()->pending_vacation_days);
     }
+
+    public function test_admin_must_provide_rehire_date_when_reactivating_personnel(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin RRHH',
+            'username' => 'admin-rrhh-reactivate',
+            'password' => 'secret',
+            'role' => 'admin',
+            'department' => 'rrhh',
+            'active' => true,
+        ]);
+
+        $personnel = Personnel::create([
+            'employee_number' => 'RH-888',
+            'first_name' => 'Jose',
+            'last_name' => 'Lopez',
+            'active' => false,
+            'hire_date' => '2020-01-15',
+            'terminated_at' => '2026-02-28',
+        ]);
+
+        $response = $this->actingAs($admin)->patch(route('personnel.reactivate', $personnel), [
+            'rehire_date' => '2026-03-20',
+        ]);
+
+        $response->assertRedirect(route('personnel.index', ['personnel_id' => $personnel->id]));
+        $this->assertTrue($personnel->fresh()->active);
+        $this->assertNull($personnel->fresh()->terminated_at);
+        $this->assertSame('2026-03-20', optional($personnel->fresh()->hire_date)->format('Y-m-d'));
+    }
 }
