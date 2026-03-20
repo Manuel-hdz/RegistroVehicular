@@ -6,6 +6,7 @@ use App\Models\Driver;
 use App\Models\Movement;
 use App\Models\User;
 use App\Models\Vehicle;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -70,7 +71,19 @@ class MovementController extends Controller
         $data['guard_out_id'] = $this->resolveGuardUserId();
         $data['status'] = 'open';
 
-        Movement::create($data);
+        try {
+            Movement::create($data);
+        } catch (QueryException $exception) {
+            if (($exception->errorInfo[1] ?? null) === 1452) {
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'vehicle_id' => 'No se pudo registrar la salida por una relación inválida de unidad o conductor. Actualiza la base de datos y vuelve a intentar.',
+                    ]);
+            }
+
+            throw $exception;
+        }
 
         return redirect()->route('movements.index')->with('status', 'Salida registrada.');
     }
@@ -151,7 +164,20 @@ class MovementController extends Controller
         }
         unset($data['fuel_in_base'], $data['fuel_in_dir']);
 
-        $movement->update($data);
+        try {
+            $movement->update($data);
+        } catch (QueryException $exception) {
+            if (($exception->errorInfo[1] ?? null) === 1452) {
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'vehicle_id' => 'No se pudo actualizar el movimiento por una relación inválida de unidad o conductor.',
+                    ]);
+            }
+
+            throw $exception;
+        }
+
         return redirect()->route('movements.index')->with('status', 'Movimiento actualizado.');
     }
 
