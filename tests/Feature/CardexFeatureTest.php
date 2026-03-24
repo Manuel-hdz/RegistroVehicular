@@ -76,6 +76,38 @@ class CardexFeatureTest extends TestCase
         $this->assertCount(0, PersonnelCardexEntry::all());
     }
 
+    public function test_range_capture_updates_multiple_days_and_consumes_pending_vacation_days(): void
+    {
+        $admin = $this->adminUser();
+        $personnel = Personnel::create([
+            'employee_number' => 'RH-912',
+            'first_name' => 'Rosa',
+            'last_name' => 'Mena',
+            'pending_vacation_days' => 3,
+            'active' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('cardex.store'), [
+            'personnel_id' => $personnel->id,
+            'entry_date_start' => '2026-03-12',
+            'entry_date_end' => '2026-03-13',
+            'code' => 'V',
+            'view_mode' => 'month',
+            'month' => '2026-03',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertSame(1, $personnel->fresh()->pending_vacation_days);
+        $this->assertSame(2, PersonnelCardexEntry::count());
+        $this->assertSame(
+            ['2026-03-12', '2026-03-13'],
+            PersonnelCardexEntry::orderBy('entry_date')
+                ->pluck('entry_date')
+                ->map(fn ($date) => $date->toDateString())
+                ->all()
+        );
+    }
+
     private function adminUser(): User
     {
         return User::create([

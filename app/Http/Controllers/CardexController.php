@@ -144,51 +144,87 @@ class CardexController extends Controller
     {
         $data = $request->validate([
             'personnel_id' => ['required', 'exists:personnels,id'],
-            'entry_date' => ['required', 'date'],
+            'entry_date' => ['nullable', 'date', 'required_without:entry_date_start,entry_date_end'],
+            'entry_date_start' => ['nullable', 'date', 'required_without:entry_date'],
+            'entry_date_end' => ['nullable', 'date', 'required_with:entry_date_start'],
             'code' => ['required', 'in:' . implode(',', array_keys(self::CODES))],
             'notes' => ['nullable', 'string', 'max:500'],
+        ], [
+            'entry_date.required_without' => 'Selecciona una fecha o un rango de fechas.',
+            'entry_date_start.required_without' => 'Selecciona una fecha inicial.',
+            'entry_date_end.required_with' => 'Selecciona una fecha final.',
         ]);
 
-        DB::transaction(function () use ($data, $request): void {
+        $singleDateInput = (string) ($data['entry_date'] ?? '');
+        if ($singleDateInput !== '') {
+            $rangeStart = Carbon::parse($singleDateInput)->startOfDay();
+            $rangeEnd = $rangeStart->copy();
+        } else {
+            $rangeStart = Carbon::parse((string) $data['entry_date_start'])->startOfDay();
+            $rangeEnd = Carbon::parse((string) $data['entry_date_end'])->startOfDay();
+        }
+
+        if ($rangeEnd->lt($rangeStart)) {
+            throw ValidationException::withMessages([
+                'entry_date_end' => 'La fecha final debe ser igual o posterior a la fecha inicial.',
+            ]);
+        }
+
+        $daysInRange = (int) $rangeStart->diffInDays($rangeEnd) + 1;
+        if ($daysInRange > 366) {
+            throw ValidationException::withMessages([
+                'entry_date_end' => 'El rango maximo permitido es de 366 dias.',
+            ]);
+        }
+
+        DB::transaction(function () use ($data, $request, $rangeStart, $rangeEnd): void {
             $personnel = Personnel::whereKey((int) $data['personnel_id'])->lockForUpdate()->firstOrFail();
             $personnel = $this->vacationAccrualService()->syncLockedPersonnel($personnel);
 
-            $entry = PersonnelCardexEntry::where('personnel_id', $personnel->id)
-                ->whereDate('entry_date', $data['entry_date'])
-                ->lockForUpdate()
-                ->first();
-
-            $previousCode = $entry?->code;
             $newCode = $data['code'];
+            $notes = $data['notes'] ?? null;
+            $cursor = $rangeStart->copy();
 
-            if ($previousCode !== 'V' && $newCode === 'V') {
-                if ((int) $personnel->pending_vacation_days <= 0) {
-                    throw ValidationException::withMessages([
-                        'code' => 'La persona no tiene dias de vacaciones pendientes para registrar esta clave.',
+            while ($cursor->lte($rangeEnd)) {
+                $entryDate = $cursor->toDateString();
+                $entry = PersonnelCardexEntry::where('personnel_id', $personnel->id)
+                    ->whereDate('entry_date', $entryDate)
+                    ->lockForUpdate()
+                    ->first();
+
+                $previousCode = $entry?->code;
+
+                if ($previousCode !== 'V' && $newCode === 'V') {
+                    if ((int) $personnel->pending_vacation_days <= 0) {
+                        throw ValidationException::withMessages([
+                            'code' => 'La persona no tiene dias de vacaciones pendientes para registrar esta clave.',
+                        ]);
+                    }
+
+                    $personnel->pending_vacation_days = (int) $personnel->pending_vacation_days - 1;
+                    $personnel->save();
+                } elseif ($previousCode === 'V' && $newCode !== 'V') {
+                    $personnel->pending_vacation_days = (int) $personnel->pending_vacation_days + 1;
+                    $personnel->save();
+                }
+
+                if (!$entry) {
+                    $entry = new PersonnelCardexEntry([
+                        'personnel_id' => (int) $data['personnel_id'],
+                        'entry_date' => $entryDate,
                     ]);
                 }
 
-                $personnel->pending_vacation_days = (int) $personnel->pending_vacation_days - 1;
-                $personnel->save();
-            } elseif ($previousCode === 'V' && $newCode !== 'V') {
-                $personnel->pending_vacation_days = (int) $personnel->pending_vacation_days + 1;
-                $personnel->save();
-            }
+                $entry->code = $newCode;
+                $entry->notes = $notes;
+                $entry->updated_by = optional($request->user())->id;
+                $entry->save();
 
-            if (!$entry) {
-                $entry = new PersonnelCardexEntry([
-                    'personnel_id' => (int) $data['personnel_id'],
-                    'entry_date' => $data['entry_date'],
-                ]);
+                $cursor->addDay();
             }
-
-            $entry->code = $newCode;
-            $entry->notes = $data['notes'] ?? null;
-            $entry->updated_by = optional($request->user())->id;
-            $entry->save();
         });
 
-        $entryDate = Carbon::parse($data['entry_date']);
+        $entryDate = $rangeStart->copy();
         $viewMode = (string) $request->input('view_mode', 'month');
         if (!in_array($viewMode, self::VIEW_MODES, true)) {
             $viewMode = 'month';
@@ -225,7 +261,7 @@ class CardexController extends Controller
         }
 
         return redirect()->route('cardex.index', $redirectParams)
-            ->with('status', 'Registro de Kardex guardado.');
+            ->with('status', $daysInRange > 1 ? 'Registros de Kardex guardados.' : 'Registro de Kardex guardado.');
     }
 
     /**

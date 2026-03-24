@@ -597,9 +597,15 @@
                     <input type="hidden" name="year" value="{{ $selectedYear }}">
                     <div class="cardex-capture-pair">
                         <div>
-                            <label>Fecha</label>
-                            <input type="date" name="entry_date" value="{{ old('entry_date', $quickDate ?? $today) }}" required>
+                            <label>Fecha inicial</label>
+                            <input type="date" id="entryRangeStart" name="entry_date_start" value="{{ old('entry_date_start', $quickDate ?? $today) }}" required>
                         </div>
+                        <div>
+                            <label>Fecha final</label>
+                            <input type="date" id="entryRangeEnd" name="entry_date_end" value="{{ old('entry_date_end', $quickDate ?? $today) }}" required>
+                        </div>
+                    </div>
+                    <div class="cardex-capture-pair">
                         <div>
                             <label>Clave</label>
                             <select name="code" required>
@@ -609,6 +615,11 @@
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+                        <div style="display:flex; align-items:flex-end;">
+                            <small style="font-size:12px; color:#64748b;">
+                                Si eliges la misma fecha en ambos campos, se registra un solo dia.
+                            </small>
                         </div>
                     </div>
                     <div>
@@ -977,6 +988,21 @@
         }
 
         document.querySelectorAll('.searchable-select').forEach(makeSearchable);
+
+        const rangeStartInput = document.getElementById('entryRangeStart');
+        const rangeEndInput = document.getElementById('entryRangeEnd');
+        if (rangeStartInput && rangeEndInput) {
+            const syncDateRange = function () {
+                const startValue = rangeStartInput.value || '';
+                rangeEndInput.min = startValue;
+                if (startValue && (!rangeEndInput.value || rangeEndInput.value < startValue)) {
+                    rangeEndInput.value = startValue;
+                }
+            };
+
+            rangeStartInput.addEventListener('change', syncDateRange);
+            syncDateRange();
+        }
 
         const printBtn = document.getElementById('btnPrintCardex');
         if (printBtn) {
