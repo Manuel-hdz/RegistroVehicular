@@ -22,6 +22,7 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleDestroyController;
 use App\Http\Controllers\WarehouseMovementController;
 use App\Http\Controllers\WarehouseLocationController;
+use App\Http\Controllers\WarehouseReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('impersonation-preview')->group(function () {
@@ -155,6 +156,9 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'impersona
         Route::middleware('section:almacen')->group(function () {
             Route::get('/entradas-salidas', [WarehouseMovementController::class, 'index'])->name('warehouse.movements');
             Route::get('/materiales', [WarehouseMovementController::class, 'inventory'])->name('warehouse.inventory');
+            Route::get('/reportes', [WarehouseReportController::class, 'index'])->name('warehouse.reports.index');
+            Route::get('/reportes/exportar', [WarehouseReportController::class, 'export'])->name('warehouse.reports.export');
+            Route::get('/reportes/exportar-excel', [WarehouseReportController::class, 'exportExcel'])->name('warehouse.reports.export-excel');
             Route::get('/ubicaciones', [WarehouseLocationController::class, 'index'])->name('warehouse.locations.index');
             Route::post('/ubicaciones', [WarehouseLocationController::class, 'store'])->name('warehouse.locations.store');
             Route::patch('/ubicaciones/{warehouseLocation}', [WarehouseLocationController::class, 'update'])->name('warehouse.locations.update');

@@ -285,6 +285,10 @@
                 <i class="bi bi-boxes"></i>
                 <span>Inventario</span>
             </a>
+            <a class="btn btn-secondary" href="{{ route('warehouse.reports.index', ['cost_center_id' => $selectedCostCenter->id]) }}">
+                <i class="bi bi-clipboard-data"></i>
+                <span>Reportes por fecha</span>
+            </a>
         </div>
 
         <div class="warehouse-history">

@@ -801,6 +801,11 @@
                                         </a>
                                     </li>
                                     <li>
+                                        <a class="dropdown-item {{ request()->routeIs('warehouse.reports.*') ? 'active' : '' }}" href="{{ route('warehouse.reports.index') }}">
+                                            <i class="bi bi-clipboard-data"></i><span>Reportes</span>
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item {{ request()->routeIs('parts.*') ? 'active' : '' }}" href="{{ route('parts.index') }}">
                                             <i class="bi bi-gear-wide-connected"></i><span>Refacciones</span>
                                         </a>
