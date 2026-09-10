@@ -12,6 +12,7 @@ use App\Http\Controllers\DriverDestroyController;
 use App\Http\Controllers\GraphController;
 use App\Http\Controllers\HumanResourcesController;
 use App\Http\Controllers\MovementController;
+use App\Http\Controllers\PacmanScoreController;
 use App\Http\Controllers\PersonnelController;
 use App\Http\Controllers\PublicDashboardController;
 use App\Http\Controllers\RequisitionController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VacationPolicyController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleDestroyController;
+use App\Http\Controllers\WarehouseMovementController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('impersonation-preview')->group(function () {
@@ -84,6 +86,12 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'impersona
     Route::prefix('administracion')->group(function () {
         Route::middleware('section:administracion')->group(function () {
             Route::get('/vehiculos/{vehicle}/documentos/{document}', [VehicleController::class, 'document'])->name('vehicles.document');
+            Route::get('/vehiculos-csv/plantilla', [BulkImportController::class, 'template'])
+                ->defaults('type', 'vehicles')
+                ->name('vehicles.import.template');
+            Route::post('/vehiculos-csv', [BulkImportController::class, 'store'])
+                ->defaults('type', 'vehicles')
+                ->name('vehicles.import.store');
             Route::resource('vehiculos', VehicleController::class)
                 ->parameters(['vehiculos' => 'vehicle'])
                 ->names('vehicles')
@@ -143,6 +151,22 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'impersona
     });
 
     Route::prefix('almacen')->group(function () {
+        Route::middleware('section:almacen')->group(function () {
+            Route::get('/entradas-salidas', [WarehouseMovementController::class, 'index'])->name('warehouse.movements');
+            Route::get('/materiales', [WarehouseMovementController::class, 'inventory'])->name('warehouse.inventory');
+            Route::get('/pacman/puntajes', [PacmanScoreController::class, 'index'])->name('warehouse.pacman-scores.index');
+            Route::post('/pacman/puntajes', [PacmanScoreController::class, 'store'])->name('warehouse.pacman-scores.store');
+            Route::get('/entradas-salidas/salidas/{warehouseMaterialExit}/vale', [WarehouseMovementController::class, 'voucher'])->name('warehouse.material-exits.voucher');
+        });
+
+        Route::middleware(['section:almacen', 'module-owner:almacen'])->group(function () {
+            Route::post('/entradas-salidas/materiales', [WarehouseMovementController::class, 'storeMaterial'])->name('warehouse.materials.store');
+            Route::post('/entradas-salidas/salidas', [WarehouseMovementController::class, 'storeMaterialExit'])->name('warehouse.material-exits.store');
+            Route::patch('/entradas-salidas/salidas/{warehouseMaterialExit}/recibido', [WarehouseMovementController::class, 'markExitDelivered'])->name('warehouse.material-exits.delivered');
+            Route::put('/entradas-salidas/materiales/{part}', [WarehouseMovementController::class, 'updateMaterial'])->name('warehouse.materials.update');
+            Route::delete('/entradas-salidas/materiales/{part}', [WarehouseMovementController::class, 'destroyMaterial'])->name('warehouse.materials.destroy');
+        });
+
         Route::middleware('section:refacciones')->group(function () {
             Route::get('/refacciones', [\App\Http\Controllers\PartController::class, 'index'])->name('parts.index');
         });

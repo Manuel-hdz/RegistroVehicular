@@ -23,6 +23,7 @@
 
                 var wrapper = document.createElement('div');
                 wrapper.style.position = 'relative';
+                wrapper.style.zIndex = '3000';
                 wrapper.className = 'searchable-wrapper';
 
                 var input = document.createElement('input');
@@ -33,12 +34,10 @@
 
                 var list = document.createElement('ul');
                 list.className = 'searchable-list';
-                list.style.position = 'absolute';
-                list.style.left = '0';
-                list.style.right = '0';
-                list.style.top = '100%';
-                list.style.zIndex = '10';
+                list.style.position = 'fixed';
+                list.style.zIndex = '3200';
                 list.style.maxHeight = '220px';
+                document.body.appendChild(list);
                 list.style.overflowY = 'auto';
                 list.style.margin = '4px 0 0';
                 list.style.padding = '0';
@@ -64,6 +63,11 @@
                 }
 
                 function render(filter) {
+                    var rect = input.getBoundingClientRect();
+                    list.style.left = rect.left + 'px';
+                    list.style.top = rect.bottom + 'px';
+                    list.style.width = rect.width + 'px';
+
                     list.innerHTML = '';
                     var term = (filter || '').toLowerCase().trim();
 
@@ -134,7 +138,7 @@
 
                 select.parentNode.insertBefore(wrapper, select);
                 wrapper.appendChild(input);
-                wrapper.appendChild(list);
+                document.body.appendChild(list);
                 select.style.display = 'none';
 
                 var selectedOption = select.selectedOptions[0];

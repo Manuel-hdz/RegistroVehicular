@@ -23,6 +23,6 @@ class SectionAccessMiddleware
             return $next($request);
         }
 
-        throw new AccessDeniedHttpException('Sin permisos para esta seccion.');
+        throw new AccessDeniedHttpException('Sin permisos para esta sección.');
     }
 }

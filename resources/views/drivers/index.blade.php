@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('content')
 <div class="card">
@@ -55,7 +55,7 @@
                         </a>
                         @auth
                             @if(auth()->user()->role === 'superadmin')
-                                <form action="{{ route('drivers.destroy', $d) }}" method="POST" style="display:inline;" onsubmit="return confirm('Â¿Eliminar Conductor?');">
+                                <form action="{{ route('drivers.destroy', $d) }}" method="POST" style="display:inline;" onsubmit="return confirm('EEEliminar Conductor?');">
                                     @csrf
                                     @method('DELETE')
                                     <button class="btn btn-secondary" type="submit" title="Eliminar" aria-label="Eliminar">
@@ -75,4 +75,3 @@
 @push('head-pre')
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 @endpush
-

@@ -14,12 +14,12 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     public const MODULE_PERMISSION_LABELS = [
-        'administracion' => 'Administracion',
+        'administracion' => 'Administración',
         'mantenimiento' => 'Mantenimiento',
         'rrhh' => 'Recursos Humanos',
-        'almacen' => 'Almacen',
+        'almacen' => 'Almacén',
         'compras' => 'Compras',
-        'configuracion' => 'Configuracion',
+        'configuracion' => 'Configuración',
     ];
 
     private const SECTION_DEFAULTS = [
@@ -156,11 +156,16 @@ class User extends Authenticatable
             return false;
         }
 
+        $normalizedSection = $this->normalizeValue($section);
+
+        if ($normalizedSection === 'almacen') {
+            return in_array($this->role, ['admin', 'superadmin'], true)
+                || $this->belongsToDepartment('almacen');
+        }
+
         if ($this->role === 'user') {
             return false;
         }
-
-        $normalizedSection = $this->normalizeValue($section);
 
         if ($this->isSystemsUser()) {
             return true;

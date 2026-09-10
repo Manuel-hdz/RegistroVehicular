@@ -13,6 +13,9 @@ class Vehicle extends Model
     protected $fillable = [
         'plate',
         'identifier',
+        'unit_name',
+        'registration_date',
+        'make_model',
         'vtype',
         'model',
         'year',
@@ -22,17 +25,26 @@ class Vehicle extends Model
         'serial_number',
         'additional_serial_number',
         'engine_number',
+        'engine_type',
+        'engine_filters',
+        'area',
+        'family',
+        'manufacture_date',
+        'equipment_status',
         'supplier',
         'assigned_personnel',
         'description',
         'photo_path',
         'circulation_card_path',
+        'tenure_path',
         'insurance_policy_path',
     ];
 
     protected $casts = [
         'active' => 'boolean',
         'year' => 'integer',
+        'registration_date' => 'date',
+        'manufacture_date' => 'date',
     ];
 
     public function movements(): HasMany
@@ -47,6 +59,15 @@ class Vehicle extends Model
         }
 
         return route('vehicles.document', ['vehicle' => $this, 'document' => 'circulation-card']);
+    }
+
+    public function getTenureUrlAttribute(): ?string
+    {
+        if (!$this->tenure_path) {
+            return null;
+        }
+
+        return route('vehicles.document', ['vehicle' => $this, 'document' => 'tenure']);
     }
 
     public function getInsurancePolicyUrlAttribute(): ?string

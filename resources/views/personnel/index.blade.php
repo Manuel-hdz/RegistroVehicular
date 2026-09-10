@@ -259,9 +259,9 @@
     <form method="GET" action="{{ route('personnel.index') }}" class="personnel-toolbar">
         <div>
             <label>Seleccionar personal</label>
-            <select id="personnelSelect" class="searchable-select" name="personnel_id" onchange="this.form.submit()">
+            <select id="personnelSelect" class="searchable-select" name="personnel_id" data-placeholder="Buscar por nombre, empleado, puesto, departamento, CURP o RFC..." onchange="this.form.submit()">
                 @foreach($personnelList as $person)
-                    <option value="{{ $person->id }}" {{ (int) $selectedPersonnelId === (int) $person->id ? 'selected' : '' }}>
+                    <option value="{{ $person->id }}" data-search="{{ implode(' ', array_filter([$person->employee_number, $person->full_name, $person->position, $person->department, $person->curp, $person->rfc, $person->nss, $person->phone, $person->email])) }}" {{ (int) $selectedPersonnelId === (int) $person->id ? 'selected' : '' }}>
                         {{ $person->employee_number }} - {{ $person->full_name }}
                     </option>
                 @endforeach
@@ -391,22 +391,21 @@
 
             const wrapper = document.createElement('div');
             wrapper.style.position = 'relative';
+            wrapper.style.zIndex = '3000';
             wrapper.className = 'searchable-wrapper';
 
             const input = document.createElement('input');
             input.type = 'text';
-            input.placeholder = 'Buscar...';
+            input.placeholder = select.dataset.placeholder || 'Buscar personal...';
             input.className = 'searchable-input';
             input.autocomplete = 'off';
 
             const list = document.createElement('ul');
             list.className = 'searchable-list';
-            list.style.position = 'absolute';
-            list.style.left = '0';
-            list.style.right = '0';
-            list.style.top = '100%';
-            list.style.zIndex = '10';
+            list.style.position = 'fixed';
+            list.style.zIndex = '3200';
             list.style.maxHeight = '160px';
+            document.body.appendChild(list);
             list.style.overflowY = 'auto';
             list.style.margin = '4px 0 0';
             list.style.padding = '0';
@@ -428,8 +427,14 @@
             }
 
             function render(filter) {
+                const rect = input.getBoundingClientRect();
+                list.style.left = rect.left + 'px';
+                list.style.top = rect.bottom + 'px';
+                list.style.width = rect.width + 'px';
+
                 list.innerHTML = '';
-                const term = (filter || '').toLowerCase();
+                const normalize = value => (value || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+                const term = normalize(filter);
                 filteredOptions = originalOptions.filter(function (opt) {
                     if (!opt.value) return;
                     const text = opt.textContent;
@@ -493,7 +498,7 @@
 
             select.parentNode.insertBefore(wrapper, select);
             wrapper.appendChild(input);
-            wrapper.appendChild(list);
+            document.body.appendChild(list);
             select.style.display = 'none';
 
             const selectedOpt = select.selectedOptions[0];

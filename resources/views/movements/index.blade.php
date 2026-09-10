@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('content')
 @push('head-pre')
@@ -6,7 +6,7 @@
 @endpush
 @push('head')
 <style>
-  /* Ocultar columnas pesadas en mÃ³viles para la tabla de abiertos */
+  /* Ocultar columnas pesadas en móviles para la tabla de abiertos */
   @media (max-width: 575.98px){
     table.movements-open thead th:nth-child(4),
     table.movements-open thead th:nth-child(5),
@@ -62,7 +62,7 @@
                                     <a class="btn btn-secondary btn-icon" href="{{ route('movements.edit', $m) }}" title="Editar" aria-label="Editar">
                                         <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                     </a>
-                                    <form action="{{ route('movements.cancel', $m) }}" method="POST" style="display:inline;" onsubmit="return confirm('Â¿Seguro que deseas cancelar esta salida?');">
+                                    <form action="{{ route('movements.cancel', $m) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Seguro que deseas cancelar esta salida?');">
                                         @csrf
                                         @method('PUT')
                                         <button class="btn btn-secondary btn-icon" type="submit" title="Cancelar" aria-label="Cancelar">
@@ -114,5 +114,3 @@
     </div>
 </div>
 @endsection
-
-

@@ -23,6 +23,6 @@ class ModuleOwnerMiddleware
             return $next($request);
         }
 
-        throw new AccessDeniedHttpException('Solo el area dueña puede editar este modulo.');
+        throw new AccessDeniedHttpException('Solo el área responsable puede editar este módulo.');
     }
 }

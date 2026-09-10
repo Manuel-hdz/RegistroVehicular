@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="card">
-    <h2 style="margin-top:0">Nueva Refacción</h2>
+    <h2 style="margin-top:0">Nueva refacción</h2>
     <form method="POST" action="{{ route('parts.store') }}" class="grid grid-3">
         @csrf
         <div>
@@ -23,4 +23,3 @@
     </form>
 </div>
 @endsection
-

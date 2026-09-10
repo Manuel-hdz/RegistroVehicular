@@ -11,7 +11,7 @@ class VehicleDestroyController extends Controller
 {
     public function __invoke(Vehicle $vehicle): RedirectResponse
     {
-        foreach ([$vehicle->photo_path, $vehicle->circulation_card_path, $vehicle->insurance_policy_path] as $path) {
+        foreach ([$vehicle->photo_path, $vehicle->tenure_path, $vehicle->circulation_card_path, $vehicle->insurance_policy_path] as $path) {
             if (!$path) {
                 continue;
             }

@@ -15,7 +15,7 @@ class VehicleController extends Controller
 {
     public function index(Request $request): View
     {
-        $vehicles = Vehicle::orderBy('identifier')->orderBy('plate')->get();
+        $vehicles = Vehicle::orderBy('identifier')->orderBy('unit_name')->orderBy('plate')->get();
 
         $selectedVehicleId = (int) $request->input('vehicle_id');
         if ($selectedVehicleId <= 0 && $vehicles->isNotEmpty()) {
@@ -27,19 +27,24 @@ class VehicleController extends Controller
 
         if ($selectedVehicle) {
             $fieldLabels = [
-                'plate' => 'Placa',
-                'identifier' => 'Identificador',
-                'serial_number' => 'Numero de serie',
-                'additional_serial_number' => 'Numero de serie adicional',
-                'engine_number' => 'Motor',
-                'supplier' => 'Proveedor',
-                'assigned_personnel' => 'Personal asignado',
+                'identifier' => 'Clave',
+                'unit_name' => 'Nombre de unidad',
+                'registration_date' => 'Fecha de alta',
+                'make_model' => 'Marca/modelo',
                 'model' => 'Modelo',
-                'year' => 'Anio',
-                'description' => 'Descripcion',
-                'photo_path' => 'Foto del equipo',
+                'plate' => 'Placa',
+                'serial_number' => 'Numero de serie',
+                'additional_serial_number' => 'Serie eq. adicional',
+                'tenure_path' => 'Tenencia',
                 'circulation_card_path' => 'Tarjeta de circulacion',
-                'insurance_policy_path' => 'Poliza de seguro',
+                'engine_type' => 'Tipo de motor',
+                'engine_filters' => 'Filtros de motor',
+                'area' => 'Area',
+                'family' => 'Familia',
+                'manufacture_date' => 'Fecha de fabricacion',
+                'assigned_personnel' => 'Asignado',
+                'equipment_status' => 'Estado',
+                'supplier' => 'Proveedor',
             ];
 
             foreach ($fieldLabels as $field => $label) {
@@ -68,7 +73,7 @@ class VehicleController extends Controller
         $data = $this->validatePayload($request);
         $data['photo_path'] = $this->storePhoto($request);
         $data['circulation_card_path'] = $this->storeDocument($request, 'circulation_card', 'circulation-card');
-        $data['insurance_policy_path'] = $this->storeDocument($request, 'insurance_policy', 'insurance-policy');
+        $data['tenure_path'] = $this->storeDocument($request, 'tenure', 'tenure');
         $data['active'] = $this->resolveActiveFlag($request, true);
 
         $vehicle = Vehicle::create($data);
@@ -98,10 +103,10 @@ class VehicleController extends Controller
             $data['circulation_card_path'] = $circulationCardPath;
         }
 
-        $insurancePolicyPath = $this->storeDocument($request, 'insurance_policy', 'insurance-policy');
-        if ($insurancePolicyPath) {
-            $this->deleteDocument($vehicle->insurance_policy_path);
-            $data['insurance_policy_path'] = $insurancePolicyPath;
+        $tenurePath = $this->storeDocument($request, 'tenure', 'tenure');
+        if ($tenurePath) {
+            $this->deleteDocument($vehicle->tenure_path);
+            $data['tenure_path'] = $tenurePath;
         }
 
         $vehicle->update($data);
@@ -118,6 +123,7 @@ class VehicleController extends Controller
         $path = match ($document) {
             'photo' => $vehicle->photo_path,
             'circulation-card' => $vehicle->circulation_card_path,
+            'tenure' => $vehicle->tenure_path,
             'insurance-policy' => $vehicle->insurance_policy_path,
             default => null,
         };
@@ -150,21 +156,26 @@ class VehicleController extends Controller
         }
 
         return $request->validate([
-            'plate' => ['required', 'string', 'max:50', $plateUnique],
-            'vtype' => ['nullable', 'in:auto,pickup,furgoneta,camion,transporte_personal,remolcable,equipo_pesado,trompo'],
             'identifier' => ['nullable', 'string', 'max:100'],
+            'unit_name' => ['nullable', 'string', 'max:150'],
+            'registration_date' => ['nullable', 'date'],
+            'make_model' => ['nullable', 'string', 'max:150'],
             'model' => ['nullable', 'string', 'max:100'],
-            'year' => ['nullable', 'integer', 'min:1900', 'max:2100'],
+            'plate' => ['nullable', 'string', 'max:50', $plateUnique],
             'serial_number' => ['nullable', 'string', 'max:120'],
             'additional_serial_number' => ['nullable', 'string', 'max:120'],
-            'engine_number' => ['nullable', 'string', 'max:120'],
-            'supplier' => ['nullable', 'string', 'max:150'],
+            'engine_type' => ['nullable', 'string', 'max:120'],
+            'engine_filters' => ['nullable', 'string', 'max:2000'],
+            'area' => ['nullable', 'string', 'max:120'],
+            'family' => ['nullable', 'string', 'max:120'],
+            'manufacture_date' => ['nullable', 'date'],
             'assigned_personnel' => ['nullable', 'string', 'max:150'],
-            'description' => ['nullable', 'string', 'max:2000'],
+            'equipment_status' => ['nullable', 'string', 'max:100'],
+            'supplier' => ['nullable', 'string', 'max:150'],
             'photo' => ['nullable', 'image', 'max:5120'],
             'photo_cropped' => ['nullable', 'string'],
+            'tenure' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'circulation_card' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-            'insurance_policy' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'active' => ['nullable', 'boolean'],
         ]);
     }

@@ -10,7 +10,7 @@
             @endunless
         </div>
         @if($canManageParts)
-            <a href="{{ route('parts.create') }}" class="btn btn-primary">Nueva Refacción</a>
+            <a href="{{ route('parts.create') }}" class="btn btn-primary">Nueva refacción</a>
         @endif
     </div>
 </div>

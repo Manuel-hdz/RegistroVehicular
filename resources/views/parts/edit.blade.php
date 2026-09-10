@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="card">
-    <h2 style="margin-top:0">Editar Refacción</h2>
+    <h2 style="margin-top:0">Editar refacción</h2>
     <form method="POST" action="{{ route('parts.update', $part) }}" class="grid grid-3">
         @csrf
         @method('PUT')
@@ -24,4 +24,3 @@
     </form>
 </div>
 @endsection
-

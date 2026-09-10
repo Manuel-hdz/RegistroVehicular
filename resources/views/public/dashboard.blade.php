@@ -33,7 +33,7 @@
 @section('content')
 <div class="card" style="margin-bottom:12px; background:linear-gradient(135deg, #f8fcf9, #ffffff 52%, #eef7f2);">
   <div>
-    <h2 style="margin:0">Dashboard Publico</h2>
+    <h2 style="margin:0">Panel p&uacute;blico</h2>
     <p style="margin:6px 0 0 0; color:#555;">Resumen visual del uso de equipos y conductores con filtros compactos y lectura mas clara.</p>
   </div>
 </div>
@@ -69,7 +69,7 @@
 <div class="row g-2" style="margin-bottom:12px;">
   <div class="col-12 col-lg-6">
     <div class="card equal-card">
-      <h5 class="px-2 pt-2" style="margin:0;">Salidas por dia</h5>
+      <h5 class="px-2 pt-2" style="margin:0;">Salidas por d&iacute;a</h5>
       <div class="p-2"><canvas id="chartDays7"></canvas></div>
     </div>
   </div>
@@ -100,7 +100,7 @@
 <div class="row g-2">
   <div class="col-12 col-lg-6">
     <div class="card equal-card">
-      <h5 class="px-2 pt-2" style="margin:0;">Salidas por dia</h5>
+      <h5 class="px-2 pt-2" style="margin:0;">Salidas por d&iacute;a</h5>
       <div class="p-2"><canvas id="chartDays30"></canvas></div>
     </div>
   </div>

@@ -1,0 +1,56 @@
+/* Estilos adaptados del detector original y encapsulados en #qrScanner. */
+#qrScanner.qr-scanner {
+    max-width: 560px;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(33, 37, 41, 0.08);
+    padding: 1.5rem;
+}
+
+#qrScanner .qr-scanner__viewer {
+    /* Area central donde aparece la imagen subida, la camara o el mensaje inicial. */
+    min-height: 300px;
+    padding: 1.5rem;
+    border: 2px dashed #6c757d;
+    border-radius: 8px;
+    color: #198754;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+#qrScanner .qr-scanner__viewer img,
+#qrScanner .qr-scanner__viewer video {
+    /* Imagen y video empiezan ocultos; JS agrega is-visible cuando debe mostrarlos. */
+    display: none;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 6px;
+}
+
+#qrScanner .qr-scanner__viewer img.is-visible,
+#qrScanner .qr-scanner__viewer video.is-visible {
+    display: block;
+}
+
+#qrScanner .qr-scanner__actions p {
+    color: #495057;
+}
+
+#qrScanner textarea {
+    resize: vertical;
+}
+
+@media (max-width: 575.98px) {
+    /* Ajustes para que el detector quepa mejor en pantallas pequenas. */
+    #qrScanner.qr-scanner {
+        padding: 1rem;
+    }
+
+    #qrScanner .qr-scanner__viewer {
+        min-height: 240px;
+        padding: 1rem;
+    }
+}

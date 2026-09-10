@@ -25,6 +25,48 @@ class DepartmentAccessFeatureTest extends TestCase
         $this->actingAs($user)->get(route('requisitions.pending'))->assertOk();
     }
 
+    public function test_administrator_can_access_warehouse_regardless_of_department(): void
+    {
+        $user = User::create([
+            'name' => 'Administrador',
+            'username' => 'admin-almacen',
+            'password' => 'secret',
+            'role' => 'admin',
+            'department' => 'calidad',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->get(route('warehouse.inventory'))->assertOk();
+    }
+
+    public function test_warehouse_department_can_access_warehouse_with_regular_role(): void
+    {
+        $user = User::create([
+            'name' => 'Almacén',
+            'username' => 'usuario-almacen',
+            'password' => 'secret',
+            'role' => 'user',
+            'department' => 'almacen',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->get(route('warehouse.inventory'))->assertOk();
+    }
+
+    public function test_regular_user_outside_warehouse_cannot_access_warehouse(): void
+    {
+        $user = User::create([
+            'name' => 'Usuario',
+            'username' => 'usuario-sin-almacen',
+            'password' => 'secret',
+            'role' => 'user',
+            'department' => 'calidad',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->get(route('warehouse.inventory'))->assertForbidden();
+    }
+
     public function test_purchases_user_can_access_purchases_but_not_human_resources(): void
     {
         $user = User::create([

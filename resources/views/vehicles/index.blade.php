@@ -231,18 +231,38 @@
             <h2 style="margin:0;">Consulta de unidades</h2>
             <p style="margin:8px 0 0; color:#4b5563;">Revisa la ficha de cada unidad, sus documentos y datos de identificacion.</p>
         </div>
-        <a class="btn btn-primary" href="{{ route('vehicles.create') }}">Nueva unidad</a>
+        <div class="row" style="margin:0;">
+            <button class="btn btn-secondary" type="button" onclick="document.getElementById('vehicleCsvImport').toggleAttribute('hidden')"><i class="bi bi-file-earmark-spreadsheet"></i> Carga masiva CSV</button>
+            <a class="btn btn-primary" href="{{ route('vehicles.create') }}">Nueva unidad</a>
+        </div>
     </div>
 </div>
 
+<div class="card" id="vehicleCsvImport" {{ ($errors->has('csv_file') || session('import_errors')) ? '' : 'hidden' }}>
+    <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+        <div><h3 style="margin:0;">Carga masiva de vehículos</h3><p style="margin:6px 0 0; color:#4b5563;">Registra unidades nuevas o actualiza las existentes por clave, placa o número de serie. Todos los datos son opcionales.</p></div>
+        <a class="btn btn-secondary btn-sm" href="{{ route('vehicles.import.template') }}"><i class="bi bi-download"></i> Descargar plantilla</a>
+    </div>
+    <form method="POST" action="{{ route('vehicles.import.store') }}" enctype="multipart/form-data" style="margin-top:16px;">
+        @csrf
+        <div class="row" style="align-items:flex-end; margin:0;">
+            <div style="flex:1; min-width:240px;"><label for="vehicleCsvFile">Archivo CSV (máximo 5 MB)</label><input id="vehicleCsvFile" type="file" name="csv_file" accept=".csv,.txt,text/csv" required></div>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-upload"></i> Importar vehículos</button>
+        </div>
+    </form>
+    @error('csv_file')<div class="error" style="margin-top:12px;">{{ $message }}</div>@enderror
+    @if(session('import_errors'))
+        <details style="margin-top:12px;"><summary style="cursor:pointer; font-weight:700;">Ver líneas omitidas ({{ count(session('import_errors')) }})</summary><ul style="margin-bottom:0;">@foreach(session('import_errors') as $importError)<li>{{ $importError }}</li>@endforeach</ul></details>
+    @endif
+</div>
 <div class="card">
     <form method="GET" action="{{ route('vehicles.index') }}" class="vehicle-toolbar">
         <div>
             <label>Seleccionar unidad</label>
-            <select id="vehicleSelect" class="searchable-select" name="vehicle_id" onchange="this.form.submit()">
+            <select id="vehicleSelect" class="searchable-select" name="vehicle_id" data-placeholder="Buscar por clave, nombre, placa, marca, serie, área o asignado..." onchange="this.form.submit()">
                 @foreach($vehicles as $vehicleOption)
-                    <option value="{{ $vehicleOption->id }}" {{ (int) $selectedVehicleId === (int) $vehicleOption->id ? 'selected' : '' }}>
-                        {{ $vehicleOption->identifier ?: 'Sin identificador' }} - {{ $vehicleOption->plate }}
+                    <option value="{{ $vehicleOption->id }}" data-search="{{ implode(' ', array_filter([$vehicleOption->identifier, $vehicleOption->unit_name, $vehicleOption->plate, $vehicleOption->make_model, $vehicleOption->model, $vehicleOption->serial_number, $vehicleOption->additional_serial_number, $vehicleOption->engine_type, $vehicleOption->area, $vehicleOption->family, $vehicleOption->equipment_status, $vehicleOption->supplier, $vehicleOption->assigned_personnel])) }}" {{ (int) $selectedVehicleId === (int) $vehicleOption->id ? 'selected' : '' }}>
+                        {{ $vehicleOption->identifier ?: ($vehicleOption->unit_name ?: ($vehicleOption->plate ?: 'Equipo sin clave')) }}{{ $vehicleOption->plate ? ' - '.$vehicleOption->plate : '' }}
                     </option>
                 @endforeach
             </select>
@@ -268,7 +288,7 @@
                 @else
                     <div class="vehicle-hero">
                         <div class="vehicle-hero-text">
-                            <strong style="display:block; font-size:1.2rem;">{{ $selectedVehicle->identifier ?: 'Unidad sin identificador' }}</strong>
+                            <strong style="display:block; font-size:1.2rem;">{{ $selectedVehicle->unit_name ?: ($selectedVehicle->identifier ?: 'Unidad sin nombre') }}</strong>
                             <span style="display:block;">{{ $selectedVehicle->plate }}</span>
                         </div>
                     </div>
@@ -282,6 +302,11 @@
                 </div>
 
                 <div class="vehicle-doc-list">
+                    @if($selectedVehicle->tenure_url)
+                        <a class="vehicle-doc-link" href="{{ $selectedVehicle->tenure_url }}" target="_blank" rel="noopener"><span>Tenencia</span><i class="bi bi-box-arrow-up-right"></i></a>
+                    @else
+                        <div class="vehicle-doc-link missing"><span>Tenencia</span><span>No cargada</span></div>
+                    @endif
                     @if($selectedVehicle->circulation_card_url)
                         <a class="vehicle-doc-link" href="{{ $selectedVehicle->circulation_card_url }}" target="_blank" rel="noopener">
                             <span>Tarjeta de circulacion</span>
@@ -294,40 +319,32 @@
                         </div>
                     @endif
 
-                    @if($selectedVehicle->insurance_policy_url)
-                        <a class="vehicle-doc-link" href="{{ $selectedVehicle->insurance_policy_url }}" target="_blank" rel="noopener">
-                            <span>Poliza de seguro</span>
-                            <i class="bi bi-box-arrow-up-right"></i>
-                        </a>
-                    @else
-                        <div class="vehicle-doc-link missing">
-                            <span>Poliza de seguro</span>
-                            <span>No cargada</span>
-                        </div>
-                    @endif
+
                 </div>
             </div>
 
             <div class="vehicle-details">
-                <h3 style="margin-top:0;">{{ $selectedVehicle->identifier ?: 'Ficha de unidad' }}</h3>
+                <h3 style="margin-top:0;">{{ $selectedVehicle->unit_name ?: ($selectedVehicle->identifier ?: 'Ficha de unidad') }}</h3>
                 <div class="vehicle-fields">
-                    <div class="vehicle-field"><small>Placa</small><strong>{{ $selectedVehicle->plate ?: '-' }}</strong></div>
-                    <div class="vehicle-field"><small>Tipo</small><strong>{{ $typeLabels[$selectedVehicle->vtype] ?? 'Auto' }}</strong></div>
+                    <div class="vehicle-field"><small>Clave</small><strong>{{ $selectedVehicle->identifier ?: '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Nombre de unidad</small><strong>{{ $selectedVehicle->unit_name ?: '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Fecha de alta</small><strong>{{ $selectedVehicle->registration_date ? $selectedVehicle->registration_date->format('d/m/Y') : '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Marca/modelo</small><strong>{{ $selectedVehicle->make_model ?: '-' }}</strong></div>
                     <div class="vehicle-field"><small>Modelo</small><strong>{{ $selectedVehicle->model ?: '-' }}</strong></div>
-                    <div class="vehicle-field"><small>Anio</small><strong>{{ $selectedVehicle->year ?: '-' }}</strong></div>
-                    <div class="vehicle-field"><small>Numero de serie</small><strong>{{ $selectedVehicle->serial_number ?: '-' }}</strong></div>
-                    <div class="vehicle-field"><small>Numero de serie adicional</small><strong>{{ $selectedVehicle->additional_serial_number ?: '-' }}</strong></div>
-                    <div class="vehicle-field"><small>Motor</small><strong>{{ $selectedVehicle->engine_number ?: '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Placa</small><strong>{{ $selectedVehicle->plate ?: '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Número de serie</small><strong>{{ $selectedVehicle->serial_number ?: '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Serie eq. adicional</small><strong>{{ $selectedVehicle->additional_serial_number ?: '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Tipo de motor</small><strong>{{ $selectedVehicle->engine_type ?: '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Filtros de motor</small><strong>{{ $selectedVehicle->engine_filters ?: '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Área</small><strong>{{ $selectedVehicle->area ?: '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Familia</small><strong>{{ $selectedVehicle->family ?: '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Fecha de fabricación</small><strong>{{ $selectedVehicle->manufacture_date ? $selectedVehicle->manufacture_date->format('d/m/Y') : '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Asignado</small><strong>{{ $selectedVehicle->assigned_personnel ?: '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Estado</small><strong>{{ $selectedVehicle->equipment_status ?: '-' }}</strong></div>
                     <div class="vehicle-field"><small>Proveedor</small><strong>{{ $selectedVehicle->supplier ?: '-' }}</strong></div>
-                    <div class="vehicle-field"><small>Personal asignado</small><strong>{{ $selectedVehicle->assigned_personnel ?: '-' }}</strong></div>
-                    <div class="vehicle-field"><small>Estatus operativo</small><strong>{{ $selectedVehicle->availability === 'available' ? 'Disponible' : 'En mantenimiento' }}</strong></div>
-                    <div class="vehicle-field"><small>Ultimo comentario de mantenimiento</small><strong>{{ $selectedVehicle->maintenance_note ?: '-' }}</strong></div>
                 </div>
 
-                <div class="vehicle-description">
-                    <small style="display:block; color:#6b7280; margin-bottom:6px;">Descripcion</small>
-                    <strong>{{ $selectedVehicle->description ?: '-' }}</strong>
-                </div>
+
 
                 <div class="empty-fields-box">
                     <strong>Campos vacios detectados</strong>
@@ -371,22 +388,21 @@
 
             const wrapper = document.createElement('div');
             wrapper.style.position = 'relative';
+            wrapper.style.zIndex = '3000';
             wrapper.className = 'searchable-wrapper';
 
             const input = document.createElement('input');
             input.type = 'text';
-            input.placeholder = 'Buscar unidad...';
+            input.placeholder = select.dataset.placeholder || 'Buscar unidad...';
             input.className = 'searchable-input';
             input.autocomplete = 'off';
 
             const list = document.createElement('ul');
             list.className = 'searchable-list';
-            list.style.position = 'absolute';
-            list.style.left = '0';
-            list.style.right = '0';
-            list.style.top = '100%';
-            list.style.zIndex = '10';
+            list.style.position = 'fixed';
+            list.style.zIndex = '3200';
             list.style.maxHeight = '160px';
+            document.body.appendChild(list);
             list.style.overflowY = 'auto';
             list.style.margin = '4px 0 0';
             list.style.padding = '0';
@@ -408,8 +424,14 @@
             }
 
             function render(filter) {
+                const rect = input.getBoundingClientRect();
+                list.style.left = rect.left + 'px';
+                list.style.top = rect.bottom + 'px';
+                list.style.width = rect.width + 'px';
+
                 list.innerHTML = '';
-                const term = (filter || '').toLowerCase();
+                const normalize = value => (value || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+                const term = normalize(filter);
                 filteredOptions = originalOptions.filter(function (opt) {
                     if (!opt.value) return;
                     const text = opt.textContent;
@@ -473,7 +495,7 @@
 
             select.parentNode.insertBefore(wrapper, select);
             wrapper.appendChild(input);
-            wrapper.appendChild(list);
+            document.body.appendChild(list);
             select.style.display = 'none';
 
             const selectedOpt = select.selectedOptions[0];

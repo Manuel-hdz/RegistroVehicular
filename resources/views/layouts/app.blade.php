@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
@@ -303,6 +303,18 @@
             max-width: 1180px;
             margin: 28px auto 40px;
             padding: 0 20px;
+        }
+        .searchable-wrapper {
+            position: relative;
+            z-index: 3000;
+            isolation: isolate;
+            overflow: visible;
+        }
+        .searchable-list {
+            position: fixed;
+            z-index: 3200;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
         .card {
             background: var(--surface);
@@ -625,7 +637,7 @@
 
         @if(request()->routeIs('public.dashboard') && !auth()->check())
             <a class="btn btn-outline-light btn-sm ms-auto rounded-pill px-3" href="{{ route('login') }}">
-                <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar sesión
+                <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar sesi&oacute;n
             </a>
         @endif
 
@@ -635,13 +647,13 @@
                     <i class="bi bi-box-arrow-in-right me-1"></i>Entrar
                 </a>
                 <a class="btn btn-light btn-sm px-3 text-success" href="{{ route('public.dashboard') }}">
-                    Dashboard Público
+                    Panel p&uacute;blico
                 </a>
             </div>
         @endif
 
         @auth
-            <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#appNavbar" aria-controls="appNavbar" aria-expanded="false" aria-label="Menú">
+            <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#appNavbar" aria-controls="appNavbar" aria-expanded="false" aria-label="Men&uacute;">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
@@ -657,7 +669,7 @@
                                 <ul class="dropdown-menu">
                                     <li>
                                         <a class="dropdown-item {{ request()->routeIs('public.dashboard') ? 'active' : '' }}" href="{{ route('public.dashboard') }}">
-                                            <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                                            <i class="bi bi-speedometer2"></i><span>Panel principal</span>
                                         </a>
                                     </li>
                                     <li>
@@ -710,7 +722,7 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item {{ request()->routeIs('mechanics.*') ? 'active' : '' }}" href="{{ route('mechanics.index') }}">
-                                            <i class="bi bi-wrench-adjustable-circle"></i><span>Mecánicos</span>
+                                            <i class="bi bi-wrench-adjustable-circle"></i><span>Mec&aacute;nicos</span>
                                         </a>
                                     </li>
                                     <li>
@@ -725,12 +737,12 @@
                         @if($canAccessAdministration)
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle {{ request()->routeIs('vehicles.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                                    <i class="bi bi-building-gear"></i><span>Administración</span>
+                                    <i class="bi bi-building-gear"></i><span>Administraci&oacute;n</span>
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li>
                                         <a class="dropdown-item {{ request()->routeIs('vehicles.*') ? 'active' : '' }}" href="{{ route('vehicles.index') }}">
-                                            <i class="bi bi-truck"></i><span>Vehículos</span>
+                                            <i class="bi bi-truck"></i><span>Veh&iacute;culos</span>
                                         </a>
                                     </li>
                                 </ul>
@@ -774,10 +786,20 @@
 
                         @if($canAccessWarehouse)
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle {{ request()->routeIs('parts.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                                    <i class="bi bi-box-seam"></i><span>Almacén</span>
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('parts.*') || request()->routeIs('warehouse.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    <i class="bi bi-box-seam"></i><span>Almacen</span>
                                 </a>
                                 <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('warehouse.movements') ? 'active' : '' }}" href="{{ route('warehouse.movements') }}">
+                                            <i class="bi bi-arrow-left-right"></i><span>Entradas y salidas</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('warehouse.inventory') ? 'active' : '' }}" href="{{ route('warehouse.inventory') }}">
+                                            <i class="bi bi-boxes"></i><span>Inventario</span>
+                                        </a>
+                                    </li>
                                     <li>
                                         <a class="dropdown-item {{ request()->routeIs('parts.*') ? 'active' : '' }}" href="{{ route('parts.index') }}">
                                             <i class="bi bi-gear-wide-connected"></i><span>Refacciones</span>
@@ -821,8 +843,8 @@
                                 <a
                                     href="#"
                                     class="home-link dropdown-toggle {{ request()->routeIs('cost-centers.*') || request()->routeIs('bulk-imports.*') || request()->routeIs('vacation-policies.*') || request()->routeIs('users.*') ? 'active' : '' }}"
-                                    title="Configuración"
-                                    aria-label="Configuración"
+                                    title="Configuraci&oacute;n"
+                                    aria-label="Configuraci&oacute;n"
                                     data-bs-toggle="dropdown"
                                     data-bs-auto-close="outside"
                                     aria-expanded="false"
@@ -926,7 +948,7 @@
         <div class="card" style="padding:14px 18px; border:1px solid rgba(59,130,246,.22); background:rgba(219,234,254,.82);">
             <div class="row" style="justify-content:space-between; align-items:center; gap:12px;">
                 <div style="color:#1d4ed8; font-weight:800;">Vista activa como {{ $previewUser->name }} ({{ $previewUser->username }})</div>
-                <div style="color:#475569;">Sesion original: {{ $originalUser->name }}</div>
+                <div style="color:#475569;">Sesi&oacute;n original: {{ $originalUser->name }}</div>
             </div>
         </div>
     @endif
@@ -950,7 +972,7 @@
                     <img class="logo" src="{{ asset('images/logo_marca.png') }}" alt="Concreto Lanzado de Fresnillo MARCA" onerror="this.style.display='none'" style="height:36px;">
                     <div class="small">
                         <strong class="d-block">Concreto Lanzado de Fresnillo MARCA</strong>
-                        <span class="d-block">Av Enrique Estrada #755, Las Américas, 99030, Fresnillo, Zacatecas</span>
+                        <span class="d-block">Av. Enrique Estrada #755, Las Am&eacute;ricas, 99030, Fresnillo, Zacatecas</span>
                         <span class="d-block">Desarrollador: Manuel Hernandez</span>
                     </div>
                 </div>
@@ -970,10 +992,10 @@
         <div class="modal" role="document">
             <header>
                 <strong id="supportTitle">Soporte</strong>
-                <button class="close-x" type="button" aria-label="Cerrar" id="btnCloseSupport">×</button>
+                <button class="close-x" type="button" aria-label="Cerrar" id="btnCloseSupport">&times;</button>
             </header>
             <div class="content">
-                Para soporte contacte al área de sistemas.
+                Para soporte contacte al &aacute;rea de sistemas.
             </div>
             <div class="actions">
                 <button class="btn btn-secondary" type="button" id="btnOkSupport">Entendido</button>
@@ -981,6 +1003,9 @@
         </div>
     </div>
 </div>
+@if(request()->routeIs('warehouse.*') || request()->routeIs('parts.*'))
+    @include('warehouse.konami-game')
+@endif
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     (function(){
@@ -1015,7 +1040,7 @@
             });
         });
     })();
-    // Deshabilitar botón de envío y mostrar spinner mientras se envÃ­a (para POST/PUT/PATCH/DELETE)
+    // Deshabilitar boton de envio y mostrar spinner mientras se envia (para POST/PUT/PATCH/DELETE)
     (function(){
         let lastClickedSubmit = null;
         document.addEventListener('click', function(e){
@@ -1046,7 +1071,7 @@
                 }
             }
         }, true);
-        // Si el envío es prevenido por JS, reactivar el botón
+        // Si el envio es prevenido por JS, reactivar el boton
         document.addEventListener('submit', function(e){
             setTimeout(function(){
                 if(e.defaultPrevented && lastClickedSubmit && lastClickedSubmit.dataset.loading){
@@ -1060,7 +1085,7 @@
             });
         });
     })();
-    // Modal de conflicto de sesión (cuenta en uso)
+    // Modal de conflicto de sesion (cuenta en uso)
     (function(){
         const conflictMsg = @json(session('session_conflict'));
         if(!conflictMsg) return;
@@ -1073,7 +1098,7 @@
         const modal = document.createElement('div');
         modal.className = 'modal';
         const header = document.createElement('header');
-        header.innerHTML = '<strong>Sesión cerrada</strong>';
+        header.innerHTML = '<strong>Sesi&oacute;n cerrada</strong>';
         const content = document.createElement('div');
         content.className = 'content';
         content.textContent = conflictMsg;

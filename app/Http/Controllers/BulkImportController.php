@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -35,6 +36,9 @@ class BulkImportController extends Controller
     public function store(Request $request, string $type): RedirectResponse
     {
         $definition = $this->resolveImportDefinition($type);
+        $resultRoute = $request->routeIs('vehicles.import.store')
+            ? 'vehicles.index'
+            : 'bulk-imports.index';
 
         $request->validate([
             'csv_file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
@@ -65,7 +69,21 @@ class BulkImportController extends Controller
             }
 
             $lineNumber = $index + 1;
-            $result = $this->processRow($type, $row, $headerMap, $lineNumber, $request);
+            try {
+                $result = $this->processRow($type, $row, $headerMap, $lineNumber, $request);
+            } catch (\Throwable $exception) {
+                Log::error('Error al importar una fila CSV.', [
+                    'type' => $type,
+                    'line' => $lineNumber,
+                    'exception' => $exception,
+                ]);
+                $this->appendError(
+                    $errorMessages,
+                    $maxErrorsToShow,
+                    "Linea {$lineNumber}: no pudo importarse por un error inesperado."
+                );
+                continue;
+            }
 
             if (($result['status'] ?? null) === 'created') {
                 $createdCount++;
@@ -85,7 +103,7 @@ class BulkImportController extends Controller
         }
 
         if ($processedCount === 0) {
-            return redirect()->route('bulk-imports.index')
+            return redirect()->route($resultRoute)
                 ->withErrors([
                     'csv_file' => 'No se importo ningun registro valido.',
                 ])
@@ -98,7 +116,7 @@ class BulkImportController extends Controller
             $status .= ' Se omitieron algunas lineas con error.';
         }
 
-        return redirect()->route('bulk-imports.index')
+        return redirect()->route($resultRoute)
             ->with('status', $status)
             ->with('imported_type', $type)
             ->with('import_errors', $errorMessages);
@@ -177,47 +195,40 @@ class BulkImportController extends Controller
             [
                 'key' => 'vehicles',
                 'label' => 'Vehiculos',
-                'description' => 'Carga unidades y equipos. Se actualiza por placa.',
+                'description' => 'Carga equipos y unidades. Se actualiza por clave, placa o numero de serie.',
                 'filename' => 'plantilla_vehiculos.csv',
                 'headers' => [
-                    'plate',
-                    'identifier',
-                    'vtype',
-                    'model',
-                    'year',
-                    'serial_number',
-                    'additional_serial_number',
-                    'engine_number',
-                    'supplier',
-                    'assigned_personnel',
-                    'description',
-                    'active',
+                    'key', 'unit_name', 'registration_date', 'make_model', 'model', 'plate',
+                    'serial_number', 'additional_serial_number', 'engine_type', 'engine_filters',
+                    'area', 'family', 'manufacture_date', 'assigned_to', 'status', 'supplier',
                 ],
                 'examples' => [
-                    ['ABC-123-A', 'EQ-14', 'pickup', 'NP300', '2020', 'SER12345', 'SERX-77', 'MOT456', 'Proveedor Norte', 'Pedro Ruiz', 'Unidad de apoyo', 'si'],
-                    ['ZAC-908-B', 'MX-22', 'equipo_pesado', '320D', '2019', 'CAT99881', '', 'ENG-778', 'Caterpillar', 'Luis Torres', 'Excavadora principal', 'si'],
+                    ['EQ-01', 'Excavadora principal', '2026-01-15', 'Caterpillar 320D', '2024', '', 'SER-100', 'SER-ALT-1', 'Diesel', 'Aceite; combustible; aire', 'Obra', 'Maquinaria pesada', '2024-05-10', 'Luis Torres', 'Operando', 'Caterpillar'],
                 ],
                 'aliases' => [
-                    'plate' => ['plate', 'placa'],
-                    'identifier' => ['identifier', 'identificador', 'id'],
-                    'vtype' => ['vtype', 'tipo', 'tipo_unidad'],
+                    'identifier' => ['key', 'clave', 'identifier', 'identificador'],
+                    'unit_name' => ['unit_name', 'nombre_unidad', 'nombre_de_unidad'],
+                    'registration_date' => ['registration_date', 'fecha_alta', 'fecha_de_alta'],
+                    'make_model' => ['make_model', 'marca_modelo', 'marca/modelo'],
                     'model' => ['model', 'modelo'],
-                    'year' => ['year', 'anio', 'ano'],
-                    'serial_number' => ['serial_number', 'numero_serie', 'serie'],
-                    'additional_serial_number' => ['additional_serial_number', 'numero_serie_adicional', 'serie_adicional'],
-                    'engine_number' => ['engine_number', 'motor', 'numero_motor'],
+                    'plate' => ['plate', 'placa'],
+                    'serial_number' => ['serial_number', 'numero_serie', 'numero_de_serie', 'serie'],
+                    'additional_serial_number' => ['additional_serial_number', 'serie_eq_adicional', 'serie_adicional'],
+                    'engine_type' => ['engine_type', 'tipo_motor', 'tipo_de_motor'],
+                    'engine_filters' => ['engine_filters', 'filtros_motor', 'filtros_de_motor'],
+                    'area' => ['area'],
+                    'family' => ['family', 'familia'],
+                    'manufacture_date' => ['manufacture_date', 'fecha_fabricacion', 'fecha_de_fabricacion'],
+                    'assigned_personnel' => ['assigned_to', 'asignado', 'assigned_personnel', 'personal_asignado'],
+                    'equipment_status' => ['status', 'estado', 'estatus'],
                     'supplier' => ['supplier', 'proveedor'],
-                    'assigned_personnel' => ['assigned_personnel', 'personal_asignado', 'asignado_a'],
-                    'description' => ['description', 'descripcion'],
-                    'active' => ['active', 'activo', 'estatus'],
                 ],
                 'notes' => [
-                    'Campo obligatorio: plate.',
-                    'vtype acepta: auto, pickup, furgoneta, camion, transporte_personal, remolcable, equipo_pesado y trompo.',
-                    'No incluye foto, tarjeta de circulacion ni poliza; esos archivos se siguen cargando manualmente.',
+                    'Todos los campos son opcionales.',
+                    'Si existe clave, placa o numero de serie se actualiza el equipo coincidente; de lo contrario se crea uno nuevo.',
+                    'Tenencia y tarjeta de circulacion son archivos y se adjuntan desde la edicion del equipo.',
                 ],
-            ],
-            [
+            ],            [
                 'key' => 'parts',
                 'label' => 'Refacciones',
                 'description' => 'Carga materiales y refacciones. Se actualiza por nombre.',
@@ -379,53 +390,58 @@ class BulkImportController extends Controller
      */
     private function processVehicleRow(array $row, array $headerMap, int $lineNumber, Request $request): array
     {
+        $identifier = $this->rowValue($row, $headerMap, 'identifier');
         $plate = $this->rowValue($row, $headerMap, 'plate');
-        if ($plate === '') {
-            return ['status' => 'skipped', 'error' => "Linea {$lineNumber}: falta plate."];
-        }
+        $serialNumber = $this->rowValue($row, $headerMap, 'serial_number');
 
-        $vtype = $this->nullableString($this->rowValue($row, $headerMap, 'vtype'));
-        $allowedTypes = ['auto', 'pickup', 'furgoneta', 'camion', 'transporte_personal', 'remolcable', 'equipo_pesado', 'trompo'];
-        if ($vtype !== null && !in_array($vtype, $allowedTypes, true)) {
-            return ['status' => 'skipped', 'error' => "Linea {$lineNumber}: el tipo de vehiculo '{$vtype}' no es valido."];
-        }
+        $registrationDateValue = $this->rowValue($row, $headerMap, 'registration_date');
+        $registrationDate = $this->nullableDate($registrationDateValue);
 
-        $yearValue = $this->rowValue($row, $headerMap, 'year');
-        $year = $this->nullableInteger($yearValue);
-        if ($yearValue !== '' && ($year === null || $year < 1900 || $year > 2100)) {
-            return ['status' => 'skipped', 'error' => "Linea {$lineNumber}: el anio '{$yearValue}' no es valido."];
-        }
+        $manufactureDateValue = $this->rowValue($row, $headerMap, 'manufacture_date');
+        $manufactureDate = $this->nullableDate($manufactureDateValue);
 
-        $vehicle = Vehicle::firstOrNew([
+        $vehicle = null;
+        foreach ([
+            'identifier' => $identifier,
             'plate' => $plate,
-        ]);
+            'serial_number' => $serialNumber,
+        ] as $field => $value) {
+            if ($value === '') {
+                continue;
+            }
+
+            $vehicle = Vehicle::where($field, $value)->first();
+            if ($vehicle) {
+                break;
+            }
+        }
+
+        $vehicle ??= new Vehicle();
+
         $isNew = !$vehicle->exists;
-
-        $active = $vehicle->exists ? (bool) $vehicle->active : true;
-        if (optional($request->user())->role === 'superadmin') {
-            $active = $this->parseBoolean($this->rowValue($row, $headerMap, 'active'), $active);
-        }
-
         $vehicle->fill([
-            'plate' => $plate,
-            'identifier' => $this->nullableString($this->rowValue($row, $headerMap, 'identifier')),
-            'vtype' => $vtype,
+            'identifier' => $this->nullableString($identifier),
+            'unit_name' => $this->nullableString($this->rowValue($row, $headerMap, 'unit_name')),
+            'registration_date' => $registrationDate,
+            'make_model' => $this->nullableString($this->rowValue($row, $headerMap, 'make_model')),
             'model' => $this->nullableString($this->rowValue($row, $headerMap, 'model')),
-            'year' => $year,
-            'serial_number' => $this->nullableString($this->rowValue($row, $headerMap, 'serial_number')),
+            'plate' => $this->nullableString($plate),
+            'serial_number' => $this->nullableString($serialNumber),
             'additional_serial_number' => $this->nullableString($this->rowValue($row, $headerMap, 'additional_serial_number')),
-            'engine_number' => $this->nullableString($this->rowValue($row, $headerMap, 'engine_number')),
-            'supplier' => $this->nullableString($this->rowValue($row, $headerMap, 'supplier')),
+            'engine_type' => $this->nullableString($this->rowValue($row, $headerMap, 'engine_type')),
+            'engine_filters' => $this->nullableString($this->rowValue($row, $headerMap, 'engine_filters')),
+            'area' => $this->nullableString($this->rowValue($row, $headerMap, 'area')),
+            'family' => $this->nullableString($this->rowValue($row, $headerMap, 'family')),
+            'manufacture_date' => $manufactureDate,
             'assigned_personnel' => $this->nullableString($this->rowValue($row, $headerMap, 'assigned_personnel')),
-            'description' => $this->nullableString($this->rowValue($row, $headerMap, 'description')),
-            'active' => $active,
+            'equipment_status' => $this->nullableString($this->rowValue($row, $headerMap, 'equipment_status')),
+            'supplier' => $this->nullableString($this->rowValue($row, $headerMap, 'supplier')),
+            'active' => $vehicle->exists ? (bool) $vehicle->active : true,
         ]);
-
         $vehicle->save();
 
         return ['status' => $isNew ? 'created' : 'updated'];
     }
-
     /**
      * @param array<int, string> $row
      * @param array<string, int> $headerMap
