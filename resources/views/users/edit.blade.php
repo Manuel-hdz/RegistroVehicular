@@ -38,6 +38,19 @@
         <div>
             <label><input type="checkbox" name="active" value="1" {{ old('active', $user->active) ? 'checked' : '' }}> Activo</label>
         </div>
+        <div style="grid-column:1/-1;">
+            <label>Centros de costos</label>
+            <p style="margin:4px 0 10px; color:#6b7280;">Selecciona uno o varios almacenes a los que tendrá acceso.</p>
+            @php($selectedCostCenterIds = array_map('intval', old('cost_center_ids', $user->costCenters->pluck('id')->all())))
+            <div class="grid grid-3">
+                @foreach($costCenters as $costCenter)
+                    <label style="display:flex; align-items:center; gap:10px; margin:0; padding:14px 16px; border:1px solid #d9e3dd; border-radius:16px; background:#fff; text-transform:none; letter-spacing:0; color:#173629;">
+                        <input type="checkbox" name="cost_center_ids[]" value="{{ $costCenter->id }}" {{ in_array($costCenter->id, $selectedCostCenterIds, true) ? 'checked' : '' }}>
+                        <span style="font-weight:700;">{{ $costCenter->name }}</span>
+                    </label>
+                @endforeach
+            </div>
+        </div>
         <div style="grid-column: 1/-1;" class="row actions-stick">
             <a class="btn btn-secondary" href="{{ route('users.index') }}">Cancelar</a>
             <button class="btn btn-primary" type="submit">Guardar Cambios</button>

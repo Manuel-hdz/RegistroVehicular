@@ -3,11 +3,19 @@
 @section('content')
 <div class="card">
     <h2 style="margin:0">Inventario de almacén</h2>
-    <p style="margin:6px 0 0; color:#6b7280;">Existencias actuales agrupadas por nombre y características.</p>
+    <p style="margin:6px 0 0; color:#6b7280;">Existencias exclusivas de <strong>{{ $selectedCostCenter->name }}</strong>.</p>
 </div>
 
 <div class="card">
     <form method="GET" action="{{ route('warehouse.inventory') }}" role="search" style="display:flex; align-items:end; gap:10px; flex-wrap:wrap; margin-bottom:18px;">
+        <div style="flex:0 1 320px;">
+            <label for="inventoryCostCenter" style="display:block; font-weight:700; margin-bottom:6px;">Centro de costos</label>
+            <select id="inventoryCostCenter" name="cost_center_id" onchange="this.form.submit()">
+                @foreach($costCenters as $costCenter)
+                    <option value="{{ $costCenter->id }}" @selected($selectedCostCenter->id === $costCenter->id)>{{ $costCenter->name }}</option>
+                @endforeach
+            </select>
+        </div>
         <div style="flex:1 1 280px;">
             <label for="inventorySearch" style="display:block; font-weight:700; margin-bottom:6px;">Buscar en inventario</label>
             <div style="position:relative;">
@@ -17,7 +25,7 @@
         </div>
         <button class="btn btn-primary" type="submit"><i class="bi bi-search" aria-hidden="true"></i><span>Buscar</span></button>
         @if($search !== '')
-            <a class="btn btn-secondary" href="{{ route('warehouse.inventory') }}"><i class="bi bi-x-lg" aria-hidden="true"></i><span>Limpiar</span></a>
+            <a class="btn btn-secondary" href="{{ route('warehouse.inventory', ['cost_center_id' => $selectedCostCenter->id]) }}"><i class="bi bi-x-lg" aria-hidden="true"></i><span>Limpiar</span></a>
         @endif
     </form>
 
@@ -28,6 +36,7 @@
                     <th>Clave</th>
                     <th>Material</th>
                     <th>Características</th>
+                    <th>Ubicaciones registradas</th>
                     <th>Cantidad disponible</th>
                 </tr>
             </thead>
@@ -45,6 +54,7 @@
                                             <form method="POST" action="{{ route('warehouse.material-exits.delivered', $material->latestMaterialExit) }}" style="margin:0;">
                                                 @csrf
                                                 @method('PATCH')
+                                                <input type="hidden" name="cost_center_id" value="{{ $selectedCostCenter->id }}">
                                                 <button class="btn btn-primary" type="submit" style="min-height:32px; padding:5px 10px;">Recibido</button>
                                             </form>
                                         @endif
@@ -61,6 +71,14 @@
                                 <span class="text-muted">Sin características</span>
                             @endforelse
                         </td>
+                        <td>
+                            @php($locationNames = $material->entryMaterials->pluck('location.name')->filter()->unique()->sort()->values())
+                            @forelse($locationNames as $locationName)
+                                <span class="badge text-bg-light" style="margin:2px; border:1px solid rgba(16, 52, 37, .12);">{{ $locationName }}</span>
+                            @empty
+                                <span class="text-muted">Sin ubicación</span>
+                            @endforelse
+                        </td>
                                                 <td>
                             @php($stockQuantity = (float) $material->stock_quantity)
                             @if($stockQuantity <= 0)
@@ -72,7 +90,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="text-center text-muted">{{ $search !== '' ? 'No se encontraron materiales con ese criterio' : 'Sin materiales registrados' }}</td>
+                        <td colspan="5" class="text-center text-muted">{{ $search !== '' ? 'No se encontraron materiales con ese criterio' : 'Sin materiales registrados' }}</td>
                     </tr>
                 @endforelse
             </tbody>

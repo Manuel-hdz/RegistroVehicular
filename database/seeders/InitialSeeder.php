@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\CostCenter;
 use App\Models\Driver;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -13,20 +14,27 @@ class InitialSeeder extends Seeder
     public function run(): void
     {
         // Users
-        User::updateOrCreate(
+        $superAdmin = User::updateOrCreate(
             ['username' => 'SuperAdmin'],
             ['name' => 'Super Admin', 'password' => Hash::make('SistemasCLF'), 'role' => 'superadmin', 'department' => 'sistemas', 'active' => true]
         );
 
-        User::updateOrCreate(
+        $administrator = User::updateOrCreate(
             ['username' => 'admin'],
             ['name' => 'Administrador', 'password' => Hash::make('CLF.2025'), 'role' => 'admin', 'department' => 'gerencia', 'active' => true]
         );
 
-        User::updateOrCreate(
+        $warehouseUser = User::updateOrCreate(
             ['username' => 'usuario'],
             ['name' => 'Usuario', 'password' => Hash::make('123456'), 'role' => 'user', 'department' => 'almacen', 'active' => true]
         );
+
+        $defaultCostCenterId = CostCenter::where('code', 'INDIRECTOS-MATRIZ')->value('id');
+        if ($defaultCostCenterId) {
+            foreach ([$superAdmin, $administrator, $warehouseUser] as $user) {
+                $user->costCenters()->syncWithoutDetaching([$defaultCostCenterId]);
+            }
+        }
 
         // Vehicles
         Vehicle::updateOrCreate(['plate' => 'ABC-123'], [

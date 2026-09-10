@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -87,6 +88,11 @@ class User extends Authenticatable
     public static function modulePermissionLabels(): array
     {
         return self::MODULE_PERMISSION_LABELS;
+    }
+
+    public function costCenters(): BelongsToMany
+    {
+        return $this->belongsToMany(CostCenter::class)->withTimestamps();
     }
 
     public function normalizedDepartment(): string
@@ -192,6 +198,12 @@ class User extends Authenticatable
     public function canManageParts(): bool
     {
         return $this->canManageOwnedDepartment('almacen');
+    }
+
+    public function canManageWarehouseLocations(): bool
+    {
+        return $this->role === 'superadmin'
+            || ($this->role === 'admin' && $this->canManageOwnedDepartment('almacen'));
     }
 
     public function canManageRequisitionStatus(): bool

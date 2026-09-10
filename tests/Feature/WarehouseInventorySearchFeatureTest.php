@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\CostCenter;
 use App\Models\Part;
 use App\Models\User;
+use App\Models\WarehouseEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,8 +24,16 @@ class WarehouseInventorySearchFeatureTest extends TestCase
             'active' => true,
         ]);
 
-        Part::create(['clave' => 'MAT-FILTRO-001', 'name' => 'Filtro de aceite', 'characteristics' => ['motor diesel', 'color negro'], 'unit_cost' => 0, 'active' => true]);
+        $costCenter = CostCenter::where('code', 'INDIRECTOS-MATRIZ')->firstOrFail();
+        $filter = Part::create(['clave' => 'MAT-FILTRO-001', 'name' => 'Filtro de aceite', 'characteristics' => ['motor diesel', 'color negro'], 'unit_cost' => 0, 'active' => true]);
         Part::create(['clave' => 'MAT-BUJIA-002', 'name' => 'Bujia', 'characteristics' => ['iridio'], 'unit_cost' => 0, 'active' => true]);
+        $entry = WarehouseEntry::create([
+            'cost_center_id' => $costCenter->id,
+            'entry_key' => 'ENT-SEARCH-001',
+            'entry_type' => 'Compra',
+            'entry_date' => now(),
+        ]);
+        $entry->materials()->create(['part_id' => $filter->id, 'quantity' => 4]);
 
         $this->actingAs($user)
             ->get(route('warehouse.inventory', ['search' => 'diesel']))

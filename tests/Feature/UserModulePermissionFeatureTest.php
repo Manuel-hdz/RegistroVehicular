@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CostCenter;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -49,6 +50,9 @@ class UserModulePermissionFeatureTest extends TestCase
             'active' => true,
         ]);
 
+        $charcas = CostCenter::where('code', 'ZARPEO-CHARCAS')->firstOrFail();
+        $matriz = CostCenter::where('code', 'INDIRECTOS-MATRIZ')->firstOrFail();
+
         $response = $this->actingAs($superadmin)->post(route('users.store'), [
             'name' => 'Usuario Nuevo',
             'username' => 'usuario-nuevo',
@@ -58,11 +62,54 @@ class UserModulePermissionFeatureTest extends TestCase
             'active' => '1',
             'special_permissions' => '1',
             'module_permissions' => ['rrhh', 'almacen'],
+            'cost_center_ids' => [$charcas->id, $matriz->id],
         ]);
 
         $createdUser = User::where('username', 'usuario-nuevo')->firstOrFail();
 
         $response->assertRedirect(route('users.index'));
         $this->assertSame(['rrhh', 'almacen'], $createdUser->grantedModules());
+        $this->assertEqualsCanonicalizing(
+            [$charcas->id, $matriz->id],
+            $createdUser->costCenters()->pluck('cost_centers.id')->all()
+        );
+    }
+
+    public function test_superadmin_can_replace_a_users_cost_center_assignments(): void
+    {
+        $superadmin = User::create([
+            'name' => 'Super Admin',
+            'username' => 'superadmin-update-centers',
+            'password' => 'secret',
+            'role' => 'superadmin',
+            'department' => 'sistemas',
+            'active' => true,
+        ]);
+        $user = User::create([
+            'name' => 'Usuario Almacén',
+            'username' => 'usuario-update-centers',
+            'password' => 'secret',
+            'role' => 'user',
+            'department' => 'almacen',
+            'active' => true,
+        ]);
+        $charcas = CostCenter::where('code', 'ZARPEO-CHARCAS')->firstOrFail();
+        $sanMartin = CostCenter::where('code', 'ZARPEO-SAN-MARTIN')->firstOrFail();
+        $matriz = CostCenter::where('code', 'INDIRECTOS-MATRIZ')->firstOrFail();
+        $user->costCenters()->sync([$matriz->id]);
+
+        $this->actingAs($superadmin)->put(route('users.update', $user), [
+            'name' => $user->name,
+            'username' => $user->username,
+            'role' => $user->role,
+            'department' => $user->department,
+            'active' => '1',
+            'cost_center_ids' => [$charcas->id, $sanMartin->id],
+        ])->assertRedirect();
+
+        $this->assertEqualsCanonicalizing(
+            [$charcas->id, $sanMartin->id],
+            $user->costCenters()->pluck('cost_centers.id')->all()
+        );
     }
 }

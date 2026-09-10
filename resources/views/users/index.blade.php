@@ -28,6 +28,7 @@
                     <th>Usuario</th>
                     <th>Rol</th>
                     <th>Departamento</th>
+                    <th>Centros de costos</th>
                     <th>Permisos extra</th>
                     <th>Activo</th>
                     <th></th>
@@ -40,6 +41,7 @@
                         <td>{{ $u->username }}</td>
                         <td style="text-transform:uppercase;">{{ $u->role }}</td>
                         <td>{{ $u->department ? ucfirst($u->department) : '-' }}</td>
+                        <td>{{ $u->costCenters->isNotEmpty() ? $u->costCenters->pluck('name')->join(', ') : 'Sin asignar' }}</td>
                         <td>{{ count($u->grantedModules()) > 0 ? implode(', ', array_map(fn ($module) => $moduleOptions[$module] ?? $module, $u->grantedModules())) : 'Sin permisos extra' }}</td>
                         <td>{{ $u->active ? 'Si' : 'No' }}</td>
                         <td>

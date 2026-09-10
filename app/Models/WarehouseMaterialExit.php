@@ -11,6 +11,7 @@ class WarehouseMaterialExit extends Model
     use HasFactory;
 
     protected $fillable = [
+        'cost_center_id',
         'part_id',
         'quantity',
         'exit_date',
@@ -35,5 +36,9 @@ class WarehouseMaterialExit extends Model
     {
         return $this->belongsTo(Part::class);
     }
-}
 
+    public function costCenter(): BelongsTo
+    {
+        return $this->belongsTo(CostCenter::class);
+    }
+}

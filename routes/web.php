@@ -21,6 +21,7 @@ use App\Http\Controllers\VacationPolicyController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleDestroyController;
 use App\Http\Controllers\WarehouseMovementController;
+use App\Http\Controllers\WarehouseLocationController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('impersonation-preview')->group(function () {
@@ -154,6 +155,9 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'impersona
         Route::middleware('section:almacen')->group(function () {
             Route::get('/entradas-salidas', [WarehouseMovementController::class, 'index'])->name('warehouse.movements');
             Route::get('/materiales', [WarehouseMovementController::class, 'inventory'])->name('warehouse.inventory');
+            Route::get('/ubicaciones', [WarehouseLocationController::class, 'index'])->name('warehouse.locations.index');
+            Route::post('/ubicaciones', [WarehouseLocationController::class, 'store'])->name('warehouse.locations.store');
+            Route::patch('/ubicaciones/{warehouseLocation}', [WarehouseLocationController::class, 'update'])->name('warehouse.locations.update');
             Route::get('/pacman/puntajes', [PacmanScoreController::class, 'index'])->name('warehouse.pacman-scores.index');
             Route::post('/pacman/puntajes', [PacmanScoreController::class, 'store'])->name('warehouse.pacman-scores.store');
             Route::get('/entradas-salidas/salidas/{warehouseMaterialExit}/vale', [WarehouseMovementController::class, 'voucher'])->name('warehouse.material-exits.voucher');

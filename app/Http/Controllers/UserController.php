@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CostCenter;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ class UserController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = User::query()->orderBy('name');
+        $query = User::query()->with('costCenters')->orderBy('name');
         $departments = ['' => 'Todos'] + $this->departments();
 
         if ($request->filled('department')) {
@@ -24,7 +25,7 @@ class UserController extends Controller
         $selectedUser = null;
         $selectedUserId = (int) $request->input('selected_user');
         if ($selectedUserId > 0) {
-            $selectedUser = User::find($selectedUserId);
+            $selectedUser = User::with('costCenters')->find($selectedUserId);
         }
 
         return view('users.index', [
@@ -32,6 +33,7 @@ class UserController extends Controller
             'departments' => $departments,
             'selectedUser' => $selectedUser,
             'moduleOptions' => User::modulePermissionLabels(),
+            'costCenters' => $this->costCenters(),
         ]);
     }
 
@@ -41,6 +43,7 @@ class UserController extends Controller
             'roles' => $this->roles(),
             'departments' => $this->departments(),
             'moduleOptions' => User::modulePermissionLabels(),
+            'costCenters' => $this->costCenters(),
         ]);
     }
 
@@ -55,6 +58,8 @@ class UserController extends Controller
             'special_permissions' => ['nullable', 'boolean'],
             'module_permissions' => ['nullable', 'array'],
             'module_permissions.*' => ['string', Rule::in(array_keys(User::modulePermissionLabels()))],
+            'cost_center_ids' => ['nullable', 'array'],
+            'cost_center_ids.*' => ['integer', Rule::exists('cost_centers', 'id')->where('active', true)],
             'active' => ['nullable', 'boolean'],
         ]);
 
@@ -63,9 +68,19 @@ class UserController extends Controller
         $data['module_permissions'] = $request->has('special_permissions')
             ? collect($request->input('module_permissions', []))->map(fn ($permission) => (string) $permission)->unique()->values()->all()
             : [];
-        unset($data['special_permissions']);
+        $costCenterIds = collect($data['cost_center_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+        unset($data['special_permissions'], $data['cost_center_ids']);
 
-        User::create($data);
+        $user = User::create($data);
+        if ($costCenterIds === []) {
+            $defaultId = CostCenter::where('code', 'INDIRECTOS-MATRIZ')->value('id');
+            $costCenterIds = $defaultId ? [(int) $defaultId] : [];
+        }
+        $user->costCenters()->sync($costCenterIds);
 
         return redirect()->route('users.index')->with('status', 'Usuario creado.');
     }
@@ -76,6 +91,7 @@ class UserController extends Controller
             'user' => $user,
             'roles' => $this->roles(),
             'departments' => $this->departments(),
+            'costCenters' => $this->costCenters(),
         ]);
     }
 
@@ -83,21 +99,31 @@ class UserController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
-            'username' => ['required', 'string', 'max:191', 'unique:users,username,' . $user->id],
+            'username' => ['required', 'string', 'max:191', 'unique:users,username,'.$user->id],
             'password' => ['nullable', 'string', 'min:6'],
             'role' => ['required', Rule::in(array_keys($this->roles()))],
             'department' => ['required', Rule::in(array_keys($this->departments()))],
+            'cost_center_ids' => ['nullable', 'array'],
+            'cost_center_ids.*' => ['integer', Rule::exists('cost_centers', 'id')->where('active', true)],
             'active' => ['nullable', 'boolean'],
         ]);
 
+        $costCenterIds = array_key_exists('cost_center_ids', $data)
+            ? collect($data['cost_center_ids'] ?? [])->map(fn ($id) => (int) $id)->unique()->values()->all()
+            : null;
+        unset($data['cost_center_ids']);
+
         $data['active'] = $request->has('active');
-        if (!empty($data['password'])) {
+        if (! empty($data['password'])) {
             $data['password'] = bcrypt($data['password']);
         } else {
             unset($data['password']);
         }
 
         $user->update($data);
+        if ($costCenterIds !== null) {
+            $user->costCenters()->sync($costCenterIds);
+        }
 
         return redirect()->route('users.index', array_filter([
             'page' => $request->input('page'),
@@ -133,7 +159,7 @@ class UserController extends Controller
     public function startPreview(Request $request): RedirectResponse
     {
         $originalUser = $this->resolveOriginalUser($request);
-        if (!$originalUser || $originalUser->role !== 'superadmin') {
+        if (! $originalUser || $originalUser->role !== 'superadmin') {
             throw new AccessDeniedHttpException('Solo el superadmin puede usar esta vista.');
         }
 
@@ -142,7 +168,7 @@ class UserController extends Controller
         ]);
 
         $previewUser = User::findOrFail($data['preview_user_id']);
-        if (!$previewUser->active) {
+        if (! $previewUser->active) {
             return back()->withErrors(['preview_user_id' => 'Solo puedes ver usuarios activos.']);
         }
 
@@ -155,13 +181,13 @@ class UserController extends Controller
         $request->session()->put('impersonation.origin_user_id', $originalUser->id);
         $request->session()->put('impersonation.preview_user_id', $previewUser->id);
 
-        return redirect()->route('public.dashboard')->with('status', 'Vista cambiada a ' . $previewUser->name . '.');
+        return redirect()->route('public.dashboard')->with('status', 'Vista cambiada a '.$previewUser->name.'.');
     }
 
     public function stopPreview(Request $request): RedirectResponse
     {
         $originalUser = $this->resolveOriginalUser($request);
-        if (!$originalUser || $originalUser->role !== 'superadmin') {
+        if (! $originalUser || $originalUser->role !== 'superadmin') {
             throw new AccessDeniedHttpException('Solo el superadmin puede salir de esta vista.');
         }
 
@@ -190,6 +216,14 @@ class UserController extends Controller
             'sistemas' => 'Sistemas',
             'calidad' => 'Calidad',
         ];
+    }
+
+    private function costCenters()
+    {
+        return CostCenter::query()
+            ->where('active', true)
+            ->orderBy('name')
+            ->get();
     }
 
     private function resolveOriginalUser(Request $request): ?User

@@ -1,6 +1,6 @@
 # Orden de migraciones
 
-Las migraciones usan un prefijo numérico consecutivo (`001_` a `042_`). Ese
+Las migraciones usan un prefijo numérico consecutivo (`001_` a `045_`). Ese
 prefijo es el orden autoritativo de ejecución; la fecha que le sigue se conserva
 para identificar la migración histórica de origen.
 

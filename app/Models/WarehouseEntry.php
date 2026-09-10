@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WarehouseEntry extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['entry_key', 'entry_type', 'entry_date', 'invoice_path'];
+    protected $fillable = ['cost_center_id', 'entry_key', 'entry_type', 'entry_date', 'invoice_path'];
 
     protected $casts = [
         'entry_date' => 'datetime',
@@ -19,5 +20,10 @@ class WarehouseEntry extends Model
     public function materials(): HasMany
     {
         return $this->hasMany(WarehouseEntryMaterial::class);
+    }
+
+    public function costCenter(): BelongsTo
+    {
+        return $this->belongsTo(CostCenter::class);
     }
 }

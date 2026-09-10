@@ -18,6 +18,10 @@
             <div style="font-size:1.15rem; font-weight:800;">{{ $exit->part?->clave ?? 'Sin clave' }}</div>
         </div>
         <div>
+            <small style="color:#6d8178; font-weight:800;">Centro de costos</small>
+            <div style="font-size:1.15rem; font-weight:800;">{{ $exit->costCenter?->name ?? 'Sin centro de costos' }}</div>
+        </div>
+        <div>
             <small style="color:#6d8178; font-weight:800;">Material</small>
             <div style="font-size:1.15rem; font-weight:800;">{{ $exit->part?->name ?? 'Material sin nombre' }}</div>
         </div>
@@ -53,7 +57,7 @@
     </div>
 
     <div class="no-print" style="margin-top:24px; display:flex; gap:10px; flex-wrap:wrap;">
-        <a class="btn btn-secondary" href="{{ route('warehouse.movements') }}">Volver a entradas y salidas</a>
+        <a class="btn btn-secondary" href="{{ route('warehouse.movements', ['cost_center_id' => $exit->cost_center_id]) }}">Volver a entradas y salidas</a>
     </div>
 </div>
 

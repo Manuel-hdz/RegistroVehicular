@@ -149,6 +149,52 @@
         gap: 10px;
         margin-top: 14px;
     }
+    .entry-material-search {
+        position: relative;
+    }
+    .entry-material-suggestions {
+        position: absolute;
+        z-index: 1080;
+        top: calc(100% + 6px);
+        right: 0;
+        left: 0;
+        max-height: 260px;
+        overflow-y: auto;
+        border: 1px solid rgba(16, 52, 37, .16);
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 16px 36px rgba(16, 52, 37, .16);
+        padding: 6px;
+    }
+    .entry-material-suggestion {
+        display: block;
+        width: 100%;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        padding: 10px 12px;
+        color: #16362a;
+        text-align: left;
+    }
+    .entry-material-suggestion:hover,
+    .entry-material-suggestion:focus {
+        background: #eef7f2;
+        outline: none;
+    }
+    .entry-material-suggestion strong,
+    .entry-material-suggestion small {
+        display: block;
+    }
+    .entry-material-suggestion small,
+    .entry-material-no-results {
+        margin-top: 3px;
+        color: #6d8178;
+        font-size: .78rem;
+        font-weight: 700;
+    }
+    .entry-material-no-results {
+        padding: 10px 12px;
+    }
     .warehouse-characteristic-row {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(130px, .7fr) auto auto;
@@ -209,7 +255,21 @@
     <div>
         <div class="card">
             <h2 style="margin:0;">Entradas y salidas</h2>
-            <p style="margin:6px 0 0;">Resumen operativo de movimientos de materiales en almacen.</p>
+            <p style="margin:6px 0 0;">Almacén separado de <strong>{{ $selectedCostCenter->name }}</strong>.</p>
+            <form method="GET" action="{{ route('warehouse.movements') }}" style="margin-top:14px; max-width:420px;">
+                <label for="warehouseCostCenter">Centro de costos</label>
+                <select id="warehouseCostCenter" name="cost_center_id" onchange="this.form.submit()">
+                    @foreach($costCenters as $costCenter)
+                        <option value="{{ $costCenter->id }}" @selected($selectedCostCenter->id === $costCenter->id)>{{ $costCenter->name }}</option>
+                    @endforeach
+                </select>
+            </form>
+            @if(auth()->user()?->canManageWarehouseLocations())
+                <a class="btn btn-secondary" href="{{ route('warehouse.locations.index', ['cost_center_id' => $selectedCostCenter->id]) }}" style="margin-top:12px;">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>Administrar ubicaciones</span>
+                </a>
+            @endif
         </div>
 
         <div class="card warehouse-action-panel">
@@ -221,7 +281,7 @@
                 <i class="bi bi-box-arrow-up-right"></i>
                 <span>Salidas</span>
             </button>
-            <a class="btn btn-secondary" href="{{ route('warehouse.inventory') }}">
+            <a class="btn btn-secondary" href="{{ route('warehouse.inventory', ['cost_center_id' => $selectedCostCenter->id]) }}">
                 <i class="bi bi-boxes"></i>
                 <span>Inventario</span>
             </a>
@@ -237,7 +297,7 @@
                                 <div class="warehouse-history-title">{{ $entry->entry_key ?? 'Entrada sin folio' }}</div>
                                 <div class="warehouse-history-meta">{{ $entry->entry_type ?? 'Sin tipo' }}</div>
                                 @foreach($entry->materials as $entryMaterial)
-                                    <div class="warehouse-history-meta">{{ $entryMaterial->part?->name ?? 'Material sin nombre' }} &middot; {{ number_format((float) $entryMaterial->quantity, 2) }} &middot; {{ $entryMaterial->part?->clave ?? 'Sin clave' }}</div>
+                                    <div class="warehouse-history-meta">{{ $entryMaterial->part?->name ?? 'Material sin nombre' }} &middot; {{ number_format((float) $entryMaterial->quantity, 2) }} &middot; {{ $entryMaterial->part?->clave ?? 'Sin clave' }} &middot; {{ $entryMaterial->location?->name ?? 'Sin ubicación' }}</div>
                                 @endforeach
                                 @if($entry->invoice_path)
                                     <a class="warehouse-history-meta" href="{{ asset('storage/' . $entry->invoice_path) }}" target="_blank" rel="noopener">Ver factura</a>
@@ -261,7 +321,7 @@
                             <div>
                                 <div class="warehouse-history-title">{{ $departure->part?->name ?? 'Material sin nombre' }}</div>
                                 <div class="warehouse-history-meta">Cantidad {{ number_format((float) $departure->quantity, 2) }} &middot; Clave {{ $departure->part?->clave ?? 'Sin clave' }} &middot; {{ $departure->voucher_number ?? 'Sin vale' }}</div>
-                                <a class="warehouse-history-meta" href="{{ route('warehouse.material-exits.voucher', $departure) }}" target="_blank" rel="noopener">Ver vale</a>
+                                <a class="warehouse-history-meta" href="{{ route('warehouse.material-exits.voucher', ['warehouseMaterialExit' => $departure, 'cost_center_id' => $selectedCostCenter->id]) }}" target="_blank" rel="noopener">Ver vale</a>
                                 @if($departure->invoice_path)
                                     <a class="warehouse-history-meta" href="{{ asset('storage/' . $departure->invoice_path) }}" target="_blank" rel="noopener">Ver factura</a>
                                 @endif
@@ -358,7 +418,7 @@
                                     <td>{{ $entry->entry_key ?? 'Sin folio' }}</td>
                                     <td>
                                         @foreach($entry->materials as $entryMaterial)
-                                            <div>{{ $entryMaterial->part?->name ?? 'Material sin nombre' }} &middot; {{ number_format((float) $entryMaterial->quantity, 2) }} &middot; {{ $entryMaterial->part?->clave ?? 'Sin clave' }}</div>
+                                            <div>{{ $entryMaterial->part?->name ?? 'Material sin nombre' }} &middot; {{ number_format((float) $entryMaterial->quantity, 2) }} &middot; {{ $entryMaterial->part?->clave ?? 'Sin clave' }} &middot; {{ $entryMaterial->location?->name ?? 'Sin ubicación' }}</div>
                                         @endforeach
                                     </td>
                                     <td>{{ $entry->entry_type ?? 'Sin tipo' }}</td>
@@ -393,6 +453,7 @@
         <div class="modal-content">
             <form method="POST" action="{{ route('warehouse.materials.store') }}" enctype="multipart/form-data">
                 @csrf
+                <input type="hidden" name="cost_center_id" value="{{ $selectedCostCenter->id }}">
                 <div class="modal-header">
                     <h3 class="modal-title" id="materialEntryModalLabel">Registrar entrada</h3>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -412,11 +473,24 @@
                         <div class="warehouse-entry-material" data-material-index="0">
                             <div>
                                 <label>Nombre del material</label>
-                                <input class="entry-material-name" name="materials[0][name]" required autocomplete="off">
+                                <div class="entry-material-search">
+                                    <input class="entry-material-id" type="hidden" name="materials[0][part_id]">
+                                    <input class="entry-material-name" name="materials[0][name]" required autocomplete="off" placeholder="Escribe para buscar materiales registrados" role="combobox" aria-autocomplete="list" aria-expanded="false">
+                                    <div class="entry-material-suggestions" role="listbox" hidden></div>
+                                </div>
                             </div>
                             <div style="margin-top:10px;">
                                 <label>Cantidad</label>
                                 <input class="entry-material-quantity" type="text" inputmode="decimal" name="materials[0][quantity]" value="1" required autocomplete="off">
+                            </div>
+                            <div style="margin-top:10px;">
+                                <label>Ubicación</label>
+                                <select class="entry-material-location" name="materials[0][warehouse_location_id]" required>
+                                    <option value="">Selecciona una ubicación</option>
+                                    @foreach($warehouseLocations as $location)
+                                        <option value="{{ $location->id }}" @selected((int) old('materials.0.warehouse_location_id') === $location->id)>{{ $location->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div style="margin-top:10px;">
                                 <label>Caracteristicas</label>
@@ -444,6 +518,7 @@
         <div class="modal-content">
             <form method="POST" action="{{ route('warehouse.material-exits.store') }}" enctype="multipart/form-data">
                 @csrf
+                <input type="hidden" name="cost_center_id" value="{{ $selectedCostCenter->id }}">
                 <div class="modal-header">
                     <h3 class="modal-title" id="materialExitModalLabel">Menu de salidas</h3>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -697,6 +772,9 @@
         drawAll();
     })();
     (function(){
+        var materialCatalog = @json($entryMaterialSuggestions);
+        var warehouseLocationCatalog = @json($warehouseLocations->map(fn ($location) => ['id' => $location->id, 'name' => $location->name])->values());
+
         function normalize(value) {
             return value
                 .normalize('NFD')
@@ -709,7 +787,14 @@
         function normalizeCharacteristics(value) {
             return (value || '')
                 .split(/[\n,]+/)
-                .map(function(item){ return item.trim().toLowerCase(); })
+                .map(function(item){
+                    return item
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .trim()
+                        .toLowerCase()
+                        .replace(/\s+/g, ' ');
+                })
                 .filter(Boolean)
                 .sort()
                 .join('|');
@@ -733,14 +818,138 @@
         function refreshMaterialClave(row) {
             var nameInput = row.querySelector('.entry-material-name');
             var characteristicsInput = row.querySelector('.entry-material-characteristics');
+            var partIdInput = row.querySelector('.entry-material-id');
             var output = row.querySelector('.entry-material-clave');
             var clave = claveFor(nameInput ? nameInput.value : '', characteristicsInput ? characteristicsInput.value : '');
+            if (partIdInput && partIdInput.value && row.dataset.selectedClave) {
+                output.textContent = 'Material existente: ' + row.dataset.selectedClave;
+                return;
+            }
             output.textContent = clave || 'Escribe el nombre del material';
         }
 
+        function searchable(value) {
+            return (value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim()
+                .toLowerCase();
+        }
+
+        function clearSelectedMaterial(row) {
+            var partIdInput = row.querySelector('.entry-material-id');
+            if (partIdInput) partIdInput.value = '';
+            delete row.dataset.selectedClave;
+        }
+
+        function hideSuggestions(row) {
+            var suggestions = row.querySelector('.entry-material-suggestions');
+            var nameInput = row.querySelector('.entry-material-name');
+            if (suggestions) suggestions.hidden = true;
+            if (nameInput) nameInput.setAttribute('aria-expanded', 'false');
+        }
+
+        function selectExistingMaterial(row, material) {
+            var partIdInput = row.querySelector('.entry-material-id');
+            var nameInput = row.querySelector('.entry-material-name');
+            var characteristicsInput = row.querySelector('.entry-material-characteristics');
+            partIdInput.value = material.id;
+            nameInput.value = material.name;
+            characteristicsInput.value = (material.characteristics || []).join('\n');
+            row.dataset.selectedClave = material.clave || '';
+            var locationInput = row.querySelector('.entry-material-location');
+            if (locationInput && material.warehouse_location_id) {
+                var previousLocation = locationInput.querySelector('option[value="' + material.warehouse_location_id + '"]');
+                if (previousLocation) locationInput.value = String(material.warehouse_location_id);
+            }
+            hideSuggestions(row);
+            refreshMaterialClave(row);
+        }
+
+        function populateLocationSelect(row) {
+            var locationInput = row.querySelector('.entry-material-location');
+            if (!locationInput) return;
+
+            var placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Selecciona una ubicación';
+            locationInput.appendChild(placeholder);
+
+            warehouseLocationCatalog.forEach(function(location){
+                var option = document.createElement('option');
+                option.value = location.id;
+                option.textContent = location.name;
+                locationInput.appendChild(option);
+            });
+        }
+
+        function renderSuggestions(row) {
+            var nameInput = row.querySelector('.entry-material-name');
+            var suggestions = row.querySelector('.entry-material-suggestions');
+            var query = searchable(nameInput.value);
+            suggestions.replaceChildren();
+
+            if (!query) {
+                hideSuggestions(row);
+                return;
+            }
+
+            var matches = materialCatalog.filter(function(material){
+                var text = [material.name, material.clave]
+                    .concat(material.characteristics || [])
+                    .join(' ');
+                return searchable(text).includes(query);
+            }).slice(0, 8);
+
+            if (matches.length === 0) {
+                var empty = document.createElement('div');
+                empty.className = 'entry-material-no-results';
+                empty.textContent = 'No hay coincidencias. Se creará un material nuevo.';
+                suggestions.appendChild(empty);
+            } else {
+                matches.forEach(function(material){
+                    var button = document.createElement('button');
+                    var title = document.createElement('strong');
+                    var detail = document.createElement('small');
+                    button.type = 'button';
+                    button.className = 'entry-material-suggestion';
+                    button.setAttribute('role', 'option');
+                    title.textContent = material.name;
+                    detail.textContent = (material.clave || 'Sin clave') + ' · ' +
+                        ((material.characteristics || []).join(', ') || 'Sin características');
+                    button.appendChild(title);
+                    button.appendChild(detail);
+                    button.addEventListener('click', function(){ selectExistingMaterial(row, material); });
+                    suggestions.appendChild(button);
+                });
+            }
+
+            suggestions.hidden = false;
+            nameInput.setAttribute('aria-expanded', 'true');
+        }
+
         function wireMaterialRow(row) {
-            row.querySelectorAll('.entry-material-name, .entry-material-characteristics').forEach(function(input){
-                input.addEventListener('input', function(){ refreshMaterialClave(row); });
+            var nameInput = row.querySelector('.entry-material-name');
+            var characteristicsInput = row.querySelector('.entry-material-characteristics');
+            nameInput.addEventListener('input', function(){
+                clearSelectedMaterial(row);
+                refreshMaterialClave(row);
+                renderSuggestions(row);
+            });
+            nameInput.addEventListener('focus', function(){ renderSuggestions(row); });
+            nameInput.addEventListener('keydown', function(event){
+                if (event.key === 'ArrowDown') {
+                    var firstSuggestion = row.querySelector('.entry-material-suggestion');
+                    if (firstSuggestion) {
+                        event.preventDefault();
+                        firstSuggestion.focus();
+                    }
+                }
+                if (event.key === 'Escape') hideSuggestions(row);
+            });
+            characteristicsInput.addEventListener('input', function(){
+                clearSelectedMaterial(row);
+                refreshMaterialClave(row);
             });
             var removeButton = row.querySelector('.remove-entry-material-btn');
             if (removeButton) {
@@ -752,9 +961,10 @@
         var list = document.getElementById('entryMaterialsList');
         var addButton = document.getElementById('addEntryMaterialBtn');
         if (!list || !addButton) return;
+        var nextMaterialIndex = list.querySelectorAll('.warehouse-entry-material').length;
 
         addButton.addEventListener('click', function(){
-            var index = list.querySelectorAll('.warehouse-entry-material').length;
+            var index = nextMaterialIndex++;
             var row = document.createElement('div');
             row.className = 'warehouse-entry-material';
             row.dataset.materialIndex = index;
@@ -764,11 +974,19 @@
             row.innerHTML = '' +
                 '<div>' +
                     '<label>Nombre del material</label>' +
-                    '<input class="entry-material-name" name="materials[' + index + '][name]" required autocomplete="off">' +
+                    '<div class="entry-material-search">' +
+                        '<input class="entry-material-id" type="hidden" name="materials[' + index + '][part_id]">' +
+                        '<input class="entry-material-name" name="materials[' + index + '][name]" required autocomplete="off" placeholder="Escribe para buscar materiales registrados" role="combobox" aria-autocomplete="list" aria-expanded="false">' +
+                        '<div class="entry-material-suggestions" role="listbox" hidden></div>' +
+                    '</div>' +
                 '</div>' +
                 '<div style="margin-top:10px;">' +
                     '<label>Cantidad</label>' +
                     '<input class="entry-material-quantity" type="text" inputmode="decimal" name="materials[' + index + '][quantity]" value="1" required autocomplete="off">' +
+                '</div>' +
+                '<div style="margin-top:10px;">' +
+                    '<label>Ubicación</label>' +
+                    '<select class="entry-material-location" name="materials[' + index + '][warehouse_location_id]" required></select>' +
                 '</div>' +
                 '<div style="margin-top:10px;">' +
                     '<label>Caracteristicas</label>' +
@@ -777,11 +995,17 @@
                 '<div class="warehouse-generated-id entry-material-clave" style="margin-top:10px;">Escribe el nombre del material</div>' +
                 '<button class="btn btn-secondary remove-entry-material-btn" type="button" style="margin-top:10px;">Quitar material</button>';
             list.appendChild(row);
+            populateLocationSelect(row);
             wireMaterialRow(row);
             row.querySelector('.entry-material-name').focus();
         });
 
         list.querySelectorAll('.warehouse-entry-material').forEach(wireMaterialRow);
+        document.addEventListener('click', function(event){
+            list.querySelectorAll('.warehouse-entry-material').forEach(function(row){
+                if (!row.contains(event.target)) hideSuggestions(row);
+            });
+        });
     })();
     (function(){
         var exitModalElement = document.getElementById('materialExitModal');

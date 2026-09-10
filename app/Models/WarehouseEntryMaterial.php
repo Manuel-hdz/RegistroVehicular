@@ -10,7 +10,7 @@ class WarehouseEntryMaterial extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['warehouse_entry_id', 'part_id', 'quantity'];
+    protected $fillable = ['warehouse_entry_id', 'part_id', 'warehouse_location_id', 'quantity'];
 
     protected $casts = [
         'quantity' => 'decimal:2',
@@ -24,5 +24,10 @@ class WarehouseEntryMaterial extends Model
     public function part(): BelongsTo
     {
         return $this->belongsTo(Part::class);
+    }
+
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(WarehouseLocation::class, 'warehouse_location_id');
     }
 }

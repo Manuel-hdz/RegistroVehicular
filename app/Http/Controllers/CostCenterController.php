@@ -32,7 +32,14 @@ class CostCenterController extends Controller
 
         $data['active'] = $request->has('active');
 
-        CostCenter::create($data);
+        $costCenter = CostCenter::create($data);
+        $costCenter->warehouseLocations()->create([
+            'name' => 'General',
+            'description' => 'Ubicación predeterminada',
+            'active' => true,
+            'created_by' => $request->user()?->id,
+            'updated_by' => $request->user()?->id,
+        ]);
 
         return redirect()->route('cost-centers.index')->with('status', 'Centro de costos creado.');
     }

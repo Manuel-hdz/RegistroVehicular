@@ -37,4 +37,3 @@ class Repair extends Model
         return $this->partsCost() + $this->laborCost();
     }
 }
-
