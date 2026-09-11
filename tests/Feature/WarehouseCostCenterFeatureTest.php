@@ -7,6 +7,7 @@ use App\Models\Part;
 use App\Models\User;
 use App\Models\WarehouseEntry;
 use App\Models\WarehouseLocation;
+use App\Models\WarehouseMaterialExit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -88,6 +89,8 @@ class WarehouseCostCenterFeatureTest extends TestCase
             'cost_center_id' => $matriz->id,
             'part_id' => $part->id,
             'quantity' => 3,
+            'registered_by_user_id' => $user->id,
+            'registered_by_username' => $user->username,
         ]);
     }
 
@@ -140,6 +143,8 @@ class WarehouseCostCenterFeatureTest extends TestCase
         ])->assertRedirect(route('warehouse.movements', ['cost_center_id' => $charcas->id]));
 
         $newEntry = WarehouseEntry::latest('id')->firstOrFail();
+        $this->assertSame($user->id, $newEntry->registered_by_user_id);
+        $this->assertSame($user->username, $newEntry->registered_by_username);
         $this->assertDatabaseCount('parts', 1);
         $this->assertCount(1, $newEntry->materials);
         $this->assertSame($part->id, $newEntry->materials->first()->part_id);
@@ -204,6 +209,52 @@ class WarehouseCostCenterFeatureTest extends TestCase
             ->assertSee('Material sugerido Charcas')
             ->assertSee('acero')
             ->assertDontSee('Material privado Matriz');
+    }
+
+    public function test_latest_movement_lists_only_show_clickable_ids_linked_to_complete_tables(): void
+    {
+        $user = $this->warehouseUser();
+        $charcas = CostCenter::where('code', 'ZARPEO-CHARCAS')->firstOrFail();
+        $user->costCenters()->sync([$charcas->id]);
+        $part = Part::create([
+            'clave' => 'DETALLE-ID',
+            'name' => 'Manguera industrial',
+            'characteristics' => ['resistente al calor', '20 metros'],
+            'unit_cost' => 0,
+            'active' => true,
+        ]);
+        $entry = $this->entry($charcas, $part, 8);
+        $exit = WarehouseMaterialExit::create([
+            'cost_center_id' => $charcas->id,
+            'registered_by_user_id' => $user->id,
+            'registered_by_username' => $user->username,
+            'part_id' => $part->id,
+            'quantity' => 2,
+            'exit_date' => now(),
+            'source' => 'Almacén',
+            'destination' => 'Obra',
+            'responsible' => 'Responsable',
+            'voucher_number' => 'VALE-DETALLE-ID',
+            'status' => 'entregado',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('warehouse.movements', [
+            'cost_center_id' => $charcas->id,
+        ]));
+
+        $response->assertOk()
+            ->assertSee('data-record-row="entry-record-'.$entry->id.'"', false)
+            ->assertSee('data-record-row="exit-record-'.$exit->id.'"', false)
+            ->assertSee('id="entry-record-'.$entry->id.'"', false)
+            ->assertSee('id="exit-record-'.$exit->id.'"', false)
+            ->assertSee('resistente al calor')
+            ->assertSee('20 metros');
+
+        $html = $response->getContent();
+        $this->assertSame(1, preg_match('/<h3>Ultimas 10 entradas<\/h3>\s*<ul[^>]*>(.*?)<\/ul>/s', $html, $entryList));
+        $this->assertSame(1, preg_match('/<h3>Ultimas 10 salidas<\/h3>\s*<ul[^>]*>(.*?)<\/ul>/s', $html, $exitList));
+        $this->assertSame($entry->entry_key, preg_replace('/\s+/', ' ', trim(strip_tags($entryList[1]))));
+        $this->assertSame($exit->voucher_number, preg_replace('/\s+/', ' ', trim(strip_tags($exitList[1]))));
     }
 
     private function warehouseUser(): User

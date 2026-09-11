@@ -49,6 +49,10 @@
             <small style="color:#6d8178; font-weight:800;">Responsable</small>
             <div style="font-size:1.15rem; font-weight:800;">{{ $exit->responsible }}</div>
         </div>
+        <div>
+            <small style="color:#6d8178; font-weight:800;">Registró el movimiento</small>
+            <div style="font-size:1.15rem; font-weight:800;">{{ $exit->registeredBy?->name ?? $exit->registered_by_username ?? 'Registro previo' }}</div>
+        </div>
     </div>
 
     <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:28px; margin-top:58px;">

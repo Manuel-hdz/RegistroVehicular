@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\WarehouseEntry;
 use App\Models\WarehouseLocation;
 use App\Models\WarehouseMaterialExit;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -98,7 +99,7 @@ class WarehouseReportFeatureTest extends TestCase
             $worksheet = $archive['xl/worksheets/sheet1.xml']->getContent();
             $styles = $archive['xl/styles.xml']->getContent();
 
-            $this->assertStringContainsString('<autoFilter ref="A5:O7"/>', $worksheet);
+            $this->assertStringContainsString('<autoFilter ref="A5:P7"/>', $worksheet);
             $this->assertStringContainsString('state="frozen"', $worksheet);
             $this->assertStringContainsString('Filtro para Excel', $worksheet);
             $this->assertStringContainsString('numFmtId="164" formatCode="dd/mm/yyyy hh:mm"', $styles);
@@ -106,6 +107,41 @@ class WarehouseReportFeatureTest extends TestCase
         } finally {
             unset($archive);
             @unlink($temporaryFile);
+        }
+    }
+
+    public function test_report_shows_top_weekly_and_monthly_material_consumption(): void
+    {
+        Carbon::setTestNow('2026-09-10 12:00:00');
+
+        try {
+            [$user, $charcas, $matriz] = $this->context();
+            $weeklyPart = $this->part('CONSUMO-SEMANA', 'Material semanal');
+            $monthlyPart = $this->part('CONSUMO-MES', 'Material mensual');
+            $otherCenterPart = $this->part('CONSUMO-OTRO', 'Material de otro centro');
+            $this->exit($charcas, $weeklyPart, '2026-09-08 10:00:00', 3);
+            $this->exit($charcas, $weeklyPart, '2026-09-09 10:00:00', 4);
+            $this->exit($charcas, $monthlyPart, '2026-09-02 10:00:00', 5);
+            $this->exit($matriz, $otherCenterPart, '2026-09-09 10:00:00', 100);
+
+            $response = $this->actingAs($user)->get(route('warehouse.reports.index', [
+                'cost_center_id' => $charcas->id,
+            ]));
+
+            $response->assertOk()
+                ->assertSee('Materiales más consumidos esta semana')
+                ->assertSee('Materiales más consumidos este mes');
+
+            $weekly = collect($response->viewData('weeklyConsumption'))->keyBy('key');
+            $monthly = collect($response->viewData('monthlyConsumption'))->keyBy('key');
+
+            $this->assertSame(7.0, $weekly['CONSUMO-SEMANA']['quantity']);
+            $this->assertSame(2, $weekly['CONSUMO-SEMANA']['requests']);
+            $this->assertFalse($weekly->has('CONSUMO-MES'));
+            $this->assertFalse($monthly->has('CONSUMO-OTRO'));
+            $this->assertSame(5.0, $monthly['CONSUMO-MES']['quantity']);
+        } finally {
+            Carbon::setTestNow();
         }
     }
 

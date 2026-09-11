@@ -11,7 +11,15 @@ class WarehouseEntry extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['cost_center_id', 'entry_key', 'entry_type', 'entry_date', 'invoice_path'];
+    protected $fillable = [
+        'cost_center_id',
+        'registered_by_user_id',
+        'registered_by_username',
+        'entry_key',
+        'entry_type',
+        'entry_date',
+        'invoice_path',
+    ];
 
     protected $casts = [
         'entry_date' => 'datetime',
@@ -25,5 +33,10 @@ class WarehouseEntry extends Model
     public function costCenter(): BelongsTo
     {
         return $this->belongsTo(CostCenter::class);
+    }
+
+    public function registeredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'registered_by_user_id');
     }
 }

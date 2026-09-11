@@ -37,22 +37,27 @@ class WarehouseMovementController extends Controller
         $weeklyDepartures = WarehouseMaterialExit::where('cost_center_id', $costCenterId)
             ->whereBetween('exit_date', [$weekStart, $weekEnd])
             ->count();
-        $latestEntries = WarehouseEntry::with(['materials.part', 'materials.location'])
+        $latestEntries = WarehouseEntry::query()
             ->where('cost_center_id', $costCenterId)
             ->orderByDesc('entry_date')
             ->orderByDesc('created_at')
             ->limit(10)
             ->get();
-        $registeredEntries = WarehouseEntry::with(['materials.part', 'materials.location'])
+        $registeredEntries = WarehouseEntry::with(['materials.part', 'materials.location', 'registeredBy'])
             ->where('cost_center_id', $costCenterId)
             ->orderByDesc('entry_date')
             ->orderByDesc('created_at')
             ->get();
-        $latestDepartures = WarehouseMaterialExit::with('part')
+        $latestDepartures = WarehouseMaterialExit::query()
             ->where('cost_center_id', $costCenterId)
             ->orderByDesc('exit_date')
             ->orderByDesc('created_at')
             ->limit(10)
+            ->get();
+        $registeredDepartures = WarehouseMaterialExit::with(['part', 'registeredBy'])
+            ->where('cost_center_id', $costCenterId)
+            ->orderByDesc('exit_date')
+            ->orderByDesc('created_at')
             ->get();
         $materialOptions = Part::query()
             ->whereHas('entryMaterials.entry', fn ($query) => $query->where('cost_center_id', $costCenterId))
@@ -118,6 +123,7 @@ class WarehouseMovementController extends Controller
             'latestEntries' => $latestEntries,
             'registeredEntries' => $registeredEntries,
             'latestDepartures' => $latestDepartures,
+            'registeredDepartures' => $registeredDepartures,
             'materialOptions' => $materialOptions,
             'entryMaterialSuggestions' => $entryMaterialSuggestions,
             'warehouseLocations' => $warehouseLocations,
@@ -209,9 +215,12 @@ class WarehouseMovementController extends Controller
             ? $request->file('invoice_file')->store('facturas-compras', 'public')
             : null;
 
-        $entry = DB::transaction(function () use ($data, $invoicePath, $costCenter): WarehouseEntry {
+        $registeredBy = $request->user();
+        $entry = DB::transaction(function () use ($data, $invoicePath, $costCenter, $registeredBy): WarehouseEntry {
             $entry = WarehouseEntry::create([
                 'cost_center_id' => $costCenter->id,
+                'registered_by_user_id' => $registeredBy?->id,
+                'registered_by_username' => $registeredBy?->username,
                 'entry_type' => $data['entry_type'] ?? null,
                 'entry_date' => $data['entry_date'],
                 'invoice_path' => $invoicePath,
@@ -292,6 +301,8 @@ class WarehouseMovementController extends Controller
         $exit = WarehouseMaterialExit::create([
             ...$data,
             'cost_center_id' => $costCenter->id,
+            'registered_by_user_id' => $request->user()?->id,
+            'registered_by_username' => $request->user()?->username,
             'source' => $data['dispatched_by'] ?? '',
             'destination' => $data['destination'] ?? '',
             'responsible' => $data['responsible'] ?? '',
@@ -333,7 +344,7 @@ class WarehouseMovementController extends Controller
     public function voucher(Request $request, WarehouseMaterialExit $warehouseMaterialExit): View
     {
         $this->authorizedCostCenter($request, (int) $warehouseMaterialExit->cost_center_id);
-        $warehouseMaterialExit->load(['part', 'costCenter']);
+        $warehouseMaterialExit->load(['part', 'costCenter', 'registeredBy']);
 
         return view('warehouse.exit-voucher', ['exit' => $warehouseMaterialExit]);
     }

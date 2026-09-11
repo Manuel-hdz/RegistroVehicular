@@ -29,6 +29,16 @@ class WarehouseReportController extends Controller
         $entryUnits = (float) (clone $entryQuery)->sum('warehouse_entry_materials.quantity');
         $exitCount = (clone $exitQuery)->count();
         $exitUnits = (float) (clone $exitQuery)->sum('quantity');
+        $today = now();
+        $weekStart = $today->copy()->startOfWeek();
+        $monthStart = $today->copy()->startOfMonth();
+        $periodEnd = $today->copy()->endOfDay();
+        $weeklyConsumption = $this->topConsumption($selectedCostCenter, $weekStart, $periodEnd);
+        $monthlyConsumption = $this->topConsumption($selectedCostCenter, $monthStart, $periodEnd);
+        $consumptionPeriods = [
+            'week' => $weekStart->format('d/m/Y').' al '.$today->format('d/m/Y'),
+            'month' => $monthStart->format('d/m/Y').' al '.$today->format('d/m/Y'),
+        ];
 
         $entries = in_array($filters['movement_type'], ['all', 'entries'], true)
             ? (clone $entryQuery)
@@ -54,7 +64,10 @@ class WarehouseReportController extends Controller
             'entryCount',
             'entryUnits',
             'exitCount',
-            'exitUnits'
+            'exitUnits',
+            'weeklyConsumption',
+            'monthlyConsumption',
+            'consumptionPeriods'
         ));
     }
 
@@ -97,6 +110,7 @@ class WarehouseReportController extends Controller
                 'Llevó',
                 'Destino',
                 'Responsable',
+                'Registró',
                 'Estatus',
             ], ',', '"', '');
 
@@ -116,6 +130,9 @@ class WarehouseReportController extends Controller
                     '',
                     '',
                     '',
+                    $entryMaterial->entry?->registeredBy?->name
+                        ?? $entryMaterial->entry?->registered_by_username
+                        ?? '',
                     '',
                 ]), ',', '"', '');
             }
@@ -136,6 +153,7 @@ class WarehouseReportController extends Controller
                     $exit->carried_by,
                     $exit->destination,
                     $exit->responsible,
+                    $exit->registeredBy?->name ?? $exit->registered_by_username ?? '',
                     $exit->status === 'entregado' ? 'Entregado' : 'En curso',
                 ]), ',', '"', '');
             }
@@ -191,7 +209,7 @@ class WarehouseReportController extends Controller
                 Carbon::parse($dateFrom)->startOfDay(),
                 Carbon::parse($dateTo)->endOfDay(),
             ])
-            ->with(['entry', 'part', 'location']);
+            ->with(['entry.registeredBy', 'part', 'location']);
     }
 
     private function exitQuery(CostCenter $costCenter, string $dateFrom, string $dateTo): Builder
@@ -202,7 +220,35 @@ class WarehouseReportController extends Controller
                 Carbon::parse($dateFrom)->startOfDay(),
                 Carbon::parse($dateTo)->endOfDay(),
             ])
-            ->with('part');
+            ->with(['part', 'registeredBy']);
+    }
+
+    /**
+     * @return Collection<int, array{label:string, key:string, quantity:float, requests:int}>
+     */
+    private function topConsumption(CostCenter $costCenter, Carbon $from, Carbon $to): Collection
+    {
+        return WarehouseMaterialExit::query()
+            ->join('parts', 'parts.id', '=', 'warehouse_material_exits.part_id')
+            ->where('warehouse_material_exits.cost_center_id', $costCenter->id)
+            ->whereBetween('warehouse_material_exits.exit_date', [$from, $to])
+            ->select([
+                'parts.id',
+                'parts.name',
+                'parts.clave',
+            ])
+            ->selectRaw('SUM(warehouse_material_exits.quantity) as total_quantity')
+            ->selectRaw('COUNT(warehouse_material_exits.id) as request_count')
+            ->groupBy('parts.id', 'parts.name', 'parts.clave')
+            ->orderByDesc('total_quantity')
+            ->limit(10)
+            ->get()
+            ->map(fn ($row) => [
+                'label' => (string) $row->name,
+                'key' => (string) $row->clave,
+                'quantity' => (float) $row->total_quantity,
+                'requests' => (int) $row->request_count,
+            ]);
     }
 
     /**
@@ -234,6 +280,9 @@ class WarehouseReportController extends Controller
                     'carried_by' => '',
                     'destination' => '',
                     'responsible' => '',
+                    'registered_by' => $entryMaterial->entry?->registeredBy?->name
+                        ?? $entryMaterial->entry?->registered_by_username
+                        ?? '',
                     'status' => '',
                 ]);
             }
@@ -260,6 +309,7 @@ class WarehouseReportController extends Controller
                     'carried_by' => $exit->carried_by ?? '',
                     'destination' => $exit->destination ?? '',
                     'responsible' => $exit->responsible ?? '',
+                    'registered_by' => $exit->registeredBy?->name ?? $exit->registered_by_username ?? '',
                     'status' => $exit->status === 'entregado' ? 'Entregado' : 'En curso',
                 ]);
             }

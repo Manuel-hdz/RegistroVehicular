@@ -12,6 +12,8 @@ class WarehouseMaterialExit extends Model
 
     protected $fillable = [
         'cost_center_id',
+        'registered_by_user_id',
+        'registered_by_username',
         'part_id',
         'quantity',
         'exit_date',
@@ -40,5 +42,10 @@ class WarehouseMaterialExit extends Model
     public function costCenter(): BelongsTo
     {
         return $this->belongsTo(CostCenter::class);
+    }
+
+    public function registeredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'registered_by_user_id');
     }
 }

@@ -114,10 +114,10 @@ XML;
         $lastRow = max(5, $rows->count() + 5);
         $xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             .'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-            .'<dimension ref="A1:O'.$lastRow.'"/>'
+            .'<dimension ref="A1:P'.$lastRow.'"/>'
             .'<sheetViews><sheetView tabSelected="1" workbookViewId="0"><pane ySplit="5" topLeftCell="A6" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A6" sqref="A6"/></sheetView></sheetViews>'
             .'<sheetFormatPr defaultRowHeight="18"/>'
-            .'<cols><col min="1" max="1" width="13" customWidth="1"/><col min="2" max="2" width="24" customWidth="1"/><col min="3" max="3" width="19" customWidth="1"/><col min="4" max="5" width="18" customWidth="1"/><col min="6" max="6" width="16" customWidth="1"/><col min="7" max="7" width="30" customWidth="1"/><col min="8" max="8" width="36" customWidth="1"/><col min="9" max="9" width="22" customWidth="1"/><col min="10" max="10" width="13" customWidth="1"/><col min="11" max="15" width="20" customWidth="1"/></cols>'
+            .'<cols><col min="1" max="1" width="13" customWidth="1"/><col min="2" max="2" width="24" customWidth="1"/><col min="3" max="3" width="19" customWidth="1"/><col min="4" max="5" width="18" customWidth="1"/><col min="6" max="6" width="16" customWidth="1"/><col min="7" max="7" width="30" customWidth="1"/><col min="8" max="8" width="36" customWidth="1"/><col min="9" max="9" width="22" customWidth="1"/><col min="10" max="10" width="13" customWidth="1"/><col min="11" max="16" width="20" customWidth="1"/></cols>'
             .'<sheetData>'
             .'<row r="1" ht="27" customHeight="1">'.$this->inlineCell('A1', 'Reporte de entradas y salidas de almacén', 1).'</row>'
             .'<row r="2" ht="22" customHeight="1">'.$this->inlineCell('A2', $subtitle, 2).'</row>'
@@ -149,11 +149,12 @@ XML;
                 .$this->inlineCell('L'.$rowNumber, $row['carried_by'])
                 .$this->inlineCell('M'.$rowNumber, $row['destination'])
                 .$this->inlineCell('N'.$rowNumber, $row['responsible'])
-                .$this->inlineCell('O'.$rowNumber, $row['status'])
+                .$this->inlineCell('O'.$rowNumber, $row['registered_by'])
+                .$this->inlineCell('P'.$rowNumber, $row['status'])
                 .'</row>';
         }
 
-        return $xml.'</sheetData><autoFilter ref="A5:O'.$lastRow.'"/><mergeCells count="3"><mergeCell ref="A1:O1"/><mergeCell ref="A2:O2"/><mergeCell ref="A3:O3"/></mergeCells><printOptions horizontalCentered="1"/><pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.2" footer="0.2"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0" paperSize="9"/></worksheet>';
+        return $xml.'</sheetData><autoFilter ref="A5:P'.$lastRow.'"/><mergeCells count="3"><mergeCell ref="A1:P1"/><mergeCell ref="A2:P2"/><mergeCell ref="A3:P3"/></mergeCells><printOptions horizontalCentered="1"/><pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.2" footer="0.2"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0" paperSize="9"/></worksheet>';
     }
 
     /** @return array<int, string> */
@@ -162,7 +163,7 @@ XML;
         return [
             'Movimiento', 'Centro de costos', 'Fecha', 'Folio', 'Tipo', 'Clave', 'Material',
             'Características', 'Ubicación', 'Cantidad', 'Despachó', 'Llevó', 'Destino',
-            'Responsable', 'Estatus',
+            'Responsable', 'Registró', 'Estatus',
         ];
     }
 

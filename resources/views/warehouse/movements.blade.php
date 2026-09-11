@@ -85,6 +85,27 @@
         font-weight: 800;
         line-height: 1.25;
     }
+    .warehouse-history-id {
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-width:64px;
+        padding:7px 12px;
+        border-radius:10px;
+        background:#eef7f2;
+        color:#006847;
+        font-weight:900;
+        border:1px solid rgba(0, 104, 71, .18);
+    }
+    .warehouse-history-id:hover,
+    .warehouse-history-id:focus {
+        background:#dff1e7;
+        color:#004a33;
+    }
+    .warehouse-record-row-highlight > * {
+        background:#fff3bf !important;
+        transition:background-color .3s ease;
+    }
     .warehouse-history-meta {
         color: #6d8178;
         font-size: .82rem;
@@ -297,17 +318,7 @@
                 <ul class="warehouse-history-list">
                     @forelse($latestEntries as $entry)
                         <li>
-                            <div>
-                                <div class="warehouse-history-title">{{ $entry->entry_key ?? 'Entrada sin folio' }}</div>
-                                <div class="warehouse-history-meta">{{ $entry->entry_type ?? 'Sin tipo' }}</div>
-                                @foreach($entry->materials as $entryMaterial)
-                                    <div class="warehouse-history-meta">{{ $entryMaterial->part?->name ?? 'Material sin nombre' }} &middot; {{ number_format((float) $entryMaterial->quantity, 2) }} &middot; {{ $entryMaterial->part?->clave ?? 'Sin clave' }} &middot; {{ $entryMaterial->location?->name ?? 'Sin ubicación' }}</div>
-                                @endforeach
-                                @if($entry->invoice_path)
-                                    <a class="warehouse-history-meta" href="{{ asset('storage/' . $entry->invoice_path) }}" target="_blank" rel="noopener">Ver factura</a>
-                                @endif
-                            </div>
-                            <div class="warehouse-history-date">{{ ($entry->entry_date ?? $entry->created_at)?->format('Y-m-d H:i') }}</div>
+                            <a class="warehouse-history-id" href="#entriesRecordModal" data-bs-toggle="modal" data-bs-target="#entriesRecordModal" data-record-row="entry-record-{{ $entry->id }}" aria-label="Ver entrada {{ $entry->entry_key ?? $entry->id }} en la tabla completa">{{ $entry->entry_key ?? '#'.$entry->id }}</a>
                         </li>
                     @empty
                         <li>
@@ -322,15 +333,7 @@
                 <ul class="warehouse-history-list">
                     @forelse($latestDepartures as $departure)
                         <li>
-                            <div>
-                                <div class="warehouse-history-title">{{ $departure->part?->name ?? 'Material sin nombre' }}</div>
-                                <div class="warehouse-history-meta">Cantidad {{ number_format((float) $departure->quantity, 2) }} &middot; Clave {{ $departure->part?->clave ?? 'Sin clave' }} &middot; {{ $departure->voucher_number ?? 'Sin vale' }}</div>
-                                <a class="warehouse-history-meta" href="{{ route('warehouse.material-exits.voucher', ['warehouseMaterialExit' => $departure, 'cost_center_id' => $selectedCostCenter->id]) }}" target="_blank" rel="noopener">Ver vale</a>
-                                @if($departure->invoice_path)
-                                    <a class="warehouse-history-meta" href="{{ asset('storage/' . $departure->invoice_path) }}" target="_blank" rel="noopener">Ver factura</a>
-                                @endif
-                            </div>
-                            <div class="warehouse-history-date">{{ $departure->exit_date?->format('Y-m-d H:i') }}</div>
+                            <a class="warehouse-history-id" href="#exitsRecordModal" data-bs-toggle="modal" data-bs-target="#exitsRecordModal" data-record-row="exit-record-{{ $departure->id }}" aria-label="Ver salida {{ $departure->voucher_number ?? $departure->id }} en la tabla completa">{{ $departure->voucher_number ?? '#'.$departure->id }}</a>
                         </li>
                     @empty
                         <li>
@@ -401,7 +404,7 @@
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="entriesRecordModalLabel">Registro de entradas</h3>
+                <h3 class="modal-title" id="entriesRecordModalLabel">Tabla completa de entradas</h3>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
@@ -409,24 +412,46 @@
                     <table class="table table-sm align-middle">
                         <thead>
                             <tr>
+                                <th>ID</th>
                                 <th>Folio</th>
                                 <th>Material</th>
+                                <th>Características</th>
+                                <th>Ubicación</th>
+                                <th>Cantidad</th>
                                 <th>Tipo</th>
                                 <th>Fecha</th>
+                                <th>Registró</th>
                                 <th>Factura</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($registeredEntries as $entry)
-                                <tr>
+                                <tr id="entry-record-{{ $entry->id }}">
+                                    <td><strong>#{{ $entry->id }}</strong></td>
                                     <td>{{ $entry->entry_key ?? 'Sin folio' }}</td>
                                     <td>
                                         @foreach($entry->materials as $entryMaterial)
-                                            <div>{{ $entryMaterial->part?->name ?? 'Material sin nombre' }} &middot; {{ number_format((float) $entryMaterial->quantity, 2) }} &middot; {{ $entryMaterial->part?->clave ?? 'Sin clave' }} &middot; {{ $entryMaterial->location?->name ?? 'Sin ubicación' }}</div>
+                                            <div>{{ $entryMaterial->part?->name ?? 'Material sin nombre' }} &middot; {{ $entryMaterial->part?->clave ?? 'Sin clave' }}</div>
+                                        @endforeach
+                                    </td>
+                                    <td>
+                                        @foreach($entry->materials as $entryMaterial)
+                                            <div>{{ implode(', ', $entryMaterial->part?->characteristics ?? []) ?: 'Sin características' }}</div>
+                                        @endforeach
+                                    </td>
+                                    <td>
+                                        @foreach($entry->materials as $entryMaterial)
+                                            <div>{{ $entryMaterial->location?->name ?? 'Sin ubicación' }}</div>
+                                        @endforeach
+                                    </td>
+                                    <td>
+                                        @foreach($entry->materials as $entryMaterial)
+                                            <div>{{ number_format((float) $entryMaterial->quantity, 2) }}</div>
                                         @endforeach
                                     </td>
                                     <td>{{ $entry->entry_type ?? 'Sin tipo' }}</td>
                                     <td>{{ $entry->entry_date?->format('Y-m-d H:i') }}</td>
+                                    <td>{{ $entry->registeredBy?->name ?? $entry->registered_by_username ?? 'Registro previo' }}</td>
                                     <td>
                                         @if($entry->invoice_path)
                                             <a href="{{ asset('storage/' . $entry->invoice_path) }}" target="_blank" rel="noopener">Ver factura</a>
@@ -437,7 +462,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted">Sin entradas registradas</td>
+                                    <td colspan="10" class="text-center text-muted">Sin entradas registradas</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -446,6 +471,71 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-target="#entryTypeModal" data-bs-toggle="modal">Regresar</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="exitsRecordModal" tabindex="-1" aria-labelledby="exitsRecordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="exitsRecordModalLabel">Tabla completa de salidas</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Vale</th>
+                                <th>Material</th>
+                                <th>Características</th>
+                                <th>Cantidad</th>
+                                <th>Fecha</th>
+                                <th>Despachó</th>
+                                <th>Llevó</th>
+                                <th>Destino</th>
+                                <th>Responsable</th>
+                                <th>Registró</th>
+                                <th>Estatus</th>
+                                <th>Documento</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($registeredDepartures as $departure)
+                                <tr id="exit-record-{{ $departure->id }}">
+                                    <td><strong>#{{ $departure->id }}</strong></td>
+                                    <td>{{ $departure->voucher_number ?? 'Sin vale' }}</td>
+                                    <td>{{ $departure->part?->name ?? 'Material sin nombre' }}<br><small>{{ $departure->part?->clave ?? 'Sin clave' }}</small></td>
+                                    <td>{{ implode(', ', $departure->part?->characteristics ?? []) ?: 'Sin características' }}</td>
+                                    <td>{{ number_format((float) $departure->quantity, 2) }}</td>
+                                    <td>{{ $departure->exit_date?->format('Y-m-d H:i') }}</td>
+                                    <td>{{ $departure->dispatched_by ?: $departure->source ?: 'Sin registrar' }}</td>
+                                    <td>{{ $departure->carried_by ?: 'Sin registrar' }}</td>
+                                    <td>{{ $departure->destination ?: 'Sin registrar' }}</td>
+                                    <td>{{ $departure->responsible ?: 'Sin registrar' }}</td>
+                                    <td>{{ $departure->registeredBy?->name ?? $departure->registered_by_username ?? 'Registro previo' }}</td>
+                                    <td>{{ $departure->status === 'entregado' ? 'Entregado' : 'En curso' }}</td>
+                                    <td>
+                                        <a href="{{ route('warehouse.material-exits.voucher', ['warehouseMaterialExit' => $departure, 'cost_center_id' => $selectedCostCenter->id]) }}" target="_blank" rel="noopener">Ver vale</a>
+                                        @if($departure->invoice_path)
+                                            <br><a href="{{ asset('storage/' . $departure->invoice_path) }}" target="_blank" rel="noopener">Ver factura</a>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="13" class="text-center text-muted">Sin salidas registradas</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
@@ -1132,6 +1222,35 @@
         });
 
         setEntryType(entryTypeInput ? entryTypeInput.value : '');
+    })();
+    (function(){
+        document.querySelectorAll('[data-record-row]').forEach(function(link){
+            link.addEventListener('click', function(){
+                var modalSelector = link.getAttribute('data-bs-target');
+                var modalElement = modalSelector ? document.querySelector(modalSelector) : null;
+                if (modalElement) {
+                    modalElement.dataset.focusRow = link.getAttribute('data-record-row') || '';
+                }
+            });
+        });
+
+        ['entriesRecordModal', 'exitsRecordModal'].forEach(function(modalId){
+            var modalElement = document.getElementById(modalId);
+            if (!modalElement) return;
+
+            modalElement.addEventListener('shown.bs.modal', function(){
+                modalElement.querySelectorAll('.warehouse-record-row-highlight').forEach(function(row){
+                    row.classList.remove('warehouse-record-row-highlight');
+                });
+
+                var rowId = modalElement.dataset.focusRow;
+                var row = rowId ? document.getElementById(rowId) : null;
+                if (!row) return;
+
+                row.classList.add('warehouse-record-row-highlight');
+                row.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+            });
+        });
     })();
     @if(session('status') && str_starts_with(session('status'), 'Entrada registrada'))
     (function(){
