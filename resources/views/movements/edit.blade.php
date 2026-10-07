@@ -147,6 +147,13 @@
 
             var originalOptions = Array.from(select.options);
 
+            function positionList(){
+                var rect = input.getBoundingClientRect();
+                list.style.left = rect.left + 'px';
+                list.style.top = rect.bottom + 4 + 'px';
+                list.style.width = rect.width + 'px';
+            }
+
             function applyOption(opt){
                 if(!opt) return;
                 select.value = opt.value;
@@ -156,11 +163,12 @@
             }
 
             function render(filter){
+                positionList();
                 list.innerHTML = '';
-                var term = (filter || '').toLowerCase();
+                var term = (filter || '').toLowerCase().trim();
                 originalOptions.forEach(function(opt, idx){
-                    if(idx===0) return; // saltar "Seleccione…"
-                    var text = opt.textContent;
+                    if(!opt.value) return;
+                    var text = opt.textContent.trim();
                     if(term && !text.toLowerCase().includes(term)) return;
                     var li = document.createElement('li');
                     li.textContent = text;
@@ -185,6 +193,10 @@
                 render(this.value);
             });
 
+            input.addEventListener('click', function(){
+                render(this.value);
+            });
+
             input.addEventListener('keydown', function(e){
                 if(e.key !== 'Enter') return;
                 e.preventDefault();
@@ -198,10 +210,18 @@
             });
 
             document.addEventListener('click', function(e){
-                if(!wrapper.contains(e.target)){
+                if(!wrapper.contains(e.target) && !list.contains(e.target)){
                     list.hidden = true;
                 }
             });
+
+            window.addEventListener('resize', function(){
+                if(!list.hidden) positionList();
+            });
+
+            window.addEventListener('scroll', function(){
+                if(!list.hidden) positionList();
+            }, true);
 
             select.parentNode.insertBefore(wrapper, select);
             wrapper.appendChild(input);
@@ -210,7 +230,7 @@
 
             var selectedOpt = select.selectedOptions[0];
             if(selectedOpt){
-                input.value = selectedOpt.textContent;
+                input.value = selectedOpt.textContent.trim();
             }
         }
 

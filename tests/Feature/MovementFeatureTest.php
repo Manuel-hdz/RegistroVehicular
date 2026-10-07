@@ -13,6 +13,51 @@ class MovementFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_departure_form_lists_active_vehicles_and_drivers(): void
+    {
+        $user = User::create([
+            'name' => 'Usuario Formulario',
+            'username' => 'usuario-formulario',
+            'password' => 'secret',
+            'role' => 'user',
+            'department' => 'almacen',
+            'active' => true,
+        ]);
+
+        $activeVehicle = Vehicle::create([
+            'plate' => 'ACT-100',
+            'identifier' => 'Unidad Activa',
+            'active' => true,
+        ]);
+        Vehicle::create([
+            'plate' => 'INA-100',
+            'identifier' => 'Unidad Inactiva',
+            'active' => false,
+        ]);
+
+        $activeDriver = Driver::create([
+            'name' => 'Conductor Activo',
+            'active' => true,
+        ]);
+        Driver::create([
+            'name' => 'Conductor Inactivo',
+            'active' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('movements.create'));
+
+        $response
+            ->assertOk()
+            ->assertSee('name="vehicle_id"', false)
+            ->assertSee('value="'.$activeVehicle->id.'"', false)
+            ->assertSee('Unidad Activa')
+            ->assertDontSee('Unidad Inactiva')
+            ->assertSee('name="driver_id"', false)
+            ->assertSee('value="'.$activeDriver->id.'"', false)
+            ->assertSee('Conductor Activo')
+            ->assertDontSee('Conductor Inactivo');
+    }
+
     public function test_user_role_can_register_departure_without_guard_foreign_key_conflict(): void
     {
         $user = User::create([
