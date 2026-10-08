@@ -26,24 +26,52 @@ class WarehouseLocationFeatureTest extends TestCase
 
         $this->actingAs($admin)->post(route('warehouse.locations.store'), [
             'cost_center_id' => $costCenter->id,
-            'name' => 'Estante A-01',
+            'name' => 'Rack 1',
+            'level' => 1,
             'description' => 'Zona de filtros',
         ])->assertRedirect(route('warehouse.locations.index', ['cost_center_id' => $costCenter->id]));
 
-        $location = WarehouseLocation::where('normalized_name', 'estante a-01')->firstOrFail();
+        $location = WarehouseLocation::where('normalized_name', 'rack 1')->firstOrFail();
         $this->assertSame($admin->id, $location->created_by);
         $this->assertSame($admin->id, $location->updated_by);
+        $this->assertSame(1, $location->level);
+
+        $this->actingAs($admin)->post(route('warehouse.locations.store'), [
+            'cost_center_id' => $costCenter->id,
+            'name' => 'Rack 1',
+            'level' => 2,
+            'description' => 'Nivel superior',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('warehouse_locations', [
+            'cost_center_id' => $costCenter->id,
+            'normalized_name' => 'rack 1',
+            'level' => 2,
+        ]);
+
+        $this->actingAs($admin)
+            ->from(route('warehouse.locations.index', ['cost_center_id' => $costCenter->id]))
+            ->post(route('warehouse.locations.store'), [
+                'cost_center_id' => $costCenter->id,
+                'name' => 'Rack 1',
+                'level' => 2,
+            ])
+            ->assertSessionHasErrors('name');
+
+        $this->assertSame(2, WarehouseLocation::where('normalized_name', 'rack 1')->count());
 
         $this->actingAs($admin)->patch(route('warehouse.locations.update', $location), [
-            'name' => 'Estante A-02',
+            'name' => 'Rack 2',
+            'level' => 3,
             'description' => 'Zona de filtros actualizada',
             'active' => '1',
         ])->assertRedirect();
 
         $this->assertDatabaseHas('warehouse_locations', [
             'id' => $location->id,
-            'name' => 'Estante A-02',
-            'normalized_name' => 'estante a-02',
+            'name' => 'Rack 2',
+            'normalized_name' => 'rack 2',
+            'level' => 3,
             'updated_by' => $admin->id,
         ]);
     }
@@ -60,6 +88,7 @@ class WarehouseLocationFeatureTest extends TestCase
         $this->actingAs($user)->post(route('warehouse.locations.store'), [
             'cost_center_id' => $costCenter->id,
             'name' => 'No autorizada',
+            'level' => 1,
         ])->assertForbidden();
     }
 

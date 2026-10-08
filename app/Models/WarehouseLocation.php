@@ -12,9 +12,12 @@ class WarehouseLocation extends Model
 {
     use HasFactory;
 
+    public const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
     protected $fillable = [
         'cost_center_id',
         'name',
+        'level',
         'description',
         'active',
         'created_by',
@@ -23,6 +26,7 @@ class WarehouseLocation extends Model
 
     protected $casts = [
         'active' => 'boolean',
+        'level' => 'integer',
     ];
 
     protected static function booted(): void
@@ -36,6 +40,11 @@ class WarehouseLocation extends Model
     public static function normalizeName(string $name): string
     {
         return (string) Str::of($name)->ascii()->lower()->squish();
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->name.' · Nivel '.$this->level;
     }
 
     public function costCenter(): BelongsTo

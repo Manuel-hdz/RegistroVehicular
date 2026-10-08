@@ -110,7 +110,7 @@
                             <td>{{ $entryMaterial->entry?->entry_type ?? 'Sin tipo' }}</td>
                             <td><strong>{{ $entryMaterial->part?->name ?? 'Material eliminado' }}</strong><br><small>{{ $entryMaterial->part?->clave ?? 'Sin clave' }}</small></td>
                             <td>{{ implode(', ', $entryMaterial->part?->characteristics ?? []) ?: 'Sin características' }}</td>
-                            <td>{{ $entryMaterial->location?->name ?? 'Sin ubicación' }}</td>
+                            <td>{{ $entryMaterial->location?->display_name ?? 'Sin ubicación' }}</td>
                             <td>{{ $entryMaterial->entry?->registeredBy?->name ?? $entryMaterial->entry?->registered_by_username ?? 'Registro previo' }}</td>
                             <td style="text-align:right; font-weight:800;">{{ number_format((float) $entryMaterial->quantity, 2) }}</td>
                         </tr>

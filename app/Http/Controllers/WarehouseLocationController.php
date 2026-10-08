@@ -21,6 +21,7 @@ class WarehouseLocationController extends Controller
             ->with('updater')
             ->orderByDesc('active')
             ->orderBy('name')
+            ->orderBy('level')
             ->get();
 
         return view('warehouse.locations', compact('costCenters', 'selectedCostCenter', 'locations'));
@@ -32,13 +33,15 @@ class WarehouseLocationController extends Controller
         $data = $request->validate([
             'cost_center_id' => ['required', 'integer'],
             'name' => ['required', 'string', 'max:120'],
+            'level' => ['required', 'integer', 'in:'.implode(',', WarehouseLocation::LEVELS)],
             'description' => ['nullable', 'string', 'max:255'],
         ]);
         $costCenter = $this->authorizedCostCenter($request, (int) $data['cost_center_id']);
-        $this->ensureUniqueName($costCenter, $data['name']);
+        $this->ensureUniqueName($costCenter, $data['name'], (int) $data['level']);
 
         $costCenter->warehouseLocations()->create([
             'name' => $data['name'],
+            'level' => $data['level'],
             'description' => $data['description'] ?? null,
             'active' => true,
             'created_by' => $request->user()->id,
@@ -56,10 +59,11 @@ class WarehouseLocationController extends Controller
         $costCenter = $this->authorizedCostCenter($request, (int) $warehouseLocation->cost_center_id);
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
+            'level' => ['required', 'integer', 'in:'.implode(',', WarehouseLocation::LEVELS)],
             'description' => ['nullable', 'string', 'max:255'],
             'active' => ['nullable', 'boolean'],
         ]);
-        $this->ensureUniqueName($costCenter, $data['name'], $warehouseLocation);
+        $this->ensureUniqueName($costCenter, $data['name'], (int) $data['level'], $warehouseLocation);
 
         $active = $request->has('active');
         if (! $active && $warehouseLocation->active && $costCenter->warehouseLocations()->where('active', true)->count() === 1) {
@@ -70,6 +74,7 @@ class WarehouseLocationController extends Controller
 
         $warehouseLocation->update([
             'name' => $data['name'],
+            'level' => $data['level'],
             'description' => $data['description'] ?? null,
             'active' => $active,
             'updated_by' => $request->user()->id,
@@ -135,10 +140,12 @@ class WarehouseLocationController extends Controller
     private function ensureUniqueName(
         CostCenter $costCenter,
         string $name,
+        int $level,
         ?WarehouseLocation $currentLocation = null
     ): void {
         $query = $costCenter->warehouseLocations()
-            ->where('normalized_name', WarehouseLocation::normalizeName($name));
+            ->where('normalized_name', WarehouseLocation::normalizeName($name))
+            ->where('level', $level);
 
         if ($currentLocation) {
             $query->whereKeyNot($currentLocation->id);
@@ -146,7 +153,7 @@ class WarehouseLocationController extends Controller
 
         if ($query->exists()) {
             throw ValidationException::withMessages([
-                'name' => 'Ya existe una ubicación con ese nombre en el centro de costos.',
+                'name' => 'Ya existe esa ubicación en el nivel seleccionado para este centro de costos.',
             ]);
         }
     }

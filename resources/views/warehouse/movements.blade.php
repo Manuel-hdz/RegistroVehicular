@@ -441,7 +441,7 @@
                                     </td>
                                     <td>
                                         @foreach($entry->materials as $entryMaterial)
-                                            <div>{{ $entryMaterial->location?->name ?? 'Sin ubicación' }}</div>
+                                            <div>{{ $entryMaterial->location?->display_name ?? 'Sin ubicación' }}</div>
                                         @endforeach
                                     </td>
                                     <td>
@@ -582,7 +582,7 @@
                                 <select class="entry-material-location" name="materials[0][warehouse_location_id]" required>
                                     <option value="">Selecciona una ubicación</option>
                                     @foreach($warehouseLocations as $location)
-                                        <option value="{{ $location->id }}" @selected((int) old('materials.0.warehouse_location_id') === $location->id)>{{ $location->name }}</option>
+                                        <option value="{{ $location->id }}" @selected((int) old('materials.0.warehouse_location_id') === $location->id)>{{ $location->display_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -867,7 +867,7 @@
     })();
     (function(){
         var materialCatalog = @json($entryMaterialSuggestions);
-        var warehouseLocationCatalog = @json($warehouseLocations->map(fn ($location) => ['id' => $location->id, 'name' => $location->name])->values());
+        var warehouseLocationCatalog = @json($warehouseLocations->map(fn ($location) => ['id' => $location->id, 'name' => $location->display_name])->values());
 
         function normalize(value) {
             return value

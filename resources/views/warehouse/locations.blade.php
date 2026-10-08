@@ -29,11 +29,19 @@
         <input type="hidden" name="cost_center_id" value="{{ $selectedCostCenter->id }}">
         <div>
             <label for="newLocationName">Nombre</label>
-            <input id="newLocationName" name="name" value="{{ old('name') }}" maxlength="120" required placeholder="Ej. Estante A-01">
+            <input id="newLocationName" name="name" value="{{ old('name') }}" maxlength="120" required placeholder="Ej. Rack 1">
         </div>
-        <div style="grid-column:span 2;">
+        <div>
+            <label for="newLocationLevel">Nivel</label>
+            <select id="newLocationLevel" name="level" required>
+                @foreach(\App\Models\WarehouseLocation::LEVELS as $level)
+                    <option value="{{ $level }}" @selected((int) old('level', 1) === $level)>Nivel {{ $level }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
             <label for="newLocationDescription">Descripción</label>
-            <input id="newLocationDescription" name="description" value="{{ old('description') }}" maxlength="255" placeholder="Zona, nivel o referencia">
+            <input id="newLocationDescription" name="description" value="{{ old('description') }}" maxlength="255" placeholder="Zona o referencia">
         </div>
         <div style="grid-column:1/-1;">
             <button class="btn btn-primary" type="submit">Guardar ubicación</button>
@@ -53,7 +61,15 @@
                         <label>Nombre</label>
                         <input name="name" value="{{ $location->name }}" maxlength="120" required>
                     </div>
-                    <div style="grid-column:span 2;">
+                    <div>
+                        <label>Nivel</label>
+                        <select name="level" required>
+                            @foreach(\App\Models\WarehouseLocation::LEVELS as $level)
+                                <option value="{{ $level }}" @selected($location->level === $level)>Nivel {{ $level }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
                         <label>Descripción</label>
                         <input name="description" value="{{ $location->description }}" maxlength="255">
                     </div>

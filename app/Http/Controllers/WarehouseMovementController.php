@@ -26,6 +26,7 @@ class WarehouseMovementController extends Controller
         $warehouseLocations = $selectedCostCenter->warehouseLocations()
             ->where('active', true)
             ->orderBy('name')
+            ->orderBy('level')
             ->get();
         $weekStart = now()->startOfWeek();
         $weekEnd = now()->endOfWeek();

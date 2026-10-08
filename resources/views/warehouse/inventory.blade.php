@@ -72,7 +72,7 @@
                             @endforelse
                         </td>
                         <td>
-                            @php($locationNames = $material->entryMaterials->pluck('location.name')->filter()->unique()->sort()->values())
+                            @php($locationNames = $material->entryMaterials->map(fn ($entryMaterial) => $entryMaterial->location?->display_name)->filter()->unique()->sort()->values())
                             @forelse($locationNames as $locationName)
                                 <span class="badge text-bg-light" style="margin:2px; border:1px solid rgba(16, 52, 37, .12);">{{ $locationName }}</span>
                             @empty
