@@ -54,13 +54,15 @@ class InitialSeeder extends Seeder
         // Drivers
         Driver::updateOrCreate(['name' => 'Juan Pérez'], [
             'employee_number' => 'E001',
-            'license' => 'A1',
+            'license' => 'A',
+            'license_expires_at' => now()->addYears(2)->toDateString(),
             'active' => true,
         ]);
 
         Driver::updateOrCreate(['name' => 'María López'], [
             'employee_number' => 'E002',
-            'license' => 'A2',
+            'license' => 'B',
+            'license_expires_at' => now()->addYears(2)->toDateString(),
             'active' => true,
         ]);
     }

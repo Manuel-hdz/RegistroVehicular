@@ -608,6 +608,7 @@
 @php($canAccessAdministration = (($currentUser?->role ?? '') !== 'user') && ($currentUser?->canAccessSection('administracion') ?? false))
 @php($canAccessMaintenance = $currentUser?->canAccessSection('mantenimiento') ?? false)
 @php($canAccessHumanResources = $currentUser?->canAccessSection('rrhh') ?? false)
+@php($canAccessDrivers = $currentUser?->canAccessSection('conductores') ?? false)
 @php($canAccessWarehouse = $currentUser?->canAccessSection('almacen') ?? false)
 @php($canAccessPurchases = $currentUser?->canAccessSection('compras') ?? false)
 <header class="navbar navbar-expand-lg navbar-dark sticky-top app-navbar">
@@ -663,7 +664,7 @@
                     <ul class="navbar-nav main-nav me-auto mb-0">
                         @if($isAdminMenu)
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle {{ request()->routeIs('public.dashboard') || request()->routeIs('movements.*') || request()->routeIs('departures.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('public.dashboard') || request()->routeIs('movements.*') || request()->routeIs('departures.*') || request()->routeIs('drivers.*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                     <i class="bi bi-arrow-left-right"></i><span>Registro Vehicular</span>
                                 </a>
                                 <ul class="dropdown-menu">
@@ -681,6 +682,13 @@
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('departures.*') ? 'active' : '' }}" href="{{ route('departures.index') }}">
                                                 <i class="bi bi-box-arrow-up-right"></i><span>Salidas</span>
+                                            </a>
+                                        </li>
+                                    @endif
+                                    @if($canAccessDrivers)
+                                        <li>
+                                            <a class="dropdown-item {{ request()->routeIs('drivers.*') ? 'active' : '' }}" href="{{ route('drivers.index') }}">
+                                                <i class="bi bi-person-vcard"></i><span>Conductores</span>
                                             </a>
                                         </li>
                                     @endif
@@ -768,11 +776,6 @@
                                     <li>
                                         <a class="dropdown-item {{ request()->routeIs('cardex.import.*') ? 'active' : '' }}" href="{{ route('cardex.import.index') }}">
                                             <i class="bi bi-file-earmark-arrow-up"></i><span>Cargar documentos</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item {{ request()->routeIs('drivers.*') ? 'active' : '' }}" href="{{ route('drivers.index') }}">
-                                            <i class="bi bi-person-vcard"></i><span>Conductores</span>
                                         </a>
                                     </li>
                                     <li>

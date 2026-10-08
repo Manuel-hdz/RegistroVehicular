@@ -39,7 +39,8 @@ class DriverController extends Controller
 
         $data = $request->validate([
             'personnel_id' => $personnelRules,
-            'license' => ['nullable', 'string', 'max:50'],
+            'license' => ['required', Rule::in(Driver::LICENSE_TYPES)],
+            'license_expires_at' => ['required', 'date'],
             'active' => ['nullable', 'boolean'],
         ]);
 
@@ -76,7 +77,8 @@ class DriverController extends Controller
 
         $data = $request->validate([
             'personnel_id' => $personnelRules,
-            'license' => ['nullable', 'string', 'max:50'],
+            'license' => ['required', Rule::in(Driver::LICENSE_TYPES)],
+            'license_expires_at' => ['required', 'date'],
             'active' => ['nullable', 'boolean'],
         ]);
 

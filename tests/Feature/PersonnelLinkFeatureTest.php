@@ -34,7 +34,8 @@ class PersonnelLinkFeatureTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('drivers.store'), [
             'personnel_id' => $personnel->id,
-            'license' => 'LIC-1234',
+            'license' => 'B',
+            'license_expires_at' => '2028-06-30',
             'active' => '1',
         ]);
 
@@ -44,7 +45,8 @@ class PersonnelLinkFeatureTest extends TestCase
         $this->assertSame($personnel->id, $driver->personnel_id);
         $this->assertSame('Laura Lopez Diaz', $driver->name);
         $this->assertSame('RH-100', $driver->employee_number);
-        $this->assertSame('LIC-1234', $driver->license);
+        $this->assertSame('B', $driver->license);
+        $this->assertSame('2028-06-30', $driver->license_expires_at->format('Y-m-d'));
         $this->assertTrue($driver->active);
     }
 
@@ -111,12 +113,41 @@ class PersonnelLinkFeatureTest extends TestCase
 
         $response = $this->from(route('drivers.create'))->actingAs($admin)->post(route('drivers.store'), [
             'personnel_id' => $personnel->id,
-            'license' => 'LIC-9999',
+            'license' => 'A',
+            'license_expires_at' => '2028-06-30',
             'active' => '1',
         ]);
 
         $response->assertRedirect(route('drivers.create'));
         $response->assertSessionHasErrors('personnel_id');
         $this->assertCount(1, Driver::all());
+    }
+
+    public function test_driver_license_type_must_be_one_of_the_supported_values(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin RRHH',
+            'username' => 'admin-rrhh-license-types',
+            'password' => 'secret',
+            'role' => 'admin',
+            'department' => 'rrhh',
+            'active' => true,
+        ]);
+
+        $personnel = Personnel::create([
+            'employee_number' => 'RH-400',
+            'first_name' => 'Elena',
+            'last_name' => 'Santos',
+            'active' => true,
+        ]);
+
+        $this->from(route('drivers.create'))->actingAs($admin)->post(route('drivers.store'), [
+            'personnel_id' => $personnel->id,
+            'license' => 'D',
+            'license_expires_at' => '2028-06-30',
+            'active' => '1',
+        ])->assertRedirect(route('drivers.create'))->assertSessionHasErrors('license');
+
+        $this->assertDatabaseCount('drivers', 0);
     }
 }

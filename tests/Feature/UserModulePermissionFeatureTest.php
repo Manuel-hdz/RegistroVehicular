@@ -11,6 +11,48 @@ class UserModulePermissionFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_conductores_permission_grants_a_regular_user_access_to_the_driver_module(): void
+    {
+        $user = User::create([
+            'name' => 'Usuario Conductores',
+            'username' => 'usuario-conductores',
+            'password' => 'secret',
+            'role' => 'user',
+            'department' => 'compras',
+            'module_permissions' => ['conductores'],
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('drivers.index'))
+            ->assertOk()
+            ->assertSee('Conductores')
+            ->assertSee(route('drivers.index'));
+
+        $this->actingAs($user)
+            ->get(route('drivers.create'))
+            ->assertOk()
+            ->assertSee('Tipo A')
+            ->assertSee('Tipo B')
+            ->assertSee('Tipo C')
+            ->assertSee('Tipo F')
+            ->assertSee('name="license_expires_at"', false);
+    }
+
+    public function test_regular_user_without_conductores_permission_cannot_access_driver_module(): void
+    {
+        $user = User::create([
+            'name' => 'Usuario Sin Conductores',
+            'username' => 'usuario-sin-conductores',
+            'password' => 'secret',
+            'role' => 'user',
+            'department' => 'compras',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->get(route('drivers.index'))->assertForbidden();
+    }
+
     public function test_superadmin_can_update_additional_module_permissions(): void
     {
         $superadmin = User::create([
@@ -32,11 +74,11 @@ class UserModulePermissionFeatureTest extends TestCase
         ]);
 
         $response = $this->actingAs($superadmin)->patch(route('users.permissions', $user), [
-            'module_permissions' => ['rrhh', 'almacen'],
+            'module_permissions' => ['rrhh', 'almacen', 'conductores'],
         ]);
 
         $response->assertRedirect(route('users.index', ['selected_user' => $user->id]));
-        $this->assertSame(['rrhh', 'almacen'], $user->fresh()->grantedModules());
+        $this->assertSame(['rrhh', 'almacen', 'conductores'], $user->fresh()->grantedModules());
     }
 
     public function test_superadmin_can_create_user_with_special_permissions(): void

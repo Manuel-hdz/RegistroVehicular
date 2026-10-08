@@ -46,6 +46,16 @@ Route::prefix('registroVehicular')->group(function () {
         Route::get('/movements/{movement}/checkin', [MovementController::class, 'checkinForm'])->name('movements.checkin.form');
         Route::put('/movements/{movement}/checkin', [MovementController::class, 'checkin'])->name('movements.checkin');
 
+        Route::middleware('section:conductores')->group(function () {
+            Route::resource('conductores', DriverController::class)
+                ->parameters(['conductores' => 'driver'])
+                ->names('drivers')
+                ->only(['index', 'create', 'store', 'edit', 'update']);
+            Route::delete('/conductores/{driver}', DriverDestroyController::class)
+                ->middleware('role:superadmin')
+                ->name('drivers.destroy');
+        });
+
         Route::middleware('role:admin')->group(function () {
             Route::get('/departures', [DepartureController::class, 'index'])->name('departures.index');
             Route::get('/departures/export', [DepartureController::class, 'export'])->name('departures.export');
@@ -139,15 +149,10 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'impersona
             Route::get('/cardex/importar', [CardexImportController::class, 'index'])->name('cardex.import.index');
             Route::get('/cardex/importar/plantilla', [CardexImportController::class, 'template'])->name('cardex.import.template');
             Route::post('/cardex/importar', [CardexImportController::class, 'store'])->name('cardex.import.store');
-            Route::resource('conductores', DriverController::class)
-                ->parameters(['conductores' => 'driver'])
-                ->names('drivers')
-                ->only(['index', 'create', 'store', 'edit', 'update']);
             Route::get('/registrosComedor', [ComedorController::class, 'records'])->name('comedor.records');
         });
 
         Route::middleware(['role:superadmin', 'section:rrhh'])->group(function () {
-            Route::delete('/conductores/{driver}', DriverDestroyController::class)->name('drivers.destroy');
             Route::delete('/personal/{personnel}', [PersonnelController::class, 'destroy'])->name('personnel.destroy');
         });
     });

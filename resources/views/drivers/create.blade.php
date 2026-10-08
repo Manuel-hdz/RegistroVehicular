@@ -37,8 +37,17 @@
             <input id="driver_employee_display" value="" readonly>
         </div>
         <div>
-            <label>Licencia</label>
-            <input name="license" value="{{ old('license') }}">
+            <label for="driver_license">Tipo de licencia</label>
+            <select id="driver_license" name="license" required>
+                <option value="">Selecciona un tipo</option>
+                @foreach(\App\Models\Driver::LICENSE_TYPES as $licenseType)
+                    <option value="{{ $licenseType }}" @selected(old('license') === $licenseType)>Tipo {{ $licenseType }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
+            <label for="driver_license_expires_at">Fecha de vencimiento</label>
+            <input id="driver_license_expires_at" type="date" name="license_expires_at" value="{{ old('license_expires_at') }}" required>
         </div>
         <div>
             <label><input type="checkbox" name="active" value="1" checked> Activo</label>

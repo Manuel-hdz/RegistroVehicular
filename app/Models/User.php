@@ -21,6 +21,7 @@ class User extends Authenticatable
         'almacen' => 'Almacén',
         'compras' => 'Compras',
         'configuracion' => 'Configuración',
+        'conductores' => 'Conductores',
     ];
 
     private const SECTION_DEFAULTS = [
@@ -32,6 +33,7 @@ class User extends Authenticatable
         'refacciones' => ['almacen', 'mantenimiento'],
         'pendientes' => ['compras', 'almacen', 'mantenimiento'],
         'configuracion' => ['sistemas'],
+        'conductores' => ['rrhh', 'recursos humanos'],
     ];
 
     private const SECTION_PERMISSION_LINKS = [
@@ -43,6 +45,7 @@ class User extends Authenticatable
         'refacciones' => ['almacen', 'mantenimiento'],
         'pendientes' => ['compras', 'almacen', 'mantenimiento'],
         'configuracion' => ['configuracion'],
+        'conductores' => ['conductores'],
     ];
 
     /**
@@ -163,6 +166,10 @@ class User extends Authenticatable
         }
 
         $normalizedSection = $this->normalizeValue($section);
+
+        if ($normalizedSection === 'conductores' && $this->hasModulePermission('conductores')) {
+            return true;
+        }
 
         if ($normalizedSection === 'almacen') {
             return in_array($this->role, ['admin', 'superadmin'], true)

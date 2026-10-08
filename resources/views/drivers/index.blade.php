@@ -36,7 +36,8 @@
                 <th>#</th>
                 <th>Nombre</th>
                 <th>Número</th>
-                <th>Licencia</th>
+                <th>Tipo de licencia</th>
+                <th>Vencimiento</th>
                 <th>Activo</th>
                 <th></th>
             </tr>
@@ -47,7 +48,8 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $d->personnel?->full_name ?? $d->name }}</td>
                     <td>{{ $d->personnel?->employee_number ?? $d->employee_number }}</td>
-                    <td>{{ $d->license }}</td>
+                    <td>{{ $d->license ? 'Tipo '.$d->license : '-' }}</td>
+                    <td>{{ optional($d->license_expires_at)->format('d/m/Y') ?? '-' }}</td>
                     <td>{{ $d->active ? 'Sí' : 'No' }}</td>
                     <td>
                         <a class="btn btn-secondary" href="{{ route('drivers.edit', $d) }}" title="Editar" aria-label="Editar">
