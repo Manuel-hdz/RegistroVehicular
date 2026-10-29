@@ -116,6 +116,6 @@
             </tbody>
         </table>
     </div>
-    <div style="margin-top:12px;">{{ $materials->links() }}</div>
+    <div style="margin-top:12px;">{{ $materials->links('pagination::bootstrap-5') }}</div>
 </div>
 @endsection
