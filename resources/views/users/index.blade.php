@@ -71,7 +71,7 @@
                 >×</a>
             </header>
             <div class="content">
-                <p style="margin:0 0 16px; color:#6b7280;">Asigna modulos adicionales sobre su acceso base por departamento.</p>
+                <p style="margin:0 0 16px; color:#6b7280;">Asigna permisos adicionales sobre su acceso base por departamento. El permiso para cambiar ubicaciones aplica al personal de almacén en sus centros de costos autorizados.</p>
                 <form method="POST" action="{{ route('users.permissions', $selectedUser) }}">
                     @csrf
                     @method('PATCH')

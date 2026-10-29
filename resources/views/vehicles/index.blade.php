@@ -327,6 +327,7 @@
                 <h3 style="margin-top:0;">{{ $selectedVehicle->unit_name ?: ($selectedVehicle->identifier ?: 'Ficha de unidad') }}</h3>
                 <div class="vehicle-fields">
                     <div class="vehicle-field"><small>Clave</small><strong>{{ $selectedVehicle->identifier ?: '-' }}</strong></div>
+                    <div class="vehicle-field"><small>Centro de costos</small><strong>{{ $selectedVehicle->costCenter?->name ?: 'Sin asignar' }}</strong></div>
                     <div class="vehicle-field"><small>Nombre de unidad</small><strong>{{ $selectedVehicle->unit_name ?: '-' }}</strong></div>
                     <div class="vehicle-field"><small>Fecha de alta</small><strong>{{ $selectedVehicle->registration_date ? $selectedVehicle->registration_date->format('d/m/Y') : '-' }}</strong></div>
                     <div class="vehicle-field"><small>Marca/modelo</small><strong>{{ $selectedVehicle->make_model ?: '-' }}</strong></div>

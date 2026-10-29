@@ -614,7 +614,7 @@
 <header class="navbar navbar-expand-lg navbar-dark sticky-top app-navbar">
     <div class="container-fluid">
         <div class="d-flex align-items-center gap-2">
-            @if($isSystemArea)
+            @if($isSystemArea && auth()->check())
                 <a href="{{ route('public.dashboard') }}" class="home-link" title="Inicio" aria-label="Inicio">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path d="M12 3l9 8h-3v8h-5v-5H11v5H6v-8H3l9-8z"/>
@@ -622,7 +622,7 @@
                 </a>
             @endif
 
-            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ auth()->check() ? route('movements.index') : route('public.dashboard') }}">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ auth()->check() ? route('public.dashboard') : route('login') }}">
                 <img class="logo" src="{{ asset('images/logo_marca.png') }}" alt="Concreto Lanzado de Fresnillo MARCA" onerror="this.style.display='none'" style="height:36px;">
                 <span>
                     @if($isSystemArea)
@@ -646,9 +646,6 @@
             <div class="guest-actions ms-auto d-flex align-items-center gap-2">
                 <a class="btn btn-outline-light btn-sm px-3" href="{{ route('login') }}">
                     <i class="bi bi-box-arrow-in-right me-1"></i>Entrar
-                </a>
-                <a class="btn btn-light btn-sm px-3 text-success" href="{{ route('public.dashboard') }}">
-                    Panel p&uacute;blico
                 </a>
             </div>
         @endif
@@ -716,6 +713,11 @@
                                     <li>
                                         <a class="dropdown-item {{ request()->routeIs('vehicles.*') ? 'active' : '' }}" href="{{ route('vehicles.index') }}">
                                             <i class="bi bi-truck"></i><span>Consulta de unidades</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('maintenance.backlog.*') ? 'active' : '' }}" href="{{ route('maintenance.backlog.index') }}">
+                                            <i class="bi bi-list-check"></i><span>BackLog</span>
                                         </a>
                                     </li>
                                     <li>

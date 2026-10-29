@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+@include('maintenance.partials.tabs')
 @push('head')
 <style>
   /* Evitar conflicto con Bootstrap .modal */

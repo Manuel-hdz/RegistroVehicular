@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class BulkImportController extends Controller
@@ -112,6 +113,9 @@ class BulkImportController extends Controller
         }
 
         $status = "Importacion de {$definition['label']} completada. Nuevos: {$createdCount}. Actualizados: {$updatedCount}.";
+        if ($type === 'personnel-terminations') {
+            $status = "Bajas de personal completadas. Registros procesados: {$updatedCount}.";
+        }
         if (count($errorMessages) > 0) {
             $status .= ' Se omitieron algunas lineas con error.';
         }
@@ -122,12 +126,172 @@ class BulkImportController extends Controller
             ->with('import_errors', $errorMessages);
     }
 
+    public function storeSisad(Request $request, bool $terminate = false): RedirectResponse
+    {
+        $request->validate([
+            'sisad_file' => ['required', 'file', 'max:10240'],
+        ]);
+
+        $file = $request->file('sisad_file');
+        if (Str::lower($file->getClientOriginalExtension()) !== 'xls') {
+            throw ValidationException::withMessages([
+                'sisad_file' => 'Selecciona el archivo .xls generado por SISAD.',
+            ]);
+        }
+
+        [$rows, $sisadHeaderMap] = $this->readSisadRows($file->getRealPath());
+        if ($rows === [] || $sisadHeaderMap === []) {
+            return back()->withErrors([
+                'sisad_file' => 'El archivo no contiene la tabla de personal esperada del formato SISAD.',
+            ]);
+        }
+
+        $definition = $this->resolveImportDefinition('personnel');
+        $importedType = $terminate ? 'personnel-terminations-sisad' : 'personnel-sisad';
+        $personnelHeaderMap = $this->defaultHeaderMap($definition['headers']);
+        $createdCount = 0;
+        $updatedCount = 0;
+        $processedCount = 0;
+        $errorMessages = [];
+        $maxErrorsToShow = 80;
+
+        foreach ($rows as $index => $sisadRow) {
+            if ($this->isEmptyRow($sisadRow)) {
+                continue;
+            }
+
+            $lineNumber = $index + 2;
+            $row = $this->mapSisadPersonnelRow($sisadRow, $sisadHeaderMap, $definition['headers']);
+            foreach (['birth_date' => 'fecha de nacimiento', 'hire_date' => 'fecha de ingreso'] as $field => $label) {
+                $fieldIndex = $personnelHeaderMap[$field];
+                $value = trim($row[$fieldIndex] ?? '');
+                if ($value !== '' && $this->nullableDate($value) === null) {
+                    $this->appendError(
+                        $errorMessages,
+                        $maxErrorsToShow,
+                        "Fila SISAD {$lineNumber}: la {$label} no es válida; el registro se importó sin ese dato."
+                    );
+                    $row[$fieldIndex] = '';
+                }
+            }
+
+            try {
+                $result = $terminate
+                    ? $this->processSisadTerminationRow($row, $personnelHeaderMap, $lineNumber)
+                    : $this->processPersonnelRow($row, $personnelHeaderMap, $lineNumber);
+            } catch (\Throwable $exception) {
+                Log::error('Error al importar una fila SISAD.', [
+                    'line' => $lineNumber,
+                    'exception' => $exception,
+                ]);
+                $this->appendError(
+                    $errorMessages,
+                    $maxErrorsToShow,
+                    "Fila SISAD {$lineNumber}: no pudo importarse por un error inesperado."
+                );
+                continue;
+            }
+
+            if (($result['status'] ?? null) === 'created') {
+                $createdCount++;
+                $processedCount++;
+            } elseif (($result['status'] ?? null) === 'updated') {
+                $updatedCount++;
+                $processedCount++;
+            } elseif (! empty($result['error'])) {
+                $this->appendError($errorMessages, $maxErrorsToShow, $result['error']);
+            }
+        }
+
+        if ($processedCount === 0) {
+            return redirect()->route('bulk-imports.index')
+                ->withErrors(['sisad_file' => 'No se importó ningún registro válido del archivo SISAD.'])
+                ->with('imported_type', $importedType)
+                ->with('import_errors', $errorMessages);
+        }
+
+        $status = "Importación SISAD de Personal completada. Nuevos: {$createdCount}. Actualizados: {$updatedCount}.";
+        if ($terminate) {
+            $status = "Bajas de personal SISAD completadas. Nuevos inactivos: {$createdCount}. Estatus actualizados: {$updatedCount}.";
+        }
+        if ($errorMessages !== []) {
+            $status .= ' Se detectaron filas con advertencias o errores.';
+        }
+
+        return redirect()->route('bulk-imports.index')
+            ->with('status', $status)
+            ->with('imported_type', $importedType)
+            ->with('import_errors', $errorMessages);
+    }
+
     /**
      * @return array<int, array{key:string,label:string,description:string,filename:string,headers:array<int,string>,examples:array<int,array<int,string>>,aliases:array<string,array<int,string>>,notes:array<int,string>}>
      */
+    public function storeSisadTerminations(Request $request): RedirectResponse
+    {
+        return $this->storeSisad($request, true);
+    }
+
+    private function processSisadTerminationRow(array $row, array $headerMap, int $lineNumber): array
+    {
+        $number = $this->rowValue($row, $headerMap, 'employee_number');
+        if ($number !== '') {
+            $personnel = Personnel::where('employee_number', $number)->first();
+            if ($personnel) {
+                $personnel->update(['active' => false]);
+                return ['status' => 'updated'];
+            }
+        }
+
+        // Reuse the personnel validation and mapping, forcing new records inactive.
+        $row[$headerMap['active']] = 'no';
+        return $this->processPersonnelRow($row, $headerMap, $lineNumber);
+    }
+
+    private function processTerminationRow(array $row, array $headerMap, int $lineNumber): array
+    {
+        $number = $this->rowValue($row, $headerMap, 'employee_number');
+        if ($number === '') {
+            return ['status' => 'skipped', 'error' => "Linea {$lineNumber}: falta el numero de empleado."];
+        }
+        $personnel = Personnel::where('employee_number', $number)->first();
+        if (!$personnel) {
+            return ['status' => 'skipped', 'error' => "Linea {$lineNumber}: no existe el empleado {$number}."];
+        }
+        $value = $this->rowValue($row, $headerMap, 'terminated_at');
+        $date = $value === '' ? null : $this->nullableDate($this->normalizeSisadDate($value));
+        if ($value !== '' && $date === null) {
+            return ['status' => 'skipped', 'error' => "Linea {$lineNumber}: fecha de baja invalida."];
+        }
+        $personnel->update([
+            'active' => false,
+            'terminated_at' => $date ?: ($personnel->terminated_at ?: now()->toDateString()),
+        ]);
+        return ['status' => 'updated'];
+    }
+
     private function importDefinitions(): array
     {
         return [
+            [
+                'key' => 'personnel-terminations',
+                'label' => 'Bajas de personal',
+                'description' => 'Da de baja al personal incluido en el archivo, sin modificar sus demas datos.',
+                'filename' => 'plantilla_bajas_personal.csv',
+                'headers' => ['employee_number', 'terminated_at'],
+                'examples' => [['RH-001', '2026-10-21']],
+                'aliases' => [
+                    'employee_number' => ['employee_number', 'numero_empleado', 'no_empleado', 'num_empleado', 'id_empresa'],
+                    'terminated_at' => ['terminated_at', 'fecha_baja', 'fecha_de_baja', 'baja'],
+                ],
+                'notes' => [
+                    'Con plantilla CSV, el numero de empleado es obligatorio y debe existir en el sistema.',
+                    'Con SISAD, los empleados no registrados se crean como inactivos; a los existentes solo se les cambia el estatus.',
+                    'Carga solo los empleados que deseas dar de baja. Todos los incluidos se marcaran como inactivos.',
+                    'La fecha de baja es opcional: se conserva la existente o se usa la fecha de hoy.',
+                    'Los empleados ausentes del archivo no se modifican.',
+                ],
+            ],
             [
                 'key' => 'personnel',
                 'label' => 'Personal',
@@ -277,6 +441,7 @@ class BulkImportController extends Controller
     private function processRow(string $type, array $row, array $headerMap, int $lineNumber, Request $request): array
     {
         return match ($type) {
+            'personnel-terminations' => $this->processTerminationRow($row, $headerMap, $lineNumber),
             'personnel' => $this->processPersonnelRow($row, $headerMap, $lineNumber),
             'vehicles' => $this->processVehicleRow($row, $headerMap, $lineNumber, $request),
             'parts' => $this->processPartRow($row, $headerMap, $lineNumber),
@@ -477,8 +642,272 @@ class BulkImportController extends Controller
     }
 
     /**
-     * @param array<int, array<int, string>> $rows
+     * @return array{0: array<int, array<int, string>>, 1: array<string, int>}
      */
+    private function readSisadRows(string $filePath): array
+    {
+        $contents = file_get_contents($filePath);
+        if ($contents === false || stripos($contents, '<table') === false) {
+            return [[], []];
+        }
+
+        $encoding = mb_detect_encoding($contents, ['UTF-8', 'Windows-1252', 'ISO-8859-1'], true) ?: 'Windows-1252';
+        if ($encoding !== 'UTF-8') {
+            $contents = mb_convert_encoding($contents, 'UTF-8', $encoding);
+        }
+
+        $previousUseErrors = libxml_use_internal_errors(true);
+        $document = new \DOMDocument();
+        $loaded = $document->loadHTML(
+            '<?xml encoding="UTF-8">'.$contents,
+            LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_COMPACT
+        );
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousUseErrors);
+
+        if (! $loaded) {
+            return [[], []];
+        }
+
+        $rows = [];
+        $headerMap = [];
+        foreach ($document->getElementsByTagName('tr') as $tableRow) {
+            $cells = [];
+            foreach ($tableRow->childNodes as $child) {
+                if (! $child instanceof \DOMElement || ! in_array(Str::lower($child->tagName), ['td', 'th'], true)) {
+                    continue;
+                }
+
+                $cells[] = $this->sisadCellText($document, $child);
+            }
+
+            if ($cells === []) {
+                continue;
+            }
+
+            if ($headerMap === []) {
+                $candidateMap = $this->detectHeaderMap($cells, $this->sisadHeaderAliases()) ?? [];
+                if ($this->hasRequiredSisadHeaders($candidateMap)) {
+                    $headerMap = $candidateMap;
+                }
+                continue;
+            }
+
+            $rows[] = $cells;
+        }
+
+        return [$rows, $headerMap];
+    }
+
+    private function sisadCellText(\DOMDocument $document, \DOMElement $cell): string
+    {
+        $html = $document->saveHTML($cell) ?: '';
+        $html = preg_replace('/<br\s*\/?>/i', "\n", $html) ?? $html;
+        $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = str_replace("\u{00A0}", ' ', $text);
+        $text = preg_replace('/[ \t]+/u', ' ', $text) ?? $text;
+        $text = preg_replace('/\R+/u', "\n", $text) ?? $text;
+
+        return trim($text);
+    }
+
+    /** @return array<string, array<int, string>> */
+    private function sisadHeaderAliases(): array
+    {
+        return [
+            'rfc' => ['rfc'],
+            'curp' => ['curp'],
+            'employee_number' => ['id_empresa'],
+            'terminated_at' => ['fecha_baja', 'fecha_de_baja', 'baja'],
+            'first_name' => ['nombre'],
+            'last_name' => ['apellido_paterno'],
+            'middle_name' => ['apellido_materno'],
+            'nss' => ['no_seguro_social'],
+            'hire_date' => ['fecha_ingreso'],
+            'position' => ['puesto'],
+            'account_number' => ['no_cuenta'],
+            'department' => ['area'],
+            'street' => ['calle'],
+            'exterior_number' => ['numero_exterior'],
+            'interior_number' => ['numero_interior'],
+            'neighborhood' => ['colonia'],
+            'postal_code' => ['c_p'],
+            'locality' => ['localidad'],
+            'state' => ['estado'],
+            'country' => ['pais'],
+            'phone' => ['telefono'],
+            'birth_date' => ['fecha_de_nacimiento'],
+            'marital_status' => ['estado_civil'],
+            'emergency_contact' => ['contacto_por_accidente'],
+        ];
+    }
+
+    /** @param array<string, int> $headerMap */
+    private function hasRequiredSisadHeaders(array $headerMap): bool
+    {
+        foreach (['employee_number', 'first_name', 'last_name'] as $requiredField) {
+            if (! array_key_exists($requiredField, $headerMap)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array<int, string> $row
+     * @param array<string, int> $sisadHeaderMap
+     * @param array<int, string> $personnelHeaders
+     * @return array<int, string>
+     */
+    private function mapSisadPersonnelRow(array $row, array $sisadHeaderMap, array $personnelHeaders): array
+    {
+        $curp = $this->rowValue($row, $sisadHeaderMap, 'curp');
+        $birthDate = $this->normalizeSisadDate($this->rowValue($row, $sisadHeaderMap, 'birth_date'));
+        if ($this->nullableDate($birthDate) === null) {
+            $birthDate = $this->birthDateFromCurp($curp);
+        }
+        [$emergencyName, $emergencyPhone] = $this->parseSisadEmergencyContact(
+            $this->rowValue($row, $sisadHeaderMap, 'emergency_contact')
+        );
+
+        $values = [
+            'employee_number' => $this->rowValue($row, $sisadHeaderMap, 'employee_number'),
+            'first_name' => $this->rowValue($row, $sisadHeaderMap, 'first_name'),
+            'last_name' => $this->rowValue($row, $sisadHeaderMap, 'last_name'),
+            'middle_name' => $this->rowValue($row, $sisadHeaderMap, 'middle_name'),
+            'curp' => $curp,
+            'rfc' => $this->rowValue($row, $sisadHeaderMap, 'rfc'),
+            'nss' => $this->rowValue($row, $sisadHeaderMap, 'nss'),
+            'marital_status' => $this->rowValue($row, $sisadHeaderMap, 'marital_status'),
+            'sex' => $this->sexFromCurp($curp),
+            'birth_date' => $birthDate,
+            'department' => $this->rowValue($row, $sisadHeaderMap, 'department'),
+            'position' => $this->rowValue($row, $sisadHeaderMap, 'position'),
+            'hire_date' => $this->rowValue($row, $sisadHeaderMap, 'hire_date'),
+            'account_number' => $this->rowValue($row, $sisadHeaderMap, 'account_number'),
+            'phone' => $this->sanitizeDigits($this->rowValue($row, $sisadHeaderMap, 'phone')),
+            'address' => $this->composeSisadAddress($row, $sisadHeaderMap),
+            'emergency_contact_name' => $emergencyName,
+            'emergency_contact_phone' => $emergencyPhone,
+            'active' => 'si',
+        ];
+
+        return array_map(
+            static fn (string $field): string => (string) ($values[$field] ?? ''),
+            $personnelHeaders
+        );
+    }
+
+    private function sexFromCurp(string $curp): string
+    {
+        $curp = $this->sanitizeUpperAlnum($curp);
+        $sexCode = strlen($curp) >= 11 ? $curp[10] : '';
+
+        return match ($sexCode) {
+            'H' => 'Masculino',
+            'M' => 'Femenino',
+            default => '',
+        };
+    }
+
+    private function birthDateFromCurp(string $curp): string
+    {
+        $curp = $this->sanitizeUpperAlnum($curp);
+        if (strlen($curp) < 10 || ! preg_match('/^(\d{2})(\d{2})(\d{2})$/', substr($curp, 4, 6), $matches)) {
+            return '';
+        }
+
+        $shortYear = (int) $matches[1];
+        $year = $shortYear <= ((int) now()->format('y')) ? 2000 + $shortYear : 1900 + $shortYear;
+        $month = (int) $matches[2];
+        $day = (int) $matches[3];
+
+        if (! checkdate($month, $day, $year)) {
+            return '';
+        }
+
+        return sprintf('%04d-%02d-%02d', $year, $month, $day);
+    }
+
+    private function normalizeSisadDate(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        $months = [
+            'enero' => '01', 'febrero' => '02', 'marzo' => '03', 'abril' => '04',
+            'mayo' => '05', 'junio' => '06', 'julio' => '07', 'agosto' => '08',
+            'septiembre' => '09', 'setiembre' => '09', 'octubre' => '10',
+            'noviembre' => '11', 'diciembre' => '12',
+        ];
+        $normalized = Str::lower(Str::ascii($value));
+
+        if (preg_match('/^(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(\d{4})$/', $normalized, $matches)) {
+            $month = $months[$matches[2]] ?? null;
+            if ($month !== null) {
+                return sprintf('%04d-%s-%02d', (int) $matches[3], $month, (int) $matches[1]);
+            }
+        }
+
+        return $value;
+    }
+
+    /** @param array<int, string> $row @param array<string, int> $headerMap */
+    private function composeSisadAddress(array $row, array $headerMap): string
+    {
+        $street = $this->sisadMeaningfulValue($this->rowValue($row, $headerMap, 'street'));
+        $exterior = $this->sisadMeaningfulValue($this->rowValue($row, $headerMap, 'exterior_number'));
+        $interior = $this->sisadMeaningfulValue($this->rowValue($row, $headerMap, 'interior_number'));
+        $parts = [];
+        $streetLine = trim(implode(' ', array_filter([
+            $street,
+            $exterior !== '' ? '#'.$exterior : '',
+            $interior !== '' ? 'Int. '.$interior : '',
+        ])));
+        if ($streetLine !== '') {
+            $parts[] = $streetLine;
+        }
+
+        foreach (['neighborhood' => 'Col. ', 'postal_code' => 'C.P. ', 'locality' => '', 'state' => '', 'country' => ''] as $field => $prefix) {
+            $value = $this->sisadMeaningfulValue($this->rowValue($row, $headerMap, $field));
+            if ($value !== '') {
+                $parts[] = $prefix.$value;
+            }
+        }
+
+        return implode(', ', $parts);
+    }
+
+    private function sisadMeaningfulValue(string $value): string
+    {
+        $value = trim($value);
+
+        return in_array($this->normalizeToken($value), ['', 'n_a', 'n_d', 'na', 'nd'], true) ? '' : $value;
+    }
+
+    /** @return array{0: string, 1: string} */
+    private function parseSisadEmergencyContact(string $value): array
+    {
+        $name = '';
+        $phone = '';
+
+        if (preg_match('/Nombre:\s*(.*?)(?:\R|Telefono:|Celular:|$)/iu', $value, $matches)) {
+            $name = trim($matches[1]);
+        }
+        if (preg_match('/Celular:\s*([^\r\n]*)/iu', $value, $matches)) {
+            $phone = $this->sanitizeDigits($matches[1]);
+        }
+        if ($phone === '' && preg_match('/Telefono:\s*([^\r\n]*)/iu', $value, $matches)) {
+            $phone = $this->sanitizeDigits($matches[1]);
+        }
+
+        return [$name, $phone];
+    }
+
+    /** @param array<int, array<int, string>> $rows */
     private function buildCsv(array $rows): string
     {
         $csv = '';

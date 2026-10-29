@@ -90,7 +90,7 @@ class WarehouseLocationController extends Controller
         abort_unless(
             $request->user()?->canManageWarehouseLocations(),
             403,
-            'Solo un administrador de almacén puede actualizar las ubicaciones.'
+            'Necesitas permisos para cambiar las ubicaciones de almacén.'
         );
     }
 

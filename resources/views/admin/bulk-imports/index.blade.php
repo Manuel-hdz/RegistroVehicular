@@ -82,7 +82,30 @@
                 </div>
             </form>
 
-            @if($importedType === $import['key'] && is_array($importErrors) && count($importErrors) > 0)
+            @if(in_array($import['key'], ['personnel', 'personnel-terminations']))
+                <div style="margin:18px 0; display:flex; align-items:center; gap:12px; color:#6b7280;">
+                    <span style="height:1px; background:#d6e2db; flex:1;"></span>
+                    <strong>Formato alternativo</strong>
+                    <span style="height:1px; background:#d6e2db; flex:1;"></span>
+                </div>
+                <form method="POST" action="{{ route($import['key'] === 'personnel' ? 'bulk-imports.sisad.store' : 'bulk-imports.terminations.sisad.store') }}" enctype="multipart/form-data">
+                    @csrf
+                    <div class="grid" style="gap:12px;">
+                        <div>
+                            <label>Archivo de personal generado por SISAD</label>
+                            <input type="file" name="sisad_file" accept=".xls,application/vnd.ms-excel,text/html" required>
+                            <small style="display:block; margin-top:6px; color:#64748b;">Usa directamente el archivo .xls descargado desde SISAD; no es necesario cambiar el orden de sus columnas.</small>
+                        </div>
+                        <div class="row" style="justify-content:flex-end; margin:0;">
+                            <button class="btn btn-secondary" type="submit">
+                                <i class="bi bi-file-earmark-spreadsheet"></i>{{ $import['key'] === 'personnel' ? 'Importar desde formato SISAD' : 'Dar de baja desde formato SISAD' }}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            @endif
+
+            @if(($importedType === $import['key'] || $importedType === $import['key'].'-sisad') && is_array($importErrors) && count($importErrors) > 0)
                 <div style="margin-top:16px; border:1px solid #fed7aa; background:#fff7ed; border-radius:16px; padding:14px 16px;">
                     <strong style="display:block; color:#9a3412;">Lineas con error</strong>
                     <ul style="margin:10px 0 0; padding-left:18px; color:#9a3412;">

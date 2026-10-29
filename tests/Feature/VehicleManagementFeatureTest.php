@@ -75,6 +75,7 @@ class VehicleManagementFeatureTest extends TestCase
         $response = $this->actingAs($superadmin)->put(route('vehicles.update', $vehicle), [
             'plate' => 'ABC-123',
             'identifier' => 'Unidad 1',
+            'active' => '0',
         ]);
 
         $response->assertRedirect(route('vehicles.index', ['vehicle_id' => $vehicle->id]));

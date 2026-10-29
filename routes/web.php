@@ -69,12 +69,14 @@ Route::prefix('registroVehicular')->group(function () {
         });
     });
 
-    Route::get('/dashboard', [PublicDashboardController::class, 'index'])->name('public.dashboard');
-    Route::get('/dashboard/graph/by-day.png', [GraphController::class, 'byDay'])->name('dashboard.graph.byday');
-    Route::get('/dashboard/graph/top-vehicles.png', [GraphController::class, 'topVehiclesDepartures'])->name('dashboard.graph.topvehicles');
-    Route::get('/dashboard/graph/top-km.png', [GraphController::class, 'topVehiclesKm'])->name('dashboard.graph.topkm');
-    Route::get('/dashboard/graph/top-drivers.png', [GraphController::class, 'topDriversDepartures'])->name('dashboard.graph.topdrivers');
-    Route::get('/dashboard/graph/status', [GraphController::class, 'status'])->name('dashboard.graph.status');
+    Route::middleware(['auth', \App\Http\Middleware\SingleSession::class])->group(function () {
+        Route::get('/dashboard', [PublicDashboardController::class, 'index'])->name('public.dashboard');
+        Route::get('/dashboard/graph/by-day.png', [GraphController::class, 'byDay'])->name('dashboard.graph.byday');
+        Route::get('/dashboard/graph/top-vehicles.png', [GraphController::class, 'topVehiclesDepartures'])->name('dashboard.graph.topvehicles');
+        Route::get('/dashboard/graph/top-km.png', [GraphController::class, 'topVehiclesKm'])->name('dashboard.graph.topkm');
+        Route::get('/dashboard/graph/top-drivers.png', [GraphController::class, 'topDriversDepartures'])->name('dashboard.graph.topdrivers');
+        Route::get('/dashboard/graph/status', [GraphController::class, 'status'])->name('dashboard.graph.status');
+    });
 });
 });
 
@@ -84,6 +86,9 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'impersona
 
     Route::prefix('mantenimiento')->middleware('section:mantenimiento')->group(function () {
         Route::get('/', [\App\Http\Controllers\MaintenanceController::class, 'index'])->name('maintenance.index');
+        Route::get('/backlog', [\App\Http\Controllers\MaintenanceBacklogController::class, 'index'])->name('maintenance.backlog.index');
+        Route::post('/backlog', [\App\Http\Controllers\MaintenanceBacklogController::class, 'store'])->name('maintenance.backlog.store');
+        Route::put('/backlog/{backlogItem}', [\App\Http\Controllers\MaintenanceBacklogController::class, 'update'])->name('maintenance.backlog.update');
         Route::put('/vehiculos/{vehicle}', [\App\Http\Controllers\MaintenanceController::class, 'update'])->name('maintenance.update');
         Route::resource('mecanicos', \App\Http\Controllers\MechanicController::class)
             ->parameters(['mecanicos' => 'mechanic'])
@@ -122,6 +127,8 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'impersona
             ->only(['index', 'create', 'store', 'edit', 'update']);
         Route::get('/cargas-masivas', [BulkImportController::class, 'index'])->name('bulk-imports.index');
         Route::get('/cargas-masivas/plantillas/{type}', [BulkImportController::class, 'template'])->name('bulk-imports.template');
+        Route::post('/cargas-masivas/bajas-personal/sisad', [BulkImportController::class, 'storeSisadTerminations'])->name('bulk-imports.terminations.sisad.store');
+        Route::post('/cargas-masivas/personal/sisad', [BulkImportController::class, 'storeSisad'])->name('bulk-imports.sisad.store');
         Route::post('/cargas-masivas/{type}', [BulkImportController::class, 'store'])->name('bulk-imports.store');
         Route::get('/tabla-vacaciones', [VacationPolicyController::class, 'index'])->name('vacation-policies.index');
         Route::put('/tabla-vacaciones', [VacationPolicyController::class, 'updateTable'])->name('vacation-policies.update-table');
@@ -161,6 +168,7 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'impersona
         Route::middleware('section:almacen')->group(function () {
             Route::get('/entradas-salidas', [WarehouseMovementController::class, 'index'])->name('warehouse.movements');
             Route::get('/materiales', [WarehouseMovementController::class, 'inventory'])->name('warehouse.inventory');
+            Route::patch('/materiales/entradas/{entryMaterial}/ubicacion', [WarehouseMovementController::class, 'updateMaterialLocation'])->name('warehouse.materials.location');
             Route::get('/reportes', [WarehouseReportController::class, 'index'])->name('warehouse.reports.index');
             Route::get('/reportes/exportar', [WarehouseReportController::class, 'export'])->name('warehouse.reports.export');
             Route::get('/reportes/exportar-excel', [WarehouseReportController::class, 'exportExcel'])->name('warehouse.reports.export-excel');

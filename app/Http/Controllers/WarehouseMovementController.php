@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -181,7 +182,24 @@ class WarehouseMovementController extends Controller
             'search' => $search,
             'costCenters' => $costCenters,
             'selectedCostCenter' => $selectedCostCenter,
+            'warehouseLocations' => $selectedCostCenter->warehouseLocations()->where('active', true)->orderBy('name')->orderBy('level')->get(),
         ]);
+    }
+
+    public function updateMaterialLocation(Request $request, WarehouseEntryMaterial $entryMaterial): RedirectResponse
+    {
+        abort_unless($request->user()?->canManageWarehouseLocations(), 403);
+        $costCenter = $this->authorizedCostCenter($request, (int) $entryMaterial->entry->cost_center_id);
+        $data = $request->validate([
+            'warehouse_location_id' => [
+                'required', 'integer',
+                Rule::exists('warehouse_locations', 'id')->where('cost_center_id', $costCenter->id)->where('active', true),
+            ],
+        ]);
+        $entryMaterial->update($data);
+
+        return redirect()->route('warehouse.inventory', ['cost_center_id' => $costCenter->id])
+            ->with('status', 'Ubicación del material actualizada.');
     }
 
     public function storeMaterial(Request $request): RedirectResponse

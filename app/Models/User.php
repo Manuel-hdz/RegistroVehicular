@@ -22,6 +22,7 @@ class User extends Authenticatable
         'compras' => 'Compras',
         'configuracion' => 'Configuración',
         'conductores' => 'Conductores',
+        'ubicaciones_almacen' => 'Cambiar ubicaciones de materiales',
     ];
 
     private const SECTION_DEFAULTS = [
@@ -209,8 +210,11 @@ class User extends Authenticatable
 
     public function canManageWarehouseLocations(): bool
     {
-        return $this->role === 'superadmin'
-            || ($this->role === 'admin' && $this->canManageOwnedDepartment('almacen'));
+        return $this->active !== false && (
+            $this->role === 'superadmin'
+            || ($this->role === 'admin' && $this->canManageOwnedDepartment('almacen'))
+            || ($this->belongsToDepartment('almacen') && $this->hasModulePermission('ubicaciones_almacen'))
+        );
     }
 
     public function canManageRequisitionStatus(): bool

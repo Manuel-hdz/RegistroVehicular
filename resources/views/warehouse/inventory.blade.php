@@ -78,6 +78,26 @@
                             @empty
                                 <span class="text-muted">Sin ubicación</span>
                             @endforelse
+                            @if(auth()->user()?->canManageWarehouseLocations())
+                                <details style="margin-top:8px;">
+                                    <summary>Cambiar ubicación</summary>
+                                    @foreach($material->entryMaterials as $entryMaterial)
+                                        <form method="POST" action="{{ route('warehouse.materials.location', $entryMaterial) }}" style="margin-top:10px;">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="cost_center_id" value="{{ $selectedCostCenter->id }}">
+                                            <label for="material-location-{{ $entryMaterial->id }}">{{ $material->name }} · Entrada #{{ $entryMaterial->warehouse_entry_id }} ({{ number_format((float) $entryMaterial->quantity, 2) }})</label>
+                                            <select id="material-location-{{ $entryMaterial->id }}" name="warehouse_location_id" required>
+                                                <option value="">Selecciona una ubicación</option>
+                                                @foreach($warehouseLocations as $location)
+                                                    <option value="{{ $location->id }}" @selected((int) $entryMaterial->warehouse_location_id === $location->id)>{{ $location->display_name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="submit" class="btn btn-secondary" style="margin-top:6px;">Guardar ubicación</button>
+                                        </form>
+                                    @endforeach
+                                </details>
+                            @endif
                         </td>
                                                 <td>
                             @php($stockQuantity = (float) $material->stock_quantity)

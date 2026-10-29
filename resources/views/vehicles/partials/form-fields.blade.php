@@ -1,3 +1,18 @@
+<div>
+    <label for="{{ $idPrefix }}_cost_center">Centro de costos</label>
+    <select id="{{ $idPrefix }}_cost_center" name="cost_center_id">
+        <option value="">Sin centro de costos asignado</option>
+        @foreach($costCenters as $center)
+            <option value="{{ $center->id }}" @selected((string)old('cost_center_id', $vehicle->cost_center_id ?? '') === (string)$center->id)>{{ $center->code }} - {{ $center->name }}</option>
+        @endforeach
+    </select>
+</div>
+@if(auth()->user()?->role === 'superadmin')
+    <div>
+        <input type="hidden" name="active" value="0">
+        <label for="{{ $idPrefix }}_active"><input id="{{ $idPrefix }}_active" type="checkbox" name="active" value="1" @checked(old('active', $vehicle->active ?? true))> Activo</label>
+    </div>
+@endif
 <div><label>Clave</label><input name="identifier" value="{{ old('identifier', $vehicle->identifier ?? '') }}"></div>
 <div><label>Nombre de unidad</label><input name="unit_name" value="{{ old('unit_name', $vehicle->unit_name ?? '') }}"></div>
 <div><label>Fecha de alta</label><input type="date" name="registration_date" value="{{ old('registration_date', isset($vehicle) && $vehicle?->registration_date ? $vehicle->registration_date->format('Y-m-d') : '') }}"></div>

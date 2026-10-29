@@ -33,7 +33,7 @@
 @section('content')
 <div class="card" style="margin-bottom:12px; background:linear-gradient(135deg, #f8fcf9, #ffffff 52%, #eef7f2);">
   <div>
-    <h2 style="margin:0">Panel p&uacute;blico</h2>
+    <h2 style="margin:0">Panel principal</h2>
     <p style="margin:6px 0 0 0; color:#555;">Resumen visual del uso de equipos y conductores con filtros compactos y lectura mas clara.</p>
   </div>
 </div>

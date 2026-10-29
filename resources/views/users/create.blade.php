@@ -61,7 +61,8 @@
         </div>
         <div id="specialPermissionsPanel" style="grid-column:1/-1; display:{{ old('special_permissions') ? 'block' : 'none' }};">
             <div style="padding:16px; border:1px solid #d9e3dd; border-radius:18px; background:#f8fbf9;">
-                <label style="margin-bottom:12px;">Modulos adicionales</label>
+                <label style="margin-bottom:12px;">Permisos adicionales</label>
+                <p>El permiso para cambiar ubicaciones aplica al personal de almacén en sus centros de costos autorizados.</p>
                 <div class="grid grid-3">
                     @foreach($moduleOptions as $moduleKey => $label)
                         <label style="display:flex; align-items:center; gap:10px; margin:0; padding:14px 16px; border:1px solid #d9e3dd; border-radius:16px; background:#fff; text-transform:none; letter-spacing:0; color:#173629;">

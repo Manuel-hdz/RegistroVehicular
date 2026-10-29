@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vehicle;
+use App\Models\CostCenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -15,7 +16,7 @@ class VehicleController extends Controller
 {
     public function index(Request $request): View
     {
-        $vehicles = Vehicle::orderBy('identifier')->orderBy('unit_name')->orderBy('plate')->get();
+        $vehicles = Vehicle::with('costCenter')->orderBy('identifier')->orderBy('unit_name')->orderBy('plate')->get();
 
         $selectedVehicleId = (int) $request->input('vehicle_id');
         if ($selectedVehicleId <= 0 && $vehicles->isNotEmpty()) {
@@ -55,6 +56,7 @@ class VehicleController extends Controller
         }
 
         return view('vehicles.index', [
+            'costCenters' => CostCenter::where('active', true)->orderBy('name')->get(),
             'vehicles' => $vehicles,
             'selectedVehicleId' => $selectedVehicleId,
             'selectedVehicle' => $selectedVehicle,
@@ -65,7 +67,7 @@ class VehicleController extends Controller
 
     public function create(): View
     {
-        return view('vehicles.create');
+        return view('vehicles.create', ['costCenters' => CostCenter::where('active', true)->orderBy('name')->get()]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -83,7 +85,7 @@ class VehicleController extends Controller
 
     public function edit(Vehicle $vehicle): View
     {
-        return view('vehicles.edit', compact('vehicle'));
+        return view('vehicles.edit', ['vehicle' => $vehicle, 'costCenters' => CostCenter::where('active', true)->orWhere('id', $vehicle->cost_center_id)->orderBy('name')->get()]);
     }
 
     public function update(Request $request, Vehicle $vehicle): RedirectResponse
@@ -158,6 +160,7 @@ class VehicleController extends Controller
         return $request->validate([
             'identifier' => ['nullable', 'string', 'max:100'],
             'unit_name' => ['nullable', 'string', 'max:150'],
+            'cost_center_id' => ['nullable', 'integer', 'exists:cost_centers,id'],
             'registration_date' => ['nullable', 'date'],
             'make_model' => ['nullable', 'string', 'max:150'],
             'model' => ['nullable', 'string', 'max:100'],
@@ -186,7 +189,7 @@ class VehicleController extends Controller
             return $currentValue;
         }
 
-        return $request->has('active');
+        return $request->has('active') ? $request->boolean('active') : $currentValue;
     }
 
     private function storeDocument(Request $request, string $field, string $prefix): ?string

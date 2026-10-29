@@ -14,6 +14,7 @@ class Vehicle extends Model
         'plate',
         'identifier',
         'unit_name',
+        'cost_center_id',
         'registration_date',
         'make_model',
         'vtype',
@@ -46,6 +47,11 @@ class Vehicle extends Model
         'registration_date' => 'date',
         'manufacture_date' => 'date',
     ];
+
+    public function costCenter(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(CostCenter::class);
+    }
 
     public function movements(): HasMany
     {
