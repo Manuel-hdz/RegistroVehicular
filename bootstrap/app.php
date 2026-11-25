@@ -11,6 +11,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(append: [\App\Http\Middleware\AuditRequest::class]);
+        $middleware->prependToPriorityList(\Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class, \App\Http\Middleware\AuditRequest::class);
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminOnly::class,
             'department' => \App\Http\Middleware\DepartmentMiddleware::class,

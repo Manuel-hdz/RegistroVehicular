@@ -38,6 +38,7 @@
                     <th>Características</th>
                     <th>Ubicaciones registradas</th>
                     <th>Cantidad disponible</th>
+                    @if(auth()->user()?->role === 'superadmin')<th>Registró</th>@endif
                 </tr>
             </thead>
             <tbody>
@@ -107,10 +108,20 @@
                                 <strong>{{ number_format($stockQuantity, 2) }}</strong>
                             @endif
                         </td>
+                        @if(auth()->user()?->role === 'superadmin')
+                            <td style="min-width:180px;">
+                                @foreach($material->entryMaterials->unique('warehouse_entry_id') as $registeredMaterial)
+                                    <div style="margin-bottom:6px;">
+                                        <strong>{{ $registeredMaterial->entry?->registeredBy?->name ?? $registeredMaterial->entry?->registered_by_username ?? 'Registro previo' }}</strong>
+                                        <br><small>{{ $registeredMaterial->entry?->registered_by_username }} · Entrada #{{ $registeredMaterial->warehouse_entry_id }} · {{ $registeredMaterial->entry?->entry_date?->timezone(config('audit.timezone'))->format('d/m/Y H:i') }}</small>
+                                    </div>
+                                @endforeach
+                            </td>
+                        @endif
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="text-center text-muted">{{ $search !== '' ? 'No se encontraron materiales con ese criterio' : 'Sin materiales registrados' }}</td>
+                        <td colspan="{{ auth()->user()?->role === 'superadmin' ? 6 : 5 }}" class="text-center text-muted">{{ $search !== '' ? 'No se encontraron materiales con ese criterio' : 'Sin materiales registrados' }}</td>
                     </tr>
                 @endforelse
             </tbody>

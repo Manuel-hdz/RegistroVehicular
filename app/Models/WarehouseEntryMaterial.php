@@ -10,7 +10,7 @@ class WarehouseEntryMaterial extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['warehouse_entry_id', 'part_id', 'warehouse_location_id', 'quantity'];
+    protected $fillable = ['warehouse_entry_id', 'part_id', 'warehouse_location_id', 'quantity', 'duplicate_authorized_by'];
 
     protected $casts = [
         'quantity' => 'decimal:2',

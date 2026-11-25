@@ -588,6 +588,7 @@
     'mechanics.*',
     'vehicles.*',
     'users.*',
+    'audit-logs.*',
     'hr.*',
     'personnel.*',
     'cardex.*',
@@ -878,6 +879,16 @@
                                         </a>
                                     </li>
                                     @if(auth()->user()->role === 'superadmin')
+                                        <li>
+                                            <a class="dropdown-item {{ request()->routeIs('records.*') ? 'active' : '' }}" href="{{ route('records.index') }}">
+                                                <i class="bi bi-trash"></i><span>Eliminar registros</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}" href="{{ route('audit-logs.index') }}">
+                                                <i class="bi bi-journal-text"></i><span>Bitácora del sistema</span>
+                                            </a>
+                                        </li>
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
                                                 <i class="bi bi-people"></i><span>Usuarios</span>

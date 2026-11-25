@@ -133,6 +133,9 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'impersona
         Route::get('/tabla-vacaciones', [VacationPolicyController::class, 'index'])->name('vacation-policies.index');
         Route::put('/tabla-vacaciones', [VacationPolicyController::class, 'updateTable'])->name('vacation-policies.update-table');
         Route::middleware('role:superadmin')->group(function () {
+            Route::get('/registros', [\App\Http\Controllers\RecordAdministrationController::class, 'index'])->name('records.index');
+            Route::delete('/registros/{table}', [\App\Http\Controllers\RecordAdministrationController::class, 'destroy'])->name('records.destroy');
+            Route::get('/bitacora', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('audit-logs.index');
             Route::resource('usuarios', UserController::class)
                 ->parameters(['usuarios' => 'user'])
                 ->names('users')

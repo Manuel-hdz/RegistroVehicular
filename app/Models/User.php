@@ -208,6 +208,11 @@ class User extends Authenticatable
         return $this->canManageOwnedDepartment('almacen');
     }
 
+    public function canDeleteAnyRecord(): bool
+    {
+        return $this->active !== false && $this->role === 'superadmin';
+    }
+
     public function canManageWarehouseLocations(): bool
     {
         return $this->active !== false && (

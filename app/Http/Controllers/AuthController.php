@@ -24,6 +24,7 @@ class AuthController extends Controller
         // Verifica si el usuario está activo antes de autenticar
         $user = \App\Models\User::where('username', $credentials['username'])->first();
         if ($user && $user->active === false) {
+            app(\App\Services\SystemAudit::class)->record('login_failed', 'Acceso rechazado: usuario inactivo.', [], $user);
             return back()->withErrors(['username' => 'Usuario bloqueado. Contacte a sistemas.'])->onlyInput('username');
         }
 

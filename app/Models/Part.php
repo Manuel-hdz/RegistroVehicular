@@ -17,6 +17,7 @@ class Part extends Model
     {
         static::saving(function (Part $part): void {
             $part->identity_key = self::identityKey($part->name, $part->characteristics);
+            $part->base_name = self::normalizeBaseName($part->name);
         });
     }
 
@@ -51,12 +52,14 @@ class Part extends Model
 
     public static function identityKey(string $name, mixed $characteristics = []): string
     {
-        $normalizedName = (string) Str::of($name)
-            ->ascii()
-            ->lower()
-            ->squish();
+        $normalizedName = self::normalizeBaseName($name);
 
         return hash('sha256', $normalizedName.'|'.implode('|', self::normalizeCharacteristics($characteristics)));
+    }
+
+    public static function normalizeBaseName(string $name): string
+    {
+        return (string) Str::of($name)->ascii()->lower()->squish();
     }
 
     /**

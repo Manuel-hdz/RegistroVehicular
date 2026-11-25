@@ -319,6 +319,9 @@
                     @forelse($latestEntries as $entry)
                         <li>
                             <a class="warehouse-history-id" href="#entriesRecordModal" data-bs-toggle="modal" data-bs-target="#entriesRecordModal" data-record-row="entry-record-{{ $entry->id }}" aria-label="Ver entrada {{ $entry->entry_key ?? $entry->id }} en la tabla completa">{{ $entry->entry_key ?? '#'.$entry->id }}</a>
+                            @if(auth()->user()?->role === 'superadmin')
+                                <div class="warehouse-history-meta">Registró: {{ $entry->registeredBy?->name ?? $entry->registered_by_username ?? 'Registro previo' }}@if($entry->registered_by_username) ({{ $entry->registered_by_username }})@endif</div>
+                            @endif
                         </li>
                     @empty
                         <li>
@@ -334,6 +337,9 @@
                     @forelse($latestDepartures as $departure)
                         <li>
                             <a class="warehouse-history-id" href="#exitsRecordModal" data-bs-toggle="modal" data-bs-target="#exitsRecordModal" data-record-row="exit-record-{{ $departure->id }}" aria-label="Ver salida {{ $departure->voucher_number ?? $departure->id }} en la tabla completa">{{ $departure->voucher_number ?? '#'.$departure->id }}</a>
+                            @if(auth()->user()?->role === 'superadmin')
+                                <div class="warehouse-history-meta">Registró: {{ $departure->registeredBy?->name ?? $departure->registered_by_username ?? 'Registro previo' }}@if($departure->registered_by_username) ({{ $departure->registered_by_username }})@endif</div>
+                            @endif
                         </li>
                     @empty
                         <li>
@@ -431,7 +437,11 @@
                                     <td>{{ $entry->entry_key ?? 'Sin folio' }}</td>
                                     <td>
                                         @foreach($entry->materials as $entryMaterial)
-                                            <div>{{ $entryMaterial->part?->name ?? 'Material sin nombre' }} &middot; {{ $entryMaterial->part?->clave ?? 'Sin clave' }}</div>
+                                            <div>{{ $entryMaterial->part?->name ?? 'Material sin nombre' }} &middot; {{ $entryMaterial->part?->clave ?? 'Sin clave' }}
+                                                @if($entryMaterial->duplicate_authorized_by)
+                                                    <small style="display:block;">Duplicado autorizado por: {{ $entryMaterial->duplicate_authorized_by }}</small>
+                                                @endif
+                                            </div>
                                         @endforeach
                                     </td>
                                     <td>
@@ -564,34 +574,42 @@
                         <div class="warehouse-history-meta" style="margin-top:6px;">Puedes subir PDF, JPG, PNG o WEBP.</div>
                     </div>
                     <div id="entryMaterialsList" class="warehouse-characteristics">
-                        <div class="warehouse-entry-material" data-material-index="0">
+                        @foreach(old('materials', [['quantity' => 1]]) as $materialIndex => $oldMaterial)
+                        <div class="warehouse-entry-material" data-material-index="{{ $materialIndex }}">
                             <div>
                                 <label>Nombre del material</label>
                                 <div class="entry-material-search">
-                                    <input class="entry-material-id" type="hidden" name="materials[0][part_id]">
-                                    <input class="entry-material-name" name="materials[0][name]" required autocomplete="off" placeholder="Escribe para buscar materiales registrados" role="combobox" aria-autocomplete="list" aria-expanded="false">
+                                    <input class="entry-material-id" type="hidden" name="materials[{{ $materialIndex }}][part_id]" value="{{ $oldMaterial['part_id'] ?? '' }}">
+                                    <input class="entry-material-name" name="materials[{{ $materialIndex }}][name]" value="{{ $oldMaterial['name'] ?? '' }}" required autocomplete="off" placeholder="Escribe para buscar materiales registrados" role="combobox" aria-autocomplete="list" aria-expanded="false">
                                     <div class="entry-material-suggestions" role="listbox" hidden></div>
                                 </div>
                             </div>
                             <div style="margin-top:10px;">
                                 <label>Cantidad</label>
-                                <input class="entry-material-quantity" type="text" inputmode="decimal" name="materials[0][quantity]" value="1" required autocomplete="off">
+                                <input class="entry-material-quantity" type="text" inputmode="decimal" name="materials[{{ $materialIndex }}][quantity]" value="{{ $oldMaterial['quantity'] ?? 1 }}" required autocomplete="off">
                             </div>
                             <div style="margin-top:10px;">
                                 <label>Ubicación</label>
-                                <select class="entry-material-location" name="materials[0][warehouse_location_id]" required>
+                                <select class="entry-material-location" name="materials[{{ $materialIndex }}][warehouse_location_id]" required>
                                     <option value="">Selecciona una ubicación</option>
                                     @foreach($warehouseLocations as $location)
-                                        <option value="{{ $location->id }}" @selected((int) old('materials.0.warehouse_location_id') === $location->id)>{{ $location->display_name }}</option>
+                                        <option value="{{ $location->id }}" @selected((int) ($oldMaterial['warehouse_location_id'] ?? 0) === $location->id)>{{ $location->display_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div style="margin-top:10px;">
                                 <label>Caracteristicas</label>
-                                <textarea class="entry-material-characteristics" name="materials[0][characteristics]" placeholder="Una por linea o separadas por coma"></textarea>
+                                <textarea class="entry-material-characteristics" name="materials[{{ $materialIndex }}][characteristics]" placeholder="Una por linea o separadas por coma">{{ $oldMaterial['characteristics'] ?? '' }}</textarea>
                             </div>
                             <div class="warehouse-generated-id entry-material-clave" style="margin-top:10px;">Escribe el nombre del material</div>
+                            <div class="entry-duplicate-authorization" role="alert" style="margin-top:10px; padding:12px; background:#fff4cc; color:#735c00;" hidden>
+                                <strong>Material duplicado</strong>
+                                <p>Ya existe un material con el mismo nombre base. Selecciona el existente para sumar existencias o captura el nombre de quien autoriza agregar otra variante.</p>
+                                <label for="duplicate-authorizer-{{ $materialIndex }}">Nombre de quien autoriza el duplicado</label>
+                                <input id="duplicate-authorizer-{{ $materialIndex }}" class="entry-duplicate-authorizer" name="materials[{{ $materialIndex }}][duplicate_authorized_by]" maxlength="180" value="{{ $oldMaterial['duplicate_authorized_by'] ?? '' }}" disabled>
+                            </div>
                         </div>
+                        @endforeach
                     </div>
                     <button class="btn btn-secondary" type="button" id="addEntryMaterialBtn" style="margin-top:14px;">
                         <i class="bi bi-plus-circle"></i>
@@ -867,6 +885,7 @@
     })();
     (function(){
         var materialCatalog = @json($entryMaterialSuggestions);
+        var duplicateCatalog = materialCatalog;
         var warehouseLocationCatalog = @json($warehouseLocations->map(fn ($location) => ['id' => $location->id, 'name' => $location->display_name])->values());
 
         function normalize(value) {
@@ -879,8 +898,8 @@
         }
 
         function normalizeCharacteristics(value) {
-            return (value || '')
-                .split(/[\n,]+/)
+            return Array.from(new Set((value || '')
+                .split(/[\r\n,]+/)
                 .map(function(item){
                     return item
                         .normalize('NFD')
@@ -889,9 +908,45 @@
                         .toLowerCase()
                         .replace(/\s+/g, ' ');
                 })
-                .filter(Boolean)
+                .filter(Boolean)))
                 .sort()
                 .join('|');
+        }
+
+        function baseName(value) {
+            return searchable(value).replace(/\s+/g, ' ');
+        }
+
+        function materialIdentity(name, characteristics) {
+            return baseName(name) + '|' + normalizeCharacteristics(characteristics);
+        }
+
+        function refreshDuplicateWarnings() {
+            var known = new Map();
+            duplicateCatalog.forEach(function(material){
+                var name = baseName(material.name);
+                if (!known.has(name)) known.set(name, new Set());
+                known.get(name).add(materialIdentity(material.name, (material.characteristics || []).join('\n')));
+            });
+            document.querySelectorAll('.warehouse-entry-material').forEach(function(row){
+                var name = row.querySelector('.entry-material-name').value;
+                var characteristics = row.querySelector('.entry-material-characteristics').value;
+                var identity = materialIdentity(name, characteristics);
+                var base = baseName(name);
+                var duplicates = known.get(base);
+                var needsAuthorization = Boolean(base && duplicates && !duplicates.has(identity));
+                var panel = row.querySelector('.entry-duplicate-authorization');
+                var input = row.querySelector('.entry-duplicate-authorizer');
+                // Authorization must be entered again if the material being authorized changes.
+                if (row.dataset.authorizationIdentity && row.dataset.authorizationIdentity !== identity) input.value = '';
+                row.dataset.authorizationIdentity = identity;
+                panel.hidden = !needsAuthorization;
+                input.disabled = !needsAuthorization;
+                input.required = needsAuthorization;
+                input.setCustomValidity(needsAuthorization && !input.value.trim() ? 'Captura el nombre de quien autoriza el material duplicado.' : '');
+                if (!known.has(base)) known.set(base, new Set());
+                known.get(base).add(identity);
+            });
         }
 
         function hashText(value) {
@@ -958,6 +1013,7 @@
             }
             hideSuggestions(row);
             refreshMaterialClave(row);
+            refreshDuplicateWarnings();
         }
 
         function populateLocationSelect(row) {
@@ -1023,11 +1079,23 @@
         }
 
         function wireMaterialRow(row) {
+            if (!row.querySelector('.entry-duplicate-authorization')) {
+                var panel = document.createElement('div');
+                panel.className = 'entry-duplicate-authorization';
+                panel.setAttribute('role', 'alert');
+                panel.style.cssText = 'margin-top:10px; padding:12px; background:#fff4cc; color:#735c00;';
+                panel.hidden = true;
+                panel.innerHTML = '<strong>Material duplicado</strong><p>Ya existe un material con el mismo nombre base. Selecciona el existente para sumar existencias o captura el nombre de quien autoriza agregar otra variante.</p><label>Nombre de quien autoriza el duplicado<input class="entry-duplicate-authorizer" maxlength="180" disabled></label>';
+                panel.querySelector('input').name = 'materials[' + row.dataset.materialIndex + '][duplicate_authorized_by]';
+                row.appendChild(panel);
+            }
+            row.querySelector('.entry-duplicate-authorizer').addEventListener('input', refreshDuplicateWarnings);
             var nameInput = row.querySelector('.entry-material-name');
             var characteristicsInput = row.querySelector('.entry-material-characteristics');
             nameInput.addEventListener('input', function(){
                 clearSelectedMaterial(row);
                 refreshMaterialClave(row);
+                refreshDuplicateWarnings();
                 renderSuggestions(row);
             });
             nameInput.addEventListener('focus', function(){ renderSuggestions(row); });
@@ -1044,10 +1112,11 @@
             characteristicsInput.addEventListener('input', function(){
                 clearSelectedMaterial(row);
                 refreshMaterialClave(row);
+                refreshDuplicateWarnings();
             });
             var removeButton = row.querySelector('.remove-entry-material-btn');
             if (removeButton) {
-                removeButton.addEventListener('click', function(){ row.remove(); });
+                removeButton.addEventListener('click', function(){ row.remove(); refreshDuplicateWarnings(); });
             }
             refreshMaterialClave(row);
         }
@@ -1055,7 +1124,7 @@
         var list = document.getElementById('entryMaterialsList');
         var addButton = document.getElementById('addEntryMaterialBtn');
         if (!list || !addButton) return;
-        var nextMaterialIndex = list.querySelectorAll('.warehouse-entry-material').length;
+        var nextMaterialIndex = Math.max.apply(null, Array.from(list.querySelectorAll('.warehouse-entry-material'), function(row){ return Number(row.dataset.materialIndex); })) + 1;
 
         addButton.addEventListener('click', function(){
             var index = nextMaterialIndex++;
@@ -1091,10 +1160,19 @@
             list.appendChild(row);
             populateLocationSelect(row);
             wireMaterialRow(row);
+            refreshDuplicateWarnings();
             row.querySelector('.entry-material-name').focus();
         });
 
         list.querySelectorAll('.warehouse-entry-material').forEach(wireMaterialRow);
+        refreshDuplicateWarnings();
+        list.closest('form').addEventListener('submit', function(event){
+            refreshDuplicateWarnings();
+            if (!this.reportValidity()) event.preventDefault();
+        });
+        @if($errors->has('materials') || $errors->has('materials.*'))
+        if (typeof bootstrap !== 'undefined') bootstrap.Modal.getOrCreateInstance(document.getElementById('materialEntryModal')).show();
+        @endif
         document.addEventListener('click', function(event){
             list.querySelectorAll('.warehouse-entry-material').forEach(function(row){
                 if (!row.contains(event.target)) hideSuggestions(row);

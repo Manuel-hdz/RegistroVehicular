@@ -152,7 +152,7 @@ class WarehouseCostCenterFeatureTest extends TestCase
         $this->assertSame(9.0, (float) $part->entryMaterials()->sum('quantity'));
     }
 
-    public function test_same_name_with_different_characteristics_creates_another_material(): void
+    public function test_same_name_with_different_characteristics_requires_named_authorization(): void
     {
         $user = $this->warehouseUser();
         $charcas = CostCenter::where('code', 'ZARPEO-CHARCAS')->firstOrFail();
@@ -168,16 +168,71 @@ class WarehouseCostCenterFeatureTest extends TestCase
                     'name' => 'Cable eléctrico',
                     'warehouse_location_id' => $location->id,
                     'characteristics' => $characteristics,
+                    'duplicate_authorized_by' => 'María López',
                     'quantity' => 1,
                 ]],
-            ])->assertRedirect();
+            ])->assertRedirect()->assertSessionHasNoErrors();
         }
 
         $this->assertDatabaseCount('parts', 2);
+        $this->assertDatabaseHas('warehouse_entry_materials', ['duplicate_authorized_by' => 'María López']);
         $this->assertEqualsCanonicalizing(
             [['color negro'], ['color blanco']],
             Part::all()->pluck('characteristics')->all()
         );
+    }
+
+    public function test_duplicate_base_name_is_blocked_even_with_existing_part_id_and_preserves_input(): void
+    {
+        $user = $this->warehouseUser();
+        $center = CostCenter::where('code', 'ZARPEO-CHARCAS')->firstOrFail();
+        $user->costCenters()->sync([$center->id]);
+        $part = Part::create(['clave' => 'CABLE-NEGRO', 'name' => 'Cable eléctrico', 'characteristics' => ['negro'], 'unit_cost' => 0]);
+        $this->entry($center, $part, 2);
+        $payload = [
+            'cost_center_id' => $center->id,
+            'entry_date' => now()->format('Y-m-d H:i:s'),
+            'materials' => [[
+                'part_id' => $part->id,
+                'name' => '  CABLE   ELECTRICO  ',
+                'characteristics' => 'blanco',
+                'quantity' => 1,
+                'warehouse_location_id' => $this->location($center)->id,
+                'duplicate_authorized_by' => '   ',
+            ]],
+        ];
+        $url = route('warehouse.movements', ['cost_center_id' => $center->id]);
+        $this->actingAs($user)->from($url)->post(route('warehouse.materials.store'), $payload)
+            ->assertRedirect($url)
+            ->assertSessionHasErrors('materials.0.duplicate_authorized_by')
+            ->assertSessionHasInput('materials.0.name', 'CABLE   ELECTRICO');
+        $this->assertDatabaseCount('parts', 1);
+        $this->assertDatabaseCount('warehouse_entries', 1);
+        $this->get($url)->assertOk()->assertSee('Material duplicado')->assertSee('CABLE   ELECTRICO');
+    }
+
+    public function test_duplicate_variants_in_one_entry_require_authorization_and_save_atomically(): void
+    {
+        $user = $this->warehouseUser();
+        $center = CostCenter::where('code', 'ZARPEO-CHARCAS')->firstOrFail();
+        $user->costCenters()->sync([$center->id]);
+        $material = ['name' => 'Tornillo', 'quantity' => 2, 'warehouse_location_id' => $this->location($center)->id];
+        $payload = [
+            'cost_center_id' => $center->id,
+            'entry_date' => now()->format('Y-m-d H:i:s'),
+            'materials' => [array_merge($material, ['characteristics' => 'acero']), array_merge($material, ['characteristics' => 'cobre'])],
+        ];
+        $this->actingAs($user)->post(route('warehouse.materials.store'), $payload)
+            ->assertSessionHasErrors('materials.1.duplicate_authorized_by');
+        $this->assertDatabaseCount('parts', 0);
+        $this->assertDatabaseCount('warehouse_entries', 0);
+
+        $payload['materials'][1]['duplicate_authorized_by'] = '  Ana   Pérez  ';
+        $this->post(route('warehouse.materials.store'), $payload)->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('parts', 2);
+        $this->assertDatabaseHas('warehouse_entry_materials', ['duplicate_authorized_by' => 'Ana Pérez']);
+        $this->get(route('warehouse.movements', ['cost_center_id' => $center->id]))
+            ->assertOk()->assertSee('Duplicado autorizado por: Ana Pérez');
     }
 
     public function test_entry_search_only_exposes_materials_from_the_selected_cost_center(): void

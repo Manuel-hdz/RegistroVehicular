@@ -40,6 +40,7 @@ class WarehouseMovementController extends Controller
             ->whereBetween('exit_date', [$weekStart, $weekEnd])
             ->count();
         $latestEntries = WarehouseEntry::query()
+            ->with('registeredBy')
             ->where('cost_center_id', $costCenterId)
             ->orderByDesc('entry_date')
             ->orderByDesc('created_at')
@@ -51,6 +52,7 @@ class WarehouseMovementController extends Controller
             ->orderByDesc('created_at')
             ->get();
         $latestDepartures = WarehouseMaterialExit::query()
+            ->with('registeredBy')
             ->where('cost_center_id', $costCenterId)
             ->orderByDesc('exit_date')
             ->orderByDesc('created_at')
@@ -149,7 +151,7 @@ class WarehouseMovementController extends Controller
                 'latestMaterialExit' => fn ($query) => $query->where('cost_center_id', $costCenterId),
                 'entryMaterials' => fn ($query) => $query
                     ->whereHas('entry', fn ($entryQuery) => $entryQuery->where('cost_center_id', $costCenterId))
-                    ->with('location'),
+                    ->with($request->user()?->role === 'superadmin' ? ['location', 'entry.registeredBy'] : ['location']),
             ])
             ->withSum([
                 'entryMaterials as total_entries' => fn ($query) => $query->whereHas(
@@ -215,6 +217,7 @@ class WarehouseMovementController extends Controller
             'materials.*.name' => ['required', 'string', 'max:150'],
             'materials.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'materials.*.characteristics' => ['nullable', 'string', 'max:1000'],
+            'materials.*.duplicate_authorized_by' => ['nullable', 'string', 'max:180'],
         ]);
         $costCenter = $this->authorizedCostCenter($request, (int) $data['cost_center_id']);
         $locationIds = collect($data['materials'])->pluck('warehouse_location_id')->map(fn ($id) => (int) $id)->unique();
@@ -230,12 +233,14 @@ class WarehouseMovementController extends Controller
             ]);
         }
 
-        $invoicePath = $request->hasFile('invoice_file')
-            ? $request->file('invoice_file')->store('facturas-compras', 'public')
-            : null;
-
         $registeredBy = $request->user();
-        $entry = DB::transaction(function () use ($data, $invoicePath, $costCenter, $registeredBy): WarehouseEntry {
+        $entry = DB::transaction(function () use ($data, $request, $costCenter, $registeredBy): WarehouseEntry {
+            // Serialize entries in this warehouse, including names first used in this request.
+            CostCenter::whereKey($costCenter->id)->lockForUpdate()->firstOrFail();
+            $data['materials'] = $this->validateDuplicateMaterials($data['materials'], $costCenter->id);
+            $invoicePath = $request->hasFile('invoice_file')
+                ? $request->file('invoice_file')->store('facturas-compras', 'public')
+                : null;
             $entry = WarehouseEntry::create([
                 'cost_center_id' => $costCenter->id,
                 'registered_by_user_id' => $registeredBy?->id,
@@ -260,6 +265,7 @@ class WarehouseMovementController extends Controller
                     'part_id' => $part->id,
                     'warehouse_location_id' => $locationId,
                     'quantity' => 0,
+                    'duplicate_authorized_by' => $materialData['duplicate_authorized_by'],
                 ];
                 $groupedMaterials[$groupKey]['quantity'] += (float) $materialData['quantity'];
             }
@@ -371,6 +377,38 @@ class WarehouseMovementController extends Controller
     private function normalizeCharacteristics(string $rawCharacteristics): array
     {
         return Part::normalizeCharacteristics($rawCharacteristics);
+    }
+
+    private function validateDuplicateMaterials(array $materials, int $costCenterId): array
+    {
+        $baseNames = collect($materials)->map(fn ($material) => Part::normalizeBaseName($material['name']))->unique();
+        $known = Part::whereIn('base_name', $baseNames)
+            ->whereHas('entryMaterials.entry', fn ($query) => $query->where('cost_center_id', $costCenterId))
+            ->lockForUpdate()->get()
+            ->groupBy(fn (Part $part) => Part::normalizeBaseName($part->name))
+            ->map(fn ($parts) => $parts->map(fn (Part $part) => $this->partIdentity($part))->all())
+            ->all();
+
+        foreach ($materials as $index => &$material) {
+            $baseName = Part::normalizeBaseName($material['name']);
+            if ($baseName === '') {
+                throw ValidationException::withMessages(["materials.$index.name" => 'Escribe el nombre del material.']);
+            }
+            $identity = Part::identityKey($material['name'], $material['characteristics'] ?? '');
+            $identities = $known[$baseName] ?? [];
+            $isDuplicate = $identities !== [] && ! in_array($identity, $identities, true);
+            $authorizedBy = (string) Str::of($material['duplicate_authorized_by'] ?? '')->squish();
+            if ($isDuplicate && $authorizedBy === '') {
+                throw ValidationException::withMessages([
+                    "materials.$index.duplicate_authorized_by" => 'Material duplicado: ya existe un material con el mismo nombre base. Selecciona el existente o captura el nombre de quien autoriza agregar el duplicado.',
+                ]);
+            }
+            $material['duplicate_authorized_by'] = $isDuplicate ? $authorizedBy : null;
+            $known[$baseName][] = $identity;
+        }
+        unset($material);
+
+        return $materials;
     }
 
     /**
