@@ -273,6 +273,13 @@
             <button type="button" class="btn btn-secondary" disabled>Editar</button>
         @endif
     </form>
+    @if($selectedPersonnel && auth()->user()?->canDeleteAnyRecord())
+        <form method="POST" action="{{ route('personnel.destroy', $selectedPersonnel) }}" style="margin-top:12px;" onsubmit="return confirm('¿Eliminar permanentemente este registro de personal y sus relaciones en cascada?');">
+            @csrf
+            @method('DELETE')
+            <button class="btn btn-danger btn-sm" type="submit">Eliminar personal</button>
+        </form>
+    @endif
 </div>
 
 @if(!$selectedPersonnel)

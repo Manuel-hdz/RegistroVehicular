@@ -55,6 +55,7 @@
                     <td>{{ $m->departed_at->format('Y-m-d H:i') }}</td>
                     <td>{{ $m->destination }}</td>
                     <td>
+                        @include('partials.delete-record', ['deletableRecord' => $m])
                         <a class="btn btn-warning" href="{{ route('movements.checkin.form', $m) }}">Registrar Entrada</a>
                         @auth
                             @if(auth()->user()->role === 'superadmin')
@@ -75,7 +76,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="7">Sin movimientos abiertos</td></tr>
+                <tr><td colspan="8">Sin movimientos abiertos</td></tr>
             @endforelse
         </tbody>
     </table>
@@ -94,6 +95,7 @@
                 <th>Salida</th>
                 <th>Entrada</th>
                 <th>Km Recorridos</th>
+                @if(auth()->user()?->canDeleteAnyRecord())<th>Acciones</th>@endif
             </tr>
         </thead>
         <tbody>
@@ -105,9 +107,10 @@
                     <td>{{ $m->departed_at?->format('Y-m-d H:i') }}</td>
                     <td>{{ $m->arrived_at?->format('Y-m-d H:i') }}</td>
                     <td>{{ ($m->odometer_in ?? 0) - ($m->odometer_out ?? 0) }}</td>
+                    @if(auth()->user()?->canDeleteAnyRecord())<td>@include('partials.delete-record', ['deletableRecord' => $m])</td>@endif
                 </tr>
             @empty
-                <tr><td colspan="5">Sin historial</td></tr>
+                <tr><td colspan="{{ auth()->user()?->canDeleteAnyRecord() ? 7 : 6 }}">Sin historial</td></tr>
             @endforelse
         </tbody>
     </table>

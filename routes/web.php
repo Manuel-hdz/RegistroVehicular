@@ -168,6 +168,8 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'impersona
     });
 
     Route::prefix('almacen')->group(function () {
+        Route::delete('/entradas-salidas/materiales/{part}', [WarehouseMovementController::class, 'destroyMaterial'])
+            ->middleware(['role:superadmin', 'section:almacen'])->name('warehouse.materials.destroy');
         Route::middleware('section:almacen')->group(function () {
             Route::get('/entradas-salidas', [WarehouseMovementController::class, 'index'])->name('warehouse.movements');
             Route::get('/materiales', [WarehouseMovementController::class, 'inventory'])->name('warehouse.inventory');
@@ -188,7 +190,6 @@ Route::middleware(['auth', \App\Http\Middleware\SingleSession::class, 'impersona
             Route::post('/entradas-salidas/salidas', [WarehouseMovementController::class, 'storeMaterialExit'])->name('warehouse.material-exits.store');
             Route::patch('/entradas-salidas/salidas/{warehouseMaterialExit}/recibido', [WarehouseMovementController::class, 'markExitDelivered'])->name('warehouse.material-exits.delivered');
             Route::put('/entradas-salidas/materiales/{part}', [WarehouseMovementController::class, 'updateMaterial'])->name('warehouse.materials.update');
-            Route::delete('/entradas-salidas/materiales/{part}', [WarehouseMovementController::class, 'destroyMaterial'])->name('warehouse.materials.destroy');
         });
 
         Route::middleware('section:refacciones')->group(function () {

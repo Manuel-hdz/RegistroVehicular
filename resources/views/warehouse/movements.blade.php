@@ -428,6 +428,7 @@
                                 <th>Fecha</th>
                                 <th>Registró</th>
                                 <th>Factura</th>
+                                @if(auth()->user()?->canDeleteAnyRecord())<th>Acciones</th>@endif
                             </tr>
                         </thead>
                         <tbody>
@@ -469,10 +470,11 @@
                                             <span class="warehouse-history-meta">Sin factura</span>
                                         @endif
                                     </td>
+                                    @if(auth()->user()?->canDeleteAnyRecord())<td>@include('partials.delete-record', ['deletableRecord' => $entry])</td>@endif
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="10" class="text-center text-muted">Sin entradas registradas</td>
+                                    <td colspan="{{ auth()->user()?->canDeleteAnyRecord() ? 11 : 10 }}" class="text-center text-muted">Sin entradas registradas</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -512,6 +514,7 @@
                                 <th>Registró</th>
                                 <th>Estatus</th>
                                 <th>Documento</th>
+                                @if(auth()->user()?->canDeleteAnyRecord())<th>Acciones</th>@endif
                             </tr>
                         </thead>
                         <tbody>
@@ -535,10 +538,11 @@
                                             <br><a href="{{ asset('storage/' . $departure->invoice_path) }}" target="_blank" rel="noopener">Ver factura</a>
                                         @endif
                                     </td>
+                                    @if(auth()->user()?->canDeleteAnyRecord())<td>@include('partials.delete-record', ['deletableRecord' => $departure])</td>@endif
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="13" class="text-center text-muted">Sin salidas registradas</td>
+                                    <td colspan="{{ auth()->user()?->canDeleteAnyRecord() ? 14 : 13 }}" class="text-center text-muted">Sin salidas registradas</td>
                                 </tr>
                             @endforelse
                         </tbody>

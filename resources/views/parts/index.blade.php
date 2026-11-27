@@ -37,7 +37,7 @@
                     <td>${{ number_format($p->unit_cost, 2) }}</td>
                     <td>{{ $p->active ? 'Sí' : 'No' }}</td>
                     @if($canManageParts)
-                        <td><a class="btn btn-secondary" href="{{ route('parts.edit', $p) }}">Editar</a></td>
+                        <td><a class="btn btn-secondary" href="{{ route('parts.edit', $p) }}">Editar</a> @include('warehouse.delete-material', ['deletableMaterial' => $p])</td>
                     @endif
                 </tr>
             @endforeach

@@ -68,7 +68,7 @@
                             <td>{{ $systems[$item->system_type] }}</td>
                             <td><span class="badge {{ ['bajo' => 'bg-success', 'medio' => 'bg-warning text-dark', 'alto' => 'bg-danger'][$item->criticality] }}"><span aria-hidden="true">&#9679;</span> {{ $criticalities[$item->criticality] }}</span></td>
                             <td>{{ $statuses[$item->status] }}</td>
-                            <td><button type="button" class="btn btn-sm btn-outline-secondary edit-backlog" data-item="{{ json_encode($item->only(['id', 'quantity', 'unit', 'description', 'unit_cost', 'system_type', 'criticality', 'status'])) }}" data-url="{{ route('maintenance.backlog.update', $item) }}">Editar</button></td>
+                            <td><button type="button" class="btn btn-sm btn-outline-secondary edit-backlog" data-item="{{ json_encode($item->only(['id', 'quantity', 'unit', 'description', 'unit_cost', 'system_type', 'criticality', 'status'])) }}" data-url="{{ route('maintenance.backlog.update', $item) }}">Editar</button> @include('partials.delete-record', ['deletableRecord' => $item])</td>
                         </tr>
                     @empty
                         <tr><td colspan="10">No hay piezas registradas para este equipo en el centro seleccionado. Usa «Dar de alta pieza» para comenzar.</td></tr>

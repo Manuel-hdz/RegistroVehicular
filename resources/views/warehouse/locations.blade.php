@@ -85,6 +85,7 @@
                     </div>
                 </div>
             </form>
+            @include('partials.delete-record', ['deletableRecord' => $location])
         @empty
             <p style="margin:0; color:#6b7280;">No hay ubicaciones registradas.</p>
         @endforelse

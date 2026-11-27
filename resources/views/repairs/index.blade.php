@@ -26,7 +26,7 @@
     </form>
     <div class="table-responsive">
     <table class="table table-striped align-middle" style="width:100%">
-        <thead><tr><th>#</th><th>Unidad</th><th>Inicio</th><th>Horas</th><th>Partes</th><th>Mecánicos</th><th>Costos</th></tr></thead>
+        <thead><tr><th>#</th><th>Unidad</th><th>Inicio</th><th>Horas</th><th>Partes</th><th>Mecánicos</th><th>Costos</th>@if(auth()->user()?->canDeleteAnyRecord())<th>Acciones</th>@endif</tr></thead>
         <tbody>
             @foreach($repairs as $r)
                 <tr>
@@ -49,6 +49,7 @@
                         <div>Mano de obra: ${{ number_format($r->laborCost(),2) }}</div>
                         <strong>Total: ${{ number_format($r->totalCost(),2) }}</strong>
                     </td>
+                    @if(auth()->user()?->canDeleteAnyRecord())<td>@include('partials.delete-record', ['deletableRecord' => $r])</td>@endif
                 </tr>
             @endforeach
         </tbody>

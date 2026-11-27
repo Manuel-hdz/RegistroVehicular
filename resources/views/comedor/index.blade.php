@@ -553,6 +553,7 @@
                             <th>Fecha</th>
                             <th>Hora</th>
                             <th>Capturado</th>
+                            @if(auth()->user()?->canDeleteAnyRecord())<th>Acciones</th>@endif
                         </tr>
                     </thead>
                     <tbody>
@@ -563,10 +564,11 @@
                                 <td>{{ $record->recorded_at->timezone($displayTz)->format('d/m/Y') }}</td>
                                 <td>{{ $record->recorded_at->timezone($displayTz)->format('H:i:s') }}</td>
                                 <td>{{ $record->created_at?->timezone($displayTz)->format('d/m/Y H:i:s') }}</td>
+                                @if(auth()->user()?->canDeleteAnyRecord())<td>@include('partials.delete-record', ['deletableRecord' => $record])</td>@endif
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5">Todavía no hay registros del comedor.</td>
+                                <td colspan="{{ auth()->user()?->canDeleteAnyRecord() ? 6 : 5 }}">Todavía no hay registros del comedor.</td>
                             </tr>
                         @endforelse
                     </tbody>

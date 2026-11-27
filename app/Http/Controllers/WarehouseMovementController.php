@@ -480,13 +480,15 @@ class WarehouseMovementController extends Controller
             ->with('status', 'Material actualizado.');
     }
 
-    public function destroyMaterial(Part $part): RedirectResponse
+    public function destroyMaterial(Request $request, Part $part): RedirectResponse
     {
-        $part->delete();
+        abort_unless($request->user()?->canDeleteAnyRecord(), 403);
+        [, $costCenter] = $this->warehouseContext($request);
+        app(\App\Services\WarehouseMaterialDeletion::class)->delete($part);
 
         return redirect()
-            ->route('warehouse.movements')
-            ->with('status', 'Material eliminado.');
+            ->route('warehouse.inventory', ['cost_center_id' => $costCenter->id])
+            ->with('status', 'Material eliminado junto con sus entradas, salidas y vínculos con reparaciones.');
     }
 
     /**

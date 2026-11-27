@@ -48,6 +48,7 @@
                             <div class="row" style="justify-content:flex-end; gap:8px;">
                                 <a class="btn btn-secondary" href="{{ route('users.index', array_filter(['selected_user' => $u->id, 'department' => request('department', ''), 'page' => $users->currentPage()])) }}">Permisos</a>
                                 <a class="btn btn-secondary" href="{{ route('users.edit', $u) }}?page={{ $users->currentPage() }}">Editar</a>
+                                @include('partials.delete-record', ['deletableRecord' => $u])
                             </div>
                         </td>
                     </tr>

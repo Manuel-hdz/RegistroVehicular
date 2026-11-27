@@ -20,7 +20,7 @@
                     <td>{{ $m->personnel?->employee_number ?? '-' }}</td>
                     <td>${{ number_format($m->daily_salary, 2) }}</td>
                     <td>{{ $m->active ? 'Si' : 'No' }}</td>
-                    <td><a class="btn btn-secondary" href="{{ route('mechanics.edit', $m) }}">Editar</a></td>
+                    <td><a class="btn btn-secondary" href="{{ route('mechanics.edit', $m) }}">Editar</a> @include('partials.delete-record', ['deletableRecord' => $m])</td>
                 </tr>
             @endforeach
         </tbody>

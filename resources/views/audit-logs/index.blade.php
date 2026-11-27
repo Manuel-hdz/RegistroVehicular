@@ -43,7 +43,7 @@
     <p>{{ number_format($logs->total()) }} eventos encontrados.</p>
     <div class="table-responsive">
         <table class="table table-striped align-middle">
-            <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción / registro</th><th>Descripción</th><th>Solicitud</th><th>Detalle</th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción / registro</th><th>Descripción</th><th>Solicitud</th><th>Detalle</th><th>Acciones</th></tr></thead>
             <tbody>
             @forelse($logs as $log)
                 <tr>
@@ -64,9 +64,10 @@
                             <small>IP: {{ $log->ip_address ?? 'Proceso interno' }}<br>Solicitud: {{ $log->request_id ?? 'Sin solicitud web' }}</small>
                         </details>
                     </td>
+                    <td>@include('partials.delete-record', ['deletableRecord' => $log])</td>
                 </tr>
             @empty
-                <tr><td colspan="6">No hay eventos con los filtros seleccionados.</td></tr>
+                <tr><td colspan="7">No hay eventos con los filtros seleccionados.</td></tr>
             @endforelse
             </tbody>
         </table>

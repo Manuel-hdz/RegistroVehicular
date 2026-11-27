@@ -27,7 +27,7 @@
                         <td>{{ $costCenter->code }}</td>
                         <td>{{ $costCenter->name }}</td>
                         <td>{{ $costCenter->active ? 'Si' : 'No' }}</td>
-                        <td><a class="btn btn-secondary" href="{{ route('cost-centers.edit', $costCenter) }}">Editar</a></td>
+                        <td><a class="btn btn-secondary" href="{{ route('cost-centers.edit', $costCenter) }}">Editar</a> @include('partials.delete-record', ['deletableRecord' => $costCenter])</td>
                     </tr>
                 @endforeach
             </tbody>

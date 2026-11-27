@@ -101,6 +101,12 @@ class RecordAdministrationController extends Controller
             throw $exception;
         }
 
+        $returnTo = $selection['return_to'] ?? null;
+        if (is_string($returnTo) && str_starts_with($returnTo, '/') && ! str_starts_with($returnTo, '//')
+            && ! preg_match('/[\\\\\r\n]/', $returnTo)) {
+            return redirect($returnTo)->with('status', 'Registro eliminado de '.$table.'.');
+        }
+
         return redirect()->route('records.index', ['table' => $table])->with('status', 'Registro eliminado de '.$table.'.');
     }
 

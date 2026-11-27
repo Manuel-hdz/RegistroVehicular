@@ -100,6 +100,7 @@
                     @auth
                         @if(auth()->user()->role === 'superadmin')
                             <td style="display:flex; gap:6px; align-items:center;">
+                                @include('partials.delete-record', ['deletableRecord' => $m])
                                 <a class="btn btn-secondary btn-icon" href="{{ route('movements.edit', $m) }}" title="Editar" aria-label="Editar">
                                     <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                 </a>

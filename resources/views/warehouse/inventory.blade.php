@@ -39,6 +39,7 @@
                     <th>Ubicaciones registradas</th>
                     <th>Cantidad disponible</th>
                     @if(auth()->user()?->role === 'superadmin')<th>Registró</th>@endif
+                    @if(auth()->user()?->canDeleteAnyRecord())<th>Acciones</th>@endif
                 </tr>
             </thead>
             <tbody>
@@ -118,10 +119,13 @@
                                 @endforeach
                             </td>
                         @endif
+                        @if(auth()->user()?->canDeleteAnyRecord())
+                            <td>@include('warehouse.delete-material', ['deletableMaterial' => $material])</td>
+                        @endif
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ auth()->user()?->role === 'superadmin' ? 6 : 5 }}" class="text-center text-muted">{{ $search !== '' ? 'No se encontraron materiales con ese criterio' : 'Sin materiales registrados' }}</td>
+                        <td colspan="{{ auth()->user()?->role === 'superadmin' ? 7 : 5 }}" class="text-center text-muted">{{ $search !== '' ? 'No se encontraron materiales con ese criterio' : 'Sin materiales registrados' }}</td>
                     </tr>
                 @endforelse
             </tbody>

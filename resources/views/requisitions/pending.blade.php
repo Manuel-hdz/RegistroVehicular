@@ -42,6 +42,7 @@
             <div>
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                     <h3 style="margin:0;">{{ $requisition->folio }}</h3>
+                    @include('partials.delete-record', ['deletableRecord' => $requisition])
                     <span style="padding:6px 10px; border-radius:999px; font-weight:700; {{ $badgeStyles[$requisition->status] ?? 'background:#e5e7eb; color:#374151;' }}">
                         {{ $requisition->status_label }}
                     </span>
@@ -69,6 +70,7 @@
                         <th>Justificacion</th>
                         <th>Encargado</th>
                         <th>En almacen</th>
+                        @if(auth()->user()?->canDeleteAnyRecord())<th>Acciones</th>@endif
                     </tr>
                 </thead>
                 <tbody>
@@ -132,6 +134,7 @@
                                     </span>
                                 @endif
                             </td>
+                            @if(auth()->user()?->canDeleteAnyRecord())<td>@include('partials.delete-record', ['deletableRecord' => $item])</td>@endif
                         </tr>
                     @endforeach
                 </tbody>
